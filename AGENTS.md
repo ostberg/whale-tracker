@@ -4,8 +4,8 @@ Instructions for anyone, human or AI agent on any platform, working in this proj
 points to are the complete memory of the project. Nothing depends on a particular assistant's chat history or
 private memory; if you learn something the next person needs, it goes in the repo.
 
-Status on 2026-10-08: planning complete, no code written. Local git repository created; private remote not
-yet created.
+Status on 2026-10-08: planning complete. Python package scaffolded (database connector and admin commands
+only); `whales_dev` exists on the shared server. Private remote not yet created.
 
 ## What this is
 
@@ -84,7 +84,23 @@ Windows, PowerShell, virtual environment in `.venv`. This folder is OneDrive-syn
 - The GitHub CLI (`gh`) is not installed on the owner's main machine (checked 2026-10-08). Git pushes over HTTPS
   through Git Credential Manager, as the Tamale repo does.
 
-Planned tooling, copied from the Tamale repo (W-022): Python 3.13, setuptools, pip-tools hash-pinned locks
+Set up a machine (Windows PowerShell, from the repo root):
+
+```
+python -m venv .venv --clear
+.\.venv\Scripts\python.exe -m pip install --require-hashes -r requirements-dev.lock
+.\.venv\Scripts\python.exe -m pip install --no-deps --no-build-isolation -e .
+copy .env.example .env        # then fill in; no secrets go in it
+```
+
+Everyday checks: `.venv\Scripts\python.exe -m ruff check src tests`, `-m ruff format --check src tests`,
+`-m pytest`. Regenerate locks only with `scripts\lock_deps.ps1` (versions held unless `-Upgrade`).
+
+Database work from a developer machine needs `az login` as the Entra admin and a temporary firewall rule for
+the machine's address, removed afterwards. `whales db connect-paths <database>` shows who can connect (read
+only); `whales db revoke-public-connect <database> --apply` removes PUBLIC's default grant.
+
+Tooling, copied from the Tamale repo (W-022): Python 3.13, setuptools, pip-tools hash-pinned locks
 (`pip-compile --generate-hashes`; runtime lock feeds the image, dev lock is constrained to it), Ruff (line length
 110, rules E/W/F/I/UP/B, check and format), pytest with a `live` marker excluded by default, plain numbered SQL
 migrations, CI actions pinned to commit SHAs. Recipe: Tamale's `scripts/lock_deps.ps1` and

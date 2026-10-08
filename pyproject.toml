@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "whales"
+version = "0.1.0"
+description = "Whale Tracker: managers' letters and public filings, turned into research signals"
+requires-python = ">=3.13"
+dependencies = [
+    # Postgres with its bundled libpq; signs in with Entra tokens (W-004). Same choice as the Tamale repo.
+    "psycopg[binary]>=3.2",
+]
+
+[project.scripts]
+whales = "whales.cli:main"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4",
+    # ruff is PINNED, as in the Tamale repo: a new release can change formatting and turn CI red with no
+    # code change. Bump deliberately, reformatting and re-pinning together.
+    "ruff==0.15.19",
+    "pip-tools>=7.4",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 110
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "UP",  # pyupgrade
+    "B",   # bugbear
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "live: tests that reach the real database or SEC (skipped by default; run with -m live)",
+]
+addopts = "-m 'not live'"

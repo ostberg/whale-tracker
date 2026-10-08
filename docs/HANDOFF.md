@@ -2,6 +2,52 @@
 
 Dated entries, newest first: what changed, what is verified, what is next.
 
+## 2026-10-08 (second session, end): database set up and hardened; package scaffolded
+
+**Owner decisions.**
+- W-004: share `pg-tocqv-context` under four hardening conditions, rather than paying for a server.
+- Ratings simplified to two judged and two counted signals (W-036).
+- Tag list: crossover and Kind accepted, real assets rejected (W-038).
+- Approved: create `whales_dev`, edit the Tamale role script, scaffold the package.
+
+**What changed.**
+- `whales_dev` created on `pg-tocqv-context` (UTF8).
+- Tamale's `scripts/context_db_roles.py` now revokes CONNECT on `context` from PUBLIC (Tamale commit
+  `1006a46`, local only, not pushed; another session has uncommitted work in that tree).
+- The same revoke applied live on `context` and `whales_dev`.
+- Package scaffold:
+  - `pyproject.toml`;
+  - `scripts/lock_deps.ps1`;
+  - `requirements-runtime.lock` (psycopg[binary] 3.3.6, tzdata) and `requirements-dev.lock`, both
+    hash-pinned and first generated with the Tamale venv's pinned pip-tools;
+  - `src/whales/db/connect.py`: Entra tokens from the container identity endpoint or `az`, no Azure SDK;
+  - `src/whales/db/admin.py` and `src/whales/cli.py`: the `whales db connect-paths` and
+    `revoke-public-connect` commands;
+  - 12 unit tests; `.env.example`.
+
+**Verified.**
+- Before the revoke, PUBLIC had CONNECT on `context`, and the Research Assistant and weekly-job identities
+  could connect to `whales_dev`.
+- After it, `context` is reachable only by its owner (Peter), `azuresu`, and `context_writer` members
+  (`id-research-assistant`, `id-weekly-job`); `whales_dev` only by Peter and `azuresu`. Azure's
+  `replication` role lost database CONNECT on both; physical replication does not need it and there is no
+  replica or HA.
+- Ruff check and format pass; pytest 12 passed.
+- The temporary firewall rule was removed. Only the "Azure services" rule remains.
+- pgvector is not allow-listed on the server (`azure.extensions` empty). That is needed in phase 2.
+
+**Not done.**
+- The GitHub remote: the owner signs in or creates the repository.
+- Pushing the Tamale commit, which is the owner's call or the Tamale session's.
+- The first migration (schemas `raw`, `core`, `letters`, `api` and the migrations table).
+- The ingest identity and its role.
+
+**Next.**
+1. Add the remote and push.
+2. First migration against `whales_dev`; that meets the phase 1 gate "migrations run against the Azure
+   server".
+3. Owner: the compliance brief, outreach, the Teams channel and the "?" tags.
+
 ## 2026-10-08 (second session, later): letters become the product
 
 **What changed.**

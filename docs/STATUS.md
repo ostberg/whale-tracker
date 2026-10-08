@@ -3,8 +3,8 @@
 What is done, in progress, outstanding or blocked, and on whom. Read this first, then DECISIONS.md.
 
 *Last updated 2026-10-08 (second session): letters made the primary product (W-027), phases re-planned;
-local git repository created; Tamale repo plans read in full; candidate managers surveyed on EDGAR. Nothing
-built.*
+`whales_dev` created on the shared server and both databases hardened (W-004); Python package scaffolded
+with hash-pinned locks and an Entra-token connector. No pipeline code yet.*
 
 ## Phases
 
@@ -13,7 +13,7 @@ proposals, not commitments.
 
 | # | Phase | Target | Gate | Status |
 |---|---|---|---|---|
-| 1 | Setup: git repo and private remote, `whales_dev` database, blocking decisions, letter-source inventory, compliance ruling on source tiers (W-029, W-030) | 2026-10-23 | Migrations run against the Azure server; compliance has ruled on tiers 1 to 3 | In progress: local repo done; source inventory running |
+| 1 | Setup: git repo and private remote, `whales_dev` database, blocking decisions, letter-source inventory, compliance ruling on source tiers (W-029, W-030) | 2026-10-23 | Migrations run against the Azure server; compliance has ruled on tiers 1 to 3 | In progress: local repo, scaffold, `whales_dev` and hardening done; remote, migrations and the compliance ruling outstanding |
 | 2 | Letters pilot, run by hand: fetch and store tier-1 and tier-2 letters for about ten managers, two years back, including activist letters filed as 13D exhibits (W-031); extract company mentions, topic stances and predictions, each with its quote, and rate each letter, through the in-tenant model seam | November 2026 | The owner finds the extraction useful on 20 letters; every stance carries its quote and link (W-019); ratings checked with quick verdicts on 10 letters (W-036) | Not started; needs a Foundry model endpoint for this project |
 | 3 | Thin 13F layer (W-028): SEC bulk-data backfill, current quarters from the filing XML, filer map (W-024), unit detection (W-025), check against WhaleWisdom; 13G stakes (W-031); topic exposure and the said-versus-owned view | Nov to Dec 2026 (Q3 13Fs due Monday 2026-11-16) | Every filing reconciles; sampled positions match WhaleWisdom | Not started |
 | 4 | Azure job and weekly digest: letters weekly, 13F after each deadline | December 2026 | A week of clean unattended runs | Not started |
@@ -31,15 +31,18 @@ Blocking phase 1 or 2:
 - [x] **W-004, where the database lives:** the existing `pg-tocqv-context`, under four hardening conditions
       (owner, 2026-10-08). The steps below are phase-1 work and need the owner, as the server's only Entra
       admin, to run them or approve them:
-      - [ ] in the Tamale repo, add `REVOKE CONNECT ON DATABASE context FROM PUBLIC` to
-            `scripts/context_db_roles.py` and apply it;
-      - [ ] create `whales_dev` (and later `whales`) and revoke CONNECT from PUBLIC on each;
+      - [x] done 2026-10-08: `REVOKE CONNECT ON DATABASE context FROM PUBLIC` added to Tamale's
+            `scripts/context_db_roles.py` (Tamale commit `1006a46`, not pushed) and applied live.
+            Verified: the Research Assistant and weekly-job identities still connect through
+            `context_writer`;
+      - [x] `whales_dev` created (UTF8, en_US.utf8) and CONNECT revoked from PUBLIC on 2026-10-08, so the
+            Tamale identities can no longer connect to it. `whales` follows when production is needed;
       - [x] checked 2026-10-08: `azure.extensions` is empty, so pgvector is not allowed. Adding `VECTOR`
             changes a parameter on the shared server; it is needed in phase 2 (letter search, Uniqueness), not
             phase 1. The server is `rg-research-automation`, B1ms, PostgreSQL 17, Central US, Ready, with
             databases `context`, `postgres`, `azure_sys` and `azure_maintenance`;
-      - [ ] add a temporary firewall rule for the development machine, the same practice as the context
-            layer.
+      - [x] a temporary firewall rule for the development machine was used and removed the same day
+            (`whales-dev-temp-20261008`). Add one for each working session; remove it afterwards.
 - [ ] **How the ingest job runs in Azure.** Settled in outline by W-020 and W-021 (own image, identity and
       environment; ledger rows through D-052; no immediate failure email). Still open: subscription, resource
       group and region, and whether to report to the fleet ledger at all (that needs a row and a role
