@@ -2,6 +2,55 @@
 
 Dated entries, newest first: what changed, what is verified, what is next.
 
+## 2026-10-08 (second session): git, Tamale read, manager survey
+
+**What changed.**
+- Local git repository created on `main` and the planning docs committed. No remote yet: `gh` is not installed,
+  so the owner creates the empty private `whale-tracker` repository on github.com.
+- The Tamale repo's `OPS_AUTOMATION_PLAN.md`, `CONTEXT_LAYER_PLAN.md`, `DECISIONS.md`, deploy scripts and CI
+  were read in full (by a sub-agent; findings carry file references). Results are in AGENTS.md under "From the
+  Tamale repo" and in new decisions W-020 to W-023.
+- All candidate managers were surveyed on EDGAR, giving `docs/MANAGER_SURVEY.md` and new decisions W-024 to
+  W-026. The data model gained `core.filer`.
+
+**Owner answers this session.**
+- Git: local repository plus a private GitHub remote.
+- SEC contact: "possibly `research@tocqueville.com`". The owner asked whether access is needed to prove it is
+  real. Answer: SEC verifies nothing, but the mailbox must exist and be read.
+- W-004 deferred until the Tamale read; the recommendation is now its own server.
+- Managers: verify all, plus Whitebox (Andy Redleaf), Oaktree and Longleaf. First-pass priorities: Greenlight,
+  Third Point, Oaktree, Pershing Square, Fundsmith, Longleaf, Elliott, Starboard, Jana, "Value Investor".
+
+**Verified (live EDGAR requests, 2026-10-08).**
+- Every candidate's current 13F filer CIK, its latest cover-page totals and its successions.
+- Baupost and Duquesne still report values in thousands.
+- The two Situational Awareness entities filed identical 2026 Q1 reports.
+- The EDGAR full-text and entity search endpoints work with a declared User-Agent.
+
+**Not verified.**
+- Pre-2024 filer history for most managers (see the survey's method).
+- Whether the table-scoped ledger role in W-021 works.
+- Whether `research@tocqueville.com` exists.
+
+**Tamale-side gap noticed, not acted on.** Tamale's `scripts/context_db_roles.py` grants CONNECT on database
+`context` to `context_writer` but never revokes it from PUBLIC. By Postgres default, any login role on
+`pg-tocqv-context` can therefore connect to `context`, unless someone revoked it by hand (the live server was
+not checked). This belongs to the Tamale repo; it matters whatever W-004 decides.
+
+**Next.**
+1. Owner: create the empty private GitHub repository; decide W-004, "Value Investor", W-026 and the topic
+   source of truth (W-018); confirm the SEC mailbox.
+2. Agent: add `origin` and push; scaffold `pyproject.toml`, the pip-tools locks, Ruff, pytest and the package
+   skeleton (W-022).
+3. First migration (`raw.filing`, `core.manager`, `core.filer`, `core.security`, `core.holding`) once the
+   database exists.
+4. `sources/edgar.py` and `parse/form13f.py` against saved real filings. Test fixtures should include:
+   - one filing from before 2023;
+   - one amendment;
+   - a post-2023 filing in thousands (Baupost, accession `0001061768-26-000010`);
+   - the duplicate Situational Awareness pair (`0002045724-26-000008` and `0002038540-26-000004`, both filed 2026-05-18);
+   - a filing with put lines.
+
 ## 2026-10-08: planning session; project folder created
 
 **What happened.** The owner asked for a long-running Azure process that pulls shareholder letters and 13F

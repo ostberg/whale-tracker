@@ -4,7 +4,8 @@ Instructions for anyone, human or AI agent on any platform, working in this proj
 points to are the complete memory of the project. Nothing depends on a particular assistant's chat history or
 private memory; if you learn something the next person needs, it goes in the repo.
 
-Status on 2026-10-08: planning complete, no code written, not yet a git repository.
+Status on 2026-10-08: planning complete, no code written. Local git repository created; private remote not
+yet created.
 
 ## What this is
 
@@ -73,8 +74,14 @@ Windows, PowerShell, virtual environment in `.venv`. This folder is OneDrive-syn
 - Cross-machine history travels by git; OneDrive carries the working files and `.env`.
 - Git from a sandboxed agent session that cannot delete files will leave `.lock` files under `.git`; run git
   from a normal Windows terminal or Claude Code on the machine.
+- The GitHub CLI (`gh`) is not installed on the owner's main machine (checked 2026-10-08). Git pushes over HTTPS
+  through Git Credential Manager, as the Tamale repo does.
 
-Planned tooling, matching the Tamale repo: Python 3.13, Ruff (check and format), pytest, hash-pinned lock files.
+Planned tooling, copied from the Tamale repo (W-022): Python 3.13, setuptools, pip-tools hash-pinned locks
+(`pip-compile --generate-hashes`; runtime lock feeds the image, dev lock is constrained to it), Ruff (line length
+110, rules E/W/F/I/UP/B, check and format), pytest with a `live` marker excluded by default, plain numbered SQL
+migrations, CI actions pinned to commit SHAs. Recipe: Tamale's `scripts/lock_deps.ps1` and
+`.github/workflows/ci.yml`.
 
 ## Architecture
 
@@ -105,7 +112,7 @@ Whale Tracker/
   AGENTS.md, CLAUDE.md
   pyproject.toml, requirements*.lock
   config/
-    managers.yaml        watchlist: CIK, name, style tag
+    managers.yaml        watchlist: manager, style cohort, filer CIKs with quarter ranges, excluded filings
     topics.yaml          controlled topic list and the securities mapped to each
     letter_sources.yaml  one entry per approved public letter source
   src/whales/
@@ -140,7 +147,9 @@ firm-confidential derived research, so see W-004 and the open decision in STATUS
 
 Key tables:
 
-- `core.manager`: tracked filer (CIK, name, style tag, active flag).
+- `core.manager`: tracked manager (name, style cohort, active flag). No CIK: see `core.filer`.
+- `core.filer`: one SEC filer CIK, the manager it belongs to, and the first and last quarter it counts for
+  (W-024). Successions and parallel books are common.
 - `raw.filing`: one row per SEC filing, keyed by accession number.
 - `core.security`: CUSIP, FIGI, ticker. Consumers join to the Tamale `APX:` alias on symbol and CUSIP.
 - `core.holding`: one row per 13F line, exactly as filed (including put and call lines).
@@ -185,7 +194,8 @@ One-off commands (same CLI): `whales add-manager <CIK>`, `whales backfill --from
 data sets), `whales ingest-file <path> --manager <name> --class public`, `whales rerun --filing <accession>`.
 
 Every path is idempotent (accession number or content hash), stores the raw file before parsing, reconciles
-parsed totals against the filing's summary page, and writes one `raw.run_log` row per run.
+parsed totals against the filing's summary page, detects the filing's value units (W-025), and writes one
+`raw.run_log` row per run.
 
 ## Domain facts (verified against SEC, OpenFIGI and Microsoft documentation on 2026-10-08)
 
@@ -193,13 +203,25 @@ parsed totals against the filing's summary page, and writes one `raw.run_log` ro
   Q3 2026 is due Monday 2026-11-16.
 - 13F covers long positions in Section 13(f) securities only: no shorts. Put and call lines are flagged and
   must not be treated as plain long stock.
-- 13F values are in dollars for filings from 2023-01-03 and in thousands of dollars before that.
+- 13F values are in dollars for filings from 2023-01-03 and in thousands of dollars before that. **Not every
+  filer complied**: Baupost and Duquesne still report in thousands in 2026 (verified 2026-10-08). Detect units
+  per filing (W-025).
+- Managers change filer CIKs (Greenlight to DME Capital Management from 2024 Q1; JANA Partners LLC to JANA
+  Partners Management from 2023 Q3; Pershing Square Capital Management to Pershing Square Inc. from 2026 Q2).
+  The old CIK switches to 13F-NT in the hand-over quarter. Related filers can also file identical reports
+  (Situational Awareness, 2026 Q1). See `docs/MANAGER_SURVEY.md` and W-024.
+- The value on a put or call line is the value of the underlying shares, so these lines can be large
+  (Situational Awareness held about $1.5bn of AMD and ASML puts at 2026 Q1).
 - The 13F summary page carries an entry total and a value total: reconcile against them.
 - 13Fs identify securities by CUSIP, not ticker. OpenFIGI's mapping API is free and supports `ID_CUSIP`, but a
   ticker is not guaranteed for every CUSIP. Limits: 25 requests per minute without a key, 25 per 6 seconds with
   a free key. Cache every result.
 - `data.sec.gov` needs no key. The SEC allows at most 10 requests per second and requires a User-Agent naming
-  the organisation and a contact email.
+  the organisation and a contact email. Nothing registers or verifies the address, but it must be a monitored
+  mailbox because it is how SEC reaches someone about a client it is limiting or blocking.
+- EDGAR full-text search (`efts.sec.gov/LATEST/search-index?q=...&forms=13F-HR`) and its entity autocomplete
+  (`?keysTyped=...`) answer with the same User-Agent and return JSON. Useful for finding a manager's CIK
+  (tested 2026-10-08).
 - SEC Form 13F bulk data sets go back to 2013 Q2: the efficient route for backfill.
 - 13F shows topic exposure only through listed equities, ETFs and some options. Bonds, futures, physical
   gold, currencies and swaps are not reported, so rates, Treasuries, inflation and European macro are visible
@@ -218,8 +240,30 @@ From the Tamale repo (read 2026-10-08):
 - The context layer plans model-proposed topic tags on Tamale notes, ratified by a person before any Tamale
   tag is written (`docs/CONTEXT_LAYER_PLAN.md`, WS3.3), and Tamale has a Topic relationship type. Topics here
   should share one vocabulary with that work, not start a second list (D-024).
-- A fleet job in the Tamale repo already plans an EDGAR resolver (STATUS.md, "Extinct process as a fleet job").
-  Check for a shared EDGAR client before writing a second one.
+- A fleet job in the Tamale repo plans an EDGAR resolver (STATUS.md, "Extinct process as a fleet job"). As of
+  2026-10-08 it has no code and no write-up, so this project builds its own client (W-023).
+
+From the Tamale repo (read in full 2026-10-08: `docs/OPS_AUTOMATION_PLAN.md`, `docs/CONTEXT_LAYER_PLAN.md`,
+`docs/DECISIONS.md` and the deploy scripts):
+
+- The fleet runs as Container Apps jobs in environment `cae-research-automation` (resource group
+  `rg-research-automation`, East US), image registry `tocqvresearchacr`, Key Vault `kv-tocqv-research`. Every
+  fleet job shares the identity `id-weekly-job`, which can read every secret in that vault, and the environment
+  links the firm-data file share `weeklystate`. Hence W-020: this job uses neither.
+- The fleet ledger is Table Storage (`sttocqvresearch`, table `AutomationRuns`); a watchdog flags any job whose
+  last success is older than its schedule. Outside jobs join through D-052 (`runner=external`). Failure email
+  goes through Graph and needs a secret this project must not hold (W-021).
+- `pg-tocqv-context`: Burstable B1ms, PostgreSQL 17, Central US, public endpoint with the "Azure services"
+  firewall rule, no VNet, Entra sign-in only. Jobs connect with psycopg, an Entra token as the password and
+  `sslmode=require`, reconnecting when the token expires (`src/tamale/context/backends.py`). Copy that pattern.
+- Tamale topics are about 250 Topic entities, applied unevenly; the Tamale code sources them live and never keeps
+  a copy (D-026, D-109). See the conflict noted on W-018.
+- Machine-written Tamale notes go out as the `tocquevilleapi` account ("Research Automation", D-036). No note
+  type for them is agreed; `docs/NOTE_TYPE_CATALOG.md` is an unapproved draft.
+- OpenFIGI must never be sent a list of what the firm holds (D-127). This project sends it only CUSIPs taken
+  from public 13Fs.
+- The model seam is `src/tamale/llm.py` (`LLMProvider.complete`, `governed_provider()` with a default-deny host
+  allowlist). Copy the pattern, not the module.
 
 ## Security requirements
 
