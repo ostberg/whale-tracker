@@ -9,10 +9,17 @@ yet created.
 
 ## What this is
 
-Whale Tracker follows what a watchlist of large, well-regarded investment managers ("whales") own and say, and
+Whale Tracker follows what a watchlist of large, well-regarded investment managers ("whales") say and own, and
 turns that into research signals for Tocqueville Asset Management's analysts and portfolio managers.
 
-- Pulls public SEC filings (13F first; 13D/G later) and, later, publicly posted shareholder letters.
+**Letters are the product (W-027).** What managers write in shareholder letters and memos is the differentiated
+value; 13F holdings tracking is a commodity that tools such as WhaleWisdom already provide. The 13F layer exists
+to support the letters: what a manager owns against what it says, and joins to firm holdings.
+
+- Reads shareholder letters and memos from sources in four tiers (W-029): published by the manager; SEC
+  filings; third-party republishers, only under licence; LP-received, restricted.
+- Pulls public SEC filings: 13F, kept thin and checked against WhaleWisdom (W-028); 13D/G from watchlist
+  filers, whose 13D exhibits carry activist letters (W-031).
 - Stores holdings history in Postgres and derives events: initiation, add, trim, exit, first mention.
 - Correlates names across managers (cluster buys, conviction, crowding).
 - Analyzes topics (interest rates, US Treasuries, European macro, housing, AI, edge compute, gold, inflation,
@@ -229,6 +236,15 @@ parsed totals against the filing's summary page, detects the filing's value unit
 - Amendments (13F-HR/A) can restate or add: resolve them in `core.position_quarter`, never by editing
   `core.holding`.
 - Azure Container Apps jobs use five-field cron expressions evaluated in UTC.
+- Schedule 13D/G (2023 SEC amendments, from law-firm summaries; confirm against the current rule text before
+  relying on exact deadlines). A 13D is due 5 business days after crossing 5%, and amendments 2 business days
+  after a material change. A passive 13G is due 5 business days after crossing 5%; institutional (QII) 13Gs are
+  due 45 days after the quarter-end. 13G amendments are due 45 days after the quarter-end in which a material
+  change (1% or more) occurred. Structured XML has been mandatory since 2024-12-18; exhibits are not
+  structured.
+- EDGAR form names changed with the XML move: `SC 13D`, `SC 13D/A`, `SC 13G`, `SC 13G/A` before it, then
+  `SCHEDULE 13D`, `SCHEDULE 13D/A`, `SCHEDULE 13G`, `SCHEDULE 13G/A` (seen in the submissions data of
+  Starboard, Elliott, Third Point, Pershing Square and Berkshire on 2026-10-08). Match both.
 
 From the Tamale repo (read 2026-10-08):
 
@@ -279,9 +295,12 @@ From the Tamale repo (read in full 2026-10-08: `docs/OPS_AUTOMATION_PLAN.md`, `d
   model has no tools, receives text and returns a fixed JSON structure. Extracted tickers must match
   `core.security` or the mention is dropped. Letter text goes only to in-tenant models.
 - Audit: every derived row traces to its source filing or document.
-- Compliance (needs the firm's CCO): public letter sources only, each checked for robots.txt and terms;
-  aggregator sites that prohibit scraping are excluded; LP-received letters stay out unless cleared fund by
-  fund; retention treatment for machine-generated Tamale notes and alerts to be confirmed.
+- Compliance (needs the firm's CCO): every letter source is checked for robots.txt and terms and carries its
+  tier (W-029). Third-party republishers are used only under a licence or written permission. Robots.txt
+  allowing a fetch is not permission to store or analyse: Buy Side Digest's terms, for example, forbid
+  automated access and any AI use, including embeddings. LP-received letters stay out unless cleared fund by
+  fund. PDFs whose permission flags forbid text extraction are not machine-read without a ruling (W-030).
+  Retention treatment for machine-generated Tamale notes and alerts is to be confirmed.
 
 ## Before you end a session
 
