@@ -59,13 +59,14 @@ can produce, and it ties into W-007 (forward performance from first mentions).
 
 ## 3. Manager tags (W-038)
 
-Tags are loose: a manager can carry several in each facet, except Kind, which takes exactly one. But they come from a controlled list, for the same
-reason as topics (W-018). They supersede the single "cohort" in W-026.
+Tags are loose: a manager can carry several in each facet, except Kind, which takes exactly one. But they
+come from a controlled list, for the same reason as topics (W-018). They supersede the single "cohort" in
+W-026.
 
 | Facet | Tags |
 |---|---|
+| **Kind** (exactly one) | manager, listed vehicle, independent writer, economist or strategist |
 | **Style** | value, deep value, quality, growth, special situations |
-| **Kind** | manager, listed vehicle, independent writer, economist or strategist |
 | **Strategy** | long only, long/short, market neutral, activist, event driven, macro, credit and distressed, multi-strategy, crossover (public and private) |
 | **Asset focus** (optional) | equities, credit, natural resources, multi-asset |
 | **Geography** (optional) | US, global, Europe, Asia, emerging markets |
