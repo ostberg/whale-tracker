@@ -23,7 +23,52 @@ Checked by the agent the same day.
 | [Hedge Fund Alpha: Stone Sentinel Q3 2026](https://hedgefundalpha.com/investor-letters/stone-sentinel-capital-q3-2026/) | 3 | Letter to partners as full HTML; index at `/investor-letters/` | Open, posted 2026-10-08 | Allowed | As above | n/a (HTML) | Needs a licence and a compliance ruling |
 | [Buy Side Digest: Greenlight](https://www.buysidedigest.com/funds/greenlight-capital) | 3 | Letter summaries, topic tags and scored fields open; full letters for paid members | Partly paywalled; site says accredited and professional investors only | Allowed | [Terms](https://www.buysidedigest.com/terms) forbid bots and scraping without written permission, internal business use, and any AI use including embeddings | n/a | Only through its [institutional feed](https://www.buysidedigest.com/institutional) (daily S3, JSON and CSV, source links to the manager, ticker and stance taxonomy) |
 
-## Inventory of the watchlist and additional writers
+## Additional writers on the topic list
 
-Pending: two research agents were started on 2026-10-08, one for the watchlist managers and one for further
-public writers on the topic list.
+From a research agent's survey on 2026-10-08. The agent opened every index page except Semper Augustus. These
+facts are agent-reported and not re-checked here; terms in particular need re-reading before any approval.
+Ordered by usefulness for the topic list.
+
+Topic codes: R rates, T Treasuries, EU European macro, H housing, AI, Au gold, I inflation, O oil, L lumber.
+
+| # | Writer, firm | Index | Kind, frequency, since | Topics | 13F CIK | Terms (robots allows unless noted) | Verdict |
+|---|---|---|---|---|---|---|---|
+| 1 | Torsten Sløk, Apollo | apollo.com/insights-news/insights/daily-spark | Daily Spark, daily, HTML | R T I H EU AI O Au | 1449434 (book not public equity) | Bans bots used to scrape; personal use; apolloacademy.com disallows `*.pdf` | Bot ban: permission or manual load |
+| 2 | John Hussman, Hussman Strategic Advisors | hussmanfunds.com/comment/ | Monthly comment since 2000, HTML | R T I AI Au | 1179475 | No terms page found, only a copyright notice | Promising; ask for the reprint policy |
+| 3 | Lyn Alden | lynalden.com/newsletter-archives/ | Newsletter every ~2 months since 2018, HTML | T R I Au O EU AI | None | Copying needs permission; short credited excerpts allowed; nothing on bots | Personal use; ruling |
+| 4 | Bill Smead, Smead Capital | smeadcap.com/missives/ | Missives 1 to 2 a month, HTML | O H R T I EU AI | 1427008 | Personal, non-commercial; no bot clause | Ruling. Strong said-versus-owned fit |
+| 5 | Grantham and Inker, GMO | gmo.com/americas/research-library/ | Quarterly letter and insights, HTML and PDF | AI R I EU O H | 1352662 | Print or download with notices kept; no commercial reproduction; no bot clause | Ruling |
+| 6 | Kevin Smith and Tavi Costa, Crescat | crescat.net/investment-process/investor-letters/ | About monthly since 2023, HTML | Au I R T O | None | Bans bots harvesting a large portion | Bot ban |
+| 7 | Lacy Hunt, Hoisington | hoisington.com/economic_overview.html | Quarterly, only since Q3 2024, PDF | R T I H | None | No terms found; no robots.txt | Promising; ask |
+| 8 | Prem Watsa, Fairfax | fairfax.ca/investors/ | Annual letter since 1985, PDF | R T I EU | 915191 | Personal, non-commercial; no bot clause | Ruling |
+| 9 | Bruce Flatt, Brookfield | bam.brookfield.com/reports-sec-filings/letters-shareholders | Quarterly since Q4 2022 | R H AI O EU | 1001085 | Bans scraping, bots and spiders; Cloudflare | Bot ban |
+| 10 | Goehring & Rozencwajg | gorozen.com/research/commentaries | Quarterly since 2017 | O Au I | 1863154 | No terms found; full text needs a form | Gated; manual only |
+| 11 | Murray Stahl, Horizon Kinetics | horizonkinetics.com/insights/library/ | Quarterly since 2015, PDF | I O Au R | 1056823 | Bans bots and "intelligent agents" | Bot ban |
+| 12 | David Iben, Kopernik | kopernikglobal.com/news-views/ | Several a year since 2013 | Au I O L | 1599814 | Personal or informational; no commercial reproduction | Ruling. Only lumber angle (June 2026 timber paper) |
+| 13 | Sprott | sprott.com/insights/ | 2 to 4 a month since 2018, HTML | Au I R | 1512920 | Bans scraping and data mining | Bot ban |
+| 14 | Frank Holmes, U.S. Global Investors | usfunds.com/investor-library/ | Weekly, HTML | Au O AI I | 754811 | Personal, non-commercial; no bot clause | Ruling |
+| 15 | Bridgewater | bridgewater.com/research-and-insights | About monthly, HTML | AI I Au EU R | 1350694 | "Agree" click-through; bans robots | Bot ban |
+| 16 | Steven Romick, FPA | fpa.com/insights/ | Quarterly, HTML | R I AI | 1377581 | Personal viewing only; crawl-delay 10 | Ruling |
+| 17 | Incrementum, *In Gold We Trust* | ingoldwetrust.report/archiv/ | Annual since 2007, PDF | Au I R T | Not a US filer | Private, non-commercial copies only | Ruling |
+| 18 | Chris Bloomstran, Semper Augustus | semperaugustus.com | Annual letter, PDF | R I O AI | 1115373 | Unverified (Cloudflare) | Unverified |
+| 19 | Nygren and Coniaris, Oakmark | oakmark.com/news-insights/ | Quarterly, HTML | EU AI R | 813917 | Bans bots and "intelligent agents" | Bot ban |
+| 20 | Cathie Wood, ARK Invest | ark-invest.com/articles | Articles and letters, HTML | AI | 1697748 | Terms unverified (403); robots disallows `/wp-content/` (the PDFs) | PDFs off limits |
+| 21 | Baillie Gifford | bailliegifford.com/en/uk/individual-investors/insights/ | 737 items, 49 tagged AI | AI | 1088875 | Personal use; no reproduction; no bot clause | Ruling |
+
+**Excluded: Ruffer** (CIK 1426859). Its disclaimer forbids text and data mining and any use for AI training,
+fine-tuning or retrieval; its robots.txt blocks AI crawlers by name; its site excludes US persons.
+
+**What the survey shows.**
+- Terms are the binding constraint, not robots.txt. Eight sources ban bots in their terms even where
+  robots.txt allows the path. Almost every other one limits use to personal, non-commercial.
+- So for most tier-1 sources an automated collector needs written permission from the publisher, or a
+  compliance view that a person loading letters by hand (`whales ingest-file`) for internal research is
+  acceptable. A licensed feed (Buy Side Digest's institutional product) moves that burden to the vendor.
+- Nobody writes regularly on edge compute or lumber. The nearest proxies are ARK and Baillie Gifford for AI
+  infrastructure, and Kopernik, Smead (homebuilders) and Goehring & Rozencwajg for lumber.
+- Not verified, so left out: First Eagle and Troy (investor gates), WisdomTree (403), VanEck (redirect loop).
+- PIMCO's outlooks are strong on rates, but it files only 13F-NT, so there are no holdings to compare.
+
+## Inventory of the watchlist managers
+
+Pending: a research agent started on 2026-10-08 is still running.
