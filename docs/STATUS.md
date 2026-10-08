@@ -61,11 +61,13 @@ Blocking phase 1 or 2:
       API covers the last 8 quarters, excluding the current one.
 - [ ] **A Foundry model endpoint for this project.** Letter extraction is now phase 2. The endpoint must be
       in-tenant and reached through the provider-agnostic seam.
-- [ ] **Manual collection (W-033): intake and reminder channel.** Needed for phase 2 if any pilot source is
-      manual. Intake must not depend on a laptop or OneDrive. Proposed: a Blob container `letters-inbox`
-      (upload with Storage Explorer or the portal; later an upload page in the Research Assistant). Reminders:
-      a weekly "letters due" digest to a Teams channel through a narrowly scoped webhook, or by email; this
-      settles "Alert delivery" below. Owner to choose, and to name who acts on reminders.
+- [ ] **Manual collection (W-033, W-034).** The owner chose a Teams digest and acts on reminders for now; a
+      junior analyst or intern takes over later through the `letters_reviewer` role. Still open:
+      - which team and channel;
+      - who owns the Teams Workflows flow (ideally a service account rather than a person, so it survives staff
+        changes; check that the firm's Power Automate policies allow an HTTP-triggered flow);
+      - the intake location. Proposed: a Blob container `letters-inbox`, uploaded to with Storage Explorer or
+        the portal; never a laptop or OneDrive folder.
 - [ ] **The contact email** to declare in the SEC User-Agent header. Proposed by the owner:
       `research@tocqueville.com`, used for the one-off survey on 2026-10-08. SEC does not verify or register the
       address. It is how SEC reaches someone before or after blocking a client, so it must be a real, monitored
@@ -84,9 +86,9 @@ Later:
 - [x] **Pull a letters pilot forward?** Yes, and further: letters are now the product (W-027, 2026-10-08).
 - [ ] **Price source** for forward returns. APX closes are not split-adjusted (D-118) and the FactSet feed has
       stopped, so neither works as-is.
-- [ ] **Alert delivery.** Reuse the Tamale fleet's alerting, a Teams channel, email, or a mix. The fleet's
-      email goes through a Graph secret this project must not hold (W-021). A firm-side job reading the `api`
-      views can send the alerts, or this project needs its own narrowly scoped sender.
+- [ ] **Alert delivery.** Reminders and the digest go to Teams (W-034). Still open: whether event alerts (new
+      letter from a watched manager, a 13D on a held name) use the same channel. Holdings-based alerts stay
+      firm-side (W-012).
 - [ ] **Tamale:** the entry type for machine-generated whale notes. Account: fleet jobs already write as
       `tocquevilleapi` ("Research Automation", D-036). No entry type is agreed: the Tamale repo's
       `docs/NOTE_TYPE_CATALOG.md` is an unapproved draft. Needed before phase 5.

@@ -298,7 +298,8 @@ From the Tamale repo (read in full 2026-10-08: `docs/OPS_AUTOMATION_PLAN.md`, `d
   `whales_ingest` (writes `raw`, `core`, `letters`), `whales_reader` (select on `api` only),
   `whales_restricted` (unused until cleared). The ingest identity must have CONNECT on `whales` only.
 - Network: the job has no inbound endpoint; outbound is limited to an allowlist (SEC, OpenFIGI, the price
-  source, approved letter domains, the Foundry endpoint).
+  source, approved `auto` letter domains, the Foundry endpoint, the Teams Workflows flow URL).
+- The Teams Workflows flow URL is a secret: anyone holding it can post to the channel (W-034).
 - Untrusted content: hardened XML parsing; PDFs parsed only inside the job container. The letter-extraction
   model has no tools, receives text and returns a fixed JSON structure. Extracted tickers must match
   `core.security` or the mention is dropped. Letter text goes only to in-tenant models.
