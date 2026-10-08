@@ -59,13 +59,14 @@ can produce, and it ties into W-007 (forward performance from first mentions).
 
 ## 3. Manager tags (W-038)
 
-Tags are loose: a manager can carry several in each facet. But they come from a controlled list, for the same
+Tags are loose: a manager can carry several in each facet, except Kind, which takes exactly one. But they come from a controlled list, for the same
 reason as topics (W-018). They supersede the single "cohort" in W-026.
 
 | Facet | Tags |
 |---|---|
 | **Style** | value, deep value, quality, growth, special situations |
-| **Strategy** | long only, long/short, market neutral, activist, event driven, macro, credit and distressed, multi-strategy |
+| **Kind** | manager, listed vehicle, independent writer, economist or strategist |
+| **Strategy** | long only, long/short, market neutral, activist, event driven, macro, credit and distressed, multi-strategy, crossover (public and private) |
 | **Asset focus** (optional) | equities, credit, natural resources, multi-asset |
 | **Geography** (optional) | US, global, Europe, Asia, emerging markets |
 
@@ -89,89 +90,86 @@ since a top-10 weight has not yet been computed. Correct a tag by editing the ta
 
 ### Watchlist
 
-| Manager | Style | Strategy | Asset focus | Geography | 13F lines | Notes |
-|---|---|---|---|---|---|---|
-| Tiger Global | growth | long/short | equities | global | 46 | Large private book; the 13F shows the public slice only |
-| Coatue | growth | long/short | equities | global | 211 | Private book too |
-| Altimeter | growth | long only? | equities | US | 20 | Long-biased; private book too |
-| Atreides | growth | long/short? | equities | US | 49 | Private book too |
-| Whale Rock | growth | long/short | equities | US | 35 | Technology-focused |
-| Light Street | growth | long/short | equities | global | 28 | Technology-focused |
-| Dragoneer | growth | long only | equities | US | 12 | Mostly private |
-| Durable | growth, quality | long only | equities | US | 36 | Private book too |
-| Situational Awareness | growth | long/short? | equities | US | 26 | AI-thematic; large put lines |
-| Lone Pine | growth, quality | long/short | equities | global | 34 | |
-| Viking Global | growth? | long/short | equities | global | 90 | Diversified fundamental book |
-| D1 | growth | long/short | equities | global | 55 | Private book too |
-| Maverick | growth? | long/short | equities | global | 179 | |
-| Duquesne | growth? | macro | multi-asset | global | 95 | Equity book only in the 13F |
-| Appaloosa | deep value, special situations | event driven, credit and distressed | multi-asset | US | 27 | Distressed roots; now equity-heavy |
-| Third Point | special situations | event driven, activist, long/short | multi-asset | global | 43 | |
-| Berkshire Hathaway | quality, value | long only | equities | US | 89 | Mostly operating businesses |
-| Pershing Square | quality | activist, long only | equities | US | 15 | Concentrated; uses hedges |
-| Baupost | value, deep value | event driven, credit and distressed | multi-asset | global | 23 | Often holds a lot of cash |
-| Greenlight (DME) | value | long/short | equities | US | 95 | Also holds gold and macro positions |
-| TCI | quality | activist, long only | equities | global | 11 | Concentrated; much of it in Europe |
-| Akre | quality | long only | equities | US | 20 | |
-| Himalaya | value, quality | long only | equities | Asia, US | 8 | |
-| Fundsmith | quality | long only | equities | global | 41 + 27 | Two filers |
-| Elliott | special situations | activist, event driven, credit and distressed, multi-strategy | multi-asset | global | 29 | |
-| Starboard | value | activist | equities | US | 22 | |
-| ValueAct | value, quality | activist | equities | US | 18 | |
-| Trian | value, quality | activist | equities | US | 9 | |
-| JANA | value | activist, event driven | equities | US | 10 | |
-| Oaktree | deep value | credit and distressed | credit | global | 145 | The 13F shows a small slice |
-| Southeastern (Longleaf) | value | long only | equities | global | 81 | Engages with managements, short of formal activism |
-| Whitebox | special situations? | multi-strategy, credit and distressed | multi-asset | US | 667 | Out of 13F tracking (W-010); Redleaf's writing only |
+| Manager | Kind | Style | Strategy | Asset focus | Geography | 13F lines | Notes |
+|---|---|---|---|---|---|---|---|
+| Tiger Global | manager | growth | long/short, crossover | equities | global | 46 | Large private book; the 13F shows the public slice only |
+| Coatue | manager | growth | long/short, crossover | equities | global | 211 | Private book too |
+| Altimeter | manager | growth | long only?, crossover | equities | US | 20 | Long-biased; private book too |
+| Atreides | manager | growth | long/short?, crossover | equities | US | 49 | Private book too |
+| Whale Rock | manager | growth | long/short | equities | US | 35 | Technology-focused |
+| Light Street | manager | growth | long/short | equities | global | 28 | Technology-focused |
+| Dragoneer | manager | growth | long only, crossover | equities | US | 12 | Mostly private |
+| Durable | manager | growth, quality | long only, crossover | equities | US | 36 | Private book too |
+| Situational Awareness | manager | growth | long/short? | equities | US | 26 | AI-thematic; large put lines |
+| Lone Pine | manager | growth, quality | long/short | equities | global | 34 | |
+| Viking Global | manager | growth? | long/short | equities | global | 90 | Diversified fundamental book |
+| D1 | manager | growth | long/short, crossover | equities | global | 55 | Private book too |
+| Maverick | manager | growth? | long/short | equities | global | 179 | |
+| Duquesne | manager | growth? | macro | multi-asset | global | 95 | Equity book only in the 13F |
+| Appaloosa | manager | deep value, special situations | event driven, credit and distressed | multi-asset | US | 27 | Distressed roots; now equity-heavy |
+| Third Point | manager | special situations | event driven, activist, long/short | multi-asset | global | 43 | |
+| Berkshire Hathaway | listed vehicle | quality, value | long only | equities | US | 89 | Mostly operating businesses |
+| Pershing Square | manager | quality | activist, long only | equities | US | 15 | Concentrated; uses hedges |
+| Baupost | manager | value, deep value | event driven, credit and distressed | multi-asset | global | 23 | Often holds a lot of cash |
+| Greenlight (DME) | manager | value | long/short | equities | US | 95 | Also holds gold and macro positions |
+| TCI | manager | quality | activist, long only | equities | global | 11 | Concentrated; much of it in Europe |
+| Akre | manager | quality | long only | equities | US | 20 | |
+| Himalaya | manager | value, quality | long only | equities | Asia, US | 8 | |
+| Fundsmith | manager | quality | long only | equities | global | 41 + 27 | Two filers |
+| Elliott | manager | special situations | activist, event driven, credit and distressed, multi-strategy | multi-asset | global | 29 | |
+| Starboard | manager | value | activist | equities | US | 22 | |
+| ValueAct | manager | value, quality | activist | equities | US | 18 | |
+| Trian | manager | value, quality | activist | equities | US | 9 | |
+| JANA | manager | value | activist, event driven | equities | US | 10 | |
+| Oaktree | manager | deep value | credit and distressed | credit | global | 145 | The 13F shows a small slice |
+| Southeastern (Longleaf) | manager | value | long only | equities | global | 81 | Engages with managements, short of formal activism |
+| Whitebox | manager | special situations? | multi-strategy, credit and distressed | multi-asset | US | 667 | Out of 13F tracking (W-010); Redleaf's writing only |
 
 ### Added by the owner
 
-| Manager | Style | Strategy | Asset focus | Geography | 13F | Notes |
-|---|---|---|---|---|---|---|
-| PM Capital | value, deep value | long only? long/short? | equities | global | No | Contrarian; some funds can short |
-| Praetorian (Kupperman) | special situations, deep value? | event driven, long/short? | natural resources, equities | global | No (13D and 13G only) | Thematic inflection trades |
-| Laughing Water (Sweeney) | value, special situations | long only? | equities | US | No | Small caps |
-| Stone Sentinel | ? | ? | ? | ? | Not checked | Too little known; tag from its letters |
+| Manager | Kind | Style | Strategy | Asset focus | Geography | 13F | Notes |
+|---|---|---|---|---|---|---|---|
+| PM Capital | manager | value, deep value | long only? long/short? | equities | global | No | Contrarian; some funds can short |
+| Praetorian (Kupperman) | manager | special situations, deep value? | event driven, long/short? | natural resources, equities | global | No (13D and 13G only) | Thematic inflection trades |
+| Laughing Water (Sweeney) | manager | value, special situations | long only? | equities | US | No | Small caps |
+| Stone Sentinel | manager | ? | ? | ? | ? | Not checked | Too little known; tag from its letters |
 
 ### Topic writers
 
-| Writer, firm | Style | Strategy | Asset focus | Geography | Notes |
-|---|---|---|---|---|---|
-| Sløk, Apollo | (n/a) | credit and distressed, multi-strategy | multi-asset | global | An economist writing for the firm; the firm's 13F is not a public-equity book |
-| Hussman | value | long/short? | multi-asset | US | Hedged funds; valuation-driven |
-| Lyn Alden | (n/a) | macro | multi-asset | global | Independent writer, not a manager |
-| Smead | value | long only | equities | US | |
-| GMO | value, quality | macro, multi-strategy | multi-asset | global | Asset allocation |
-| Crescat | (n/a) | macro, long/short | natural resources, multi-asset | global | |
-| Hoisington | (n/a) | macro | credit | US | Treasuries |
-| Fairfax (Watsa) | value, deep value | macro? | multi-asset | global | Insurance float; macro hedges |
-| Brookfield (Flatt) | quality | long only | multi-asset | global | Real assets; see the proposed addition below |
-| Goehring & Rozencwajg | deep value | long only | natural resources | global | |
-| Horizon Kinetics | value, deep value | long only | equities, natural resources | global | Hard assets |
-| Kopernik | deep value | long only | equities, natural resources | global, emerging markets | |
-| Sprott | (n/a) | long only | natural resources | global | Precious metals and uranium |
-| U.S. Global Investors | (n/a) | long only | natural resources | global | |
-| Bridgewater | (n/a) | macro | multi-asset | global | |
-| FPA (Romick) | value | long only | multi-asset | global | Flexible, contrarian |
-| Incrementum | (n/a) | macro | natural resources | Europe | Gold |
-| Semper Augustus | quality, value | long only | equities | US | |
-| Oakmark | value | long only | equities | US, Europe | International team |
-| ARK | growth | long only | equities | global | |
-| Baillie Gifford | growth | long only | equities | global | |
+| Writer, firm | Kind | Style | Strategy | Asset focus | Geography | Notes |
+|---|---|---|---|---|---|---|
+| Sløk, Apollo | economist or strategist | (n/a) | credit and distressed, multi-strategy | multi-asset | global | An economist writing for the firm; the firm's 13F is not a public-equity book |
+| Hussman | manager | value | long/short? | multi-asset | US | Hedged funds; valuation-driven |
+| Lyn Alden | independent writer | (n/a) | macro | multi-asset | global | Independent writer, not a manager |
+| Smead | manager | value | long only | equities | US | |
+| GMO | manager | value, quality | macro, multi-strategy | multi-asset | global | Asset allocation |
+| Crescat | manager | (n/a) | macro, long/short | natural resources, multi-asset | global | |
+| Hoisington | manager | (n/a) | macro | credit | US | Treasuries |
+| Fairfax (Watsa) | listed vehicle | value, deep value | macro? | multi-asset | global | Insurance float; macro hedges |
+| Brookfield (Flatt) | manager | quality | long only | multi-asset | global | Real assets (no separate tag) |
+| Goehring & Rozencwajg | manager | deep value | long only | natural resources | global | |
+| Horizon Kinetics | manager | value, deep value | long only | equities, natural resources | global | Hard assets |
+| Kopernik | manager | deep value | long only | equities, natural resources | global, emerging markets | |
+| Sprott | manager | (n/a) | long only | natural resources | global | Precious metals and uranium |
+| U.S. Global Investors | manager | (n/a) | long only | natural resources | global | |
+| Bridgewater | manager | (n/a) | macro | multi-asset | global | |
+| FPA (Romick) | manager | value | long only | multi-asset | global | Flexible, contrarian |
+| Incrementum | manager | (n/a) | macro | natural resources | Europe | Gold |
+| Semper Augustus | manager | quality, value | long only | equities | US | |
+| Oakmark | manager | value | long only | equities | US, Europe | International team |
+| ARK | manager | growth | long only | equities | global | |
+| Baillie Gifford | manager | growth | long only | equities | global | |
 
-### Gaps in the tag list this pass exposed
+### Tag-list changes decided 2026-10-08
 
-Proposed additions for the owner to accept or reject:
-- **Strategy: "crossover"** (public and private): Tiger, Coatue, D1, Dragoneer, Altimeter, Atreides and Durable
-  all run private books the 13F cannot see. The tag warns that the 13F is a partial picture.
-- **Asset focus: "real assets"**: Brookfield, and arguably Horizon Kinetics. "Natural resources" doesn't fit
-  infrastructure and property.
-- **A "kind" facet**: manager, listed vehicle, independent writer, economist or strategist. Lyn Alden and Sløk
-  are not managers, and their calls should be read that way.
+The owner accepted **crossover** (a strategy tag) and the **Kind** facet, and rejected "real assets", so
+Brookfield stays "multi-asset". Crossover is applied above to Tiger, Coatue, D1, Dragoneer, Altimeter, Atreides
+and Durable. Kind is "manager" except Berkshire and Fairfax (listed vehicles), Sløk (economist or strategist)
+and Lyn Alden (independent writer).
 
 ## For the owner
 
 1. Rubric settled 2026-10-08: two judged dimensions, two counted ones, a 1-5 scale and no overall score.
-2. Correct the first-pass tags in section 4, especially those marked "?", and accept or reject the three
-   proposed additions to the list.
+2. Correct the first-pass tags in section 4, especially those marked "?". (List additions decided:
+   crossover and Kind accepted, real assets rejected.)
 3. Calibration: the owner gives quick verdicts on 10 rated letters (about right, too high, too low).
