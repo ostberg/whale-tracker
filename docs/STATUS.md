@@ -61,6 +61,11 @@ Blocking phase 1 or 2:
       API covers the last 8 quarters, excluding the current one.
 - [ ] **A Foundry model endpoint for this project.** Letter extraction is now phase 2. The endpoint must be
       in-tenant and reached through the provider-agnostic seam.
+- [ ] **Manual collection (W-033): intake and reminder channel.** Needed for phase 2 if any pilot source is
+      manual. Intake must not depend on a laptop or OneDrive. Proposed: a Blob container `letters-inbox`
+      (upload with Storage Explorer or the portal; later an upload page in the Research Assistant). Reminders:
+      a weekly "letters due" digest to a Teams channel through a narrowly scoped webhook, or by email; this
+      settles "Alert delivery" below. Owner to choose, and to name who acts on reminders.
 - [ ] **The contact email** to declare in the SEC User-Agent header. Proposed by the owner:
       `research@tocqueville.com`, used for the one-off survey on 2026-10-08. SEC does not verify or register the
       address. It is how SEC reaches someone before or after blocking a client, so it must be a real, monitored

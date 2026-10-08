@@ -165,7 +165,12 @@ Key tables:
   filing date.
 - `core.price_daily`: adjusted close per security per day, with its source.
 - `core.event_return`: return per event per window against benchmarks.
-- `letters.document`: source URL, publish date, content hash, classification, permitted use.
+- `letters.source`: one approved source: manager, URL, tier (W-029), collection mode `auto` or `manual`
+  (W-033), cadence, permission basis. Loaded from `config/letter_sources.yaml`.
+- `letters.expected`: the next letter due per source and period, with its due window (from cadence and past
+  publication lag), reminder history, assignee and status (awaiting, loaded, not yet published, skipped).
+- `letters.document`: source URL, publish date, content hash, tier, how it was collected, permitted use,
+  whether the raw file is kept (W-032), and the PDF permission flags (W-030).
 - `letters.mention`: company named in a letter; stance, short summary, page reference.
 - `core.topic`: the controlled topic list (id, name, parent, description, aliases). Loaded from
   `config/topics.yaml`.
@@ -196,7 +201,7 @@ The letter-source register, with each source's tier, robots and terms evidence, 
 | Event detection | After each 13F load | Quarter-over-quarter comparison |
 | Prices and returns | Monthly | Source not yet chosen |
 | Schedule 13D/G | Daily | Same EDGAR feed |
-| Public letters | Weekly | Per-source fetcher, change detected by content hash, model extraction |
+| Public letters | Weekly | `auto` sources: per-source fetcher, change detected by content hash, model extraction. `manual` sources: reminders from the expected-publication calendar; a person drops the file in the intake (W-033) |
 | Topic exposure | After each 13F load | Join `core.position_quarter` to `core.topic_security` |
 | Topic mentions | With each letter | Same extraction pass as company mentions; topic ids must be in `core.topic`, anything else goes to `letters.topic_candidate` |
 
