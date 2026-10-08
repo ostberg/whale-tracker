@@ -34,8 +34,10 @@ Blocking phase 1 or 2:
       - [ ] in the Tamale repo, add `REVOKE CONNECT ON DATABASE context FROM PUBLIC` to
             `scripts/context_db_roles.py` and apply it;
       - [ ] create `whales_dev` (and later `whales`) and revoke CONNECT from PUBLIC on each;
-      - [ ] check whether `vector` (pgvector) is in the server's `azure.extensions` allow-list; letter
-            search and the Uniqueness score need it;
+      - [x] checked 2026-10-08: `azure.extensions` is empty, so pgvector is not allowed. Adding `VECTOR`
+            changes a parameter on the shared server; it is needed in phase 2 (letter search, Uniqueness), not
+            phase 1. The server is `rg-research-automation`, B1ms, PostgreSQL 17, Central US, Ready, with
+            databases `context`, `postgres`, `azure_sys` and `azure_maintenance`;
       - [ ] add a temporary firewall rule for the development machine, the same practice as the context
             layer.
 - [ ] **How the ingest job runs in Azure.** Settled in outline by W-020 and W-021 (own image, identity and
