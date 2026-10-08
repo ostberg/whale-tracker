@@ -2,6 +2,56 @@
 
 Dated entries, newest first: what changed, what is verified, what is next.
 
+## 2026-10-08 (second session, later): letters become the product
+
+**What changed.**
+- The owner said the real value is in shareholder letters; 13F tracking is a commodity (WhaleWisdom), useful
+  at most as a verifier. Recorded as W-027 (supersedes W-006), with W-028 to W-035.
+- Phases re-planned in STATUS.md: the letters pilot is now phase 2 and the thin 13F layer phase 3.
+- New register `docs/LETTER_SOURCES.md`. It covers the owner's example links, the 30 watchlist managers,
+  activist letters on EDGAR, three aggregators and 21 further topic writers.
+
+**Owner direction this session.**
+- Letters first; WhaleWisdom at least as a verifier.
+- Pull 13G too (W-031).
+- If a source can't be scraped, send an automated reminder to check (W-033).
+- Reminders go to a Teams digest, acted on by the owner for now and later by an intern or junior analyst
+  (W-034).
+- The owner sent example sources: Greenlight and Stone Sentinel on Hedge Fund Alpha, Buy Side Digest,
+  Fundsmith, Oaktree, Pershing Square Holdings, a q4cdn shareholder letter, PM Capital, Praetorian and
+  Laughing Water.
+
+**Verified (pages, terms and robots.txt opened 2026-10-08).**
+- The Greenlight PDF on Hedge Fund Alpha forbids text extraction (permissions value -1052).
+- Fundsmith's legal notice forbids automated text analysis without written consent (re-read directly).
+- Buy Side Digest's terms forbid bots and any AI use, but it sells an institutional S3 feed.
+- Hedge Fund Alpha's terms ban robots and copying, and it sells data licensing.
+- Regal Partners (PM Capital) requires consent to store its content.
+- Praetorian's letters are open, with no terms page.
+- Teams Office 365 connectors were retired in May 2026; Workflows webhooks replace them.
+
+**Main finding.** Website terms, not robots.txt, bind us, and they come in three kinds (W-035). Access
+restrictions are solved by manual collection with reminders. Storage restrictions are solved by keeping
+extracts only. Use restrictions (no automated text analysis or AI) are solved only by consent or a licence.
+Most of the owner's priority managers have an auto route (Oaktree, Longleaf, Elliott, Starboard, Pershing
+Square through PSUS's N-CSRS on EDGAR, JANA through 13D exhibits). Third Point is manual. Fundsmith needs
+consent. Greenlight's partner letters come only through an aggregator licence.
+
+**Not verified.**
+- The agents' paraphrases of most terms pages; re-read each before approving a source.
+- The q4cdn issuer.
+- What "Value Investor" means.
+- The 13D/G deadlines, taken from law-firm summaries rather than the rule text.
+
+**Next.**
+1. Owner:
+   - take the source-tier question to the CCO (the agent can draft the brief);
+   - decide on outreach to Buy Side Digest (trial), Hedge Fund Alpha (licence) and Fundsmith (consent);
+   - name the Teams channel and the flow owner;
+   - confirm the intake container;
+   - create the GitHub repository.
+2. Agent: push to the remote once it exists, then scaffold the package (W-022).
+
 ## 2026-10-08 (second session): git, Tamale read, manager survey
 
 **What changed.**

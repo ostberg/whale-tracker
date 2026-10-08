@@ -53,10 +53,16 @@ Blocking phase 1 or 2:
         to each manager's own source, and a normalised ticker and stance taxonomy. No price shown; contact
         info@buysidedigest.com. Its standard terms forbid automated access and any AI use, including
         embeddings, so only a licence works.
-      - **Hedge Fund Alpha** has full letter text openly visible, but no public terms page.
+      - **Hedge Fund Alpha** has full letter text openly visible. Its legal disclaimer bans robots, copying and
+        AI training, and it sells a data-licensing product.
       Recommended: the owner asks Buy Side Digest for an institutional trial and Hedge Fund Alpha for a licence,
       while the tier-1 and tier-2 pilot is built here. Any licence must allow in-tenant AI processing and
       storage. Outreach is the owner's to make.
+- [ ] **Consent requests to publishers (W-035).** Fundsmith (and Smithson) forbid automated text analysis
+      without express written consent, so neither manual nor automatic collection is enough. A short request,
+      on firm letterhead after the compliance ruling, could also go to TCI ("private circulation"),
+      Greenlight, and the topic writers whose terms ban bots (Apollo, Brookfield, Horizon Kinetics, Sprott,
+      Oakmark). The owner decides whom to ask; the agent can draft the letter.
 - [ ] **WhaleWisdom for the 13F check (W-028):** does the firm have, or want, a subscription? Without one, the
       API covers the last 8 quarters, excluding the current one.
 - [ ] **A Foundry model endpoint for this project.** Letter extraction is now phase 2. The endpoint must be

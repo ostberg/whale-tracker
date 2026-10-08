@@ -309,6 +309,9 @@ From the Tamale repo (read in full 2026-10-08: `docs/OPS_AUTOMATION_PLAN.md`, `d
   allowing a fetch is not permission to store or analyse: Buy Side Digest's terms, for example, forbid
   automated access and any AI use, including embeddings. LP-received letters stay out unless cleared fund by
   fund. PDFs whose permission flags forbid text extraction are not machine-read without a ruling (W-030).
+  Restrictions come in three kinds: access, storage and use (W-035). A use restriction (no automated text
+  analysis or AI) blocks model extraction whatever the collection route; only written consent or a licence
+  lifts it.
   Retention treatment for machine-generated Tamale notes and alerts is to be confirmed.
 
 ## Before you end a session
