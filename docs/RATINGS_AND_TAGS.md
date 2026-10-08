@@ -7,40 +7,42 @@ file keeps only the reasoning.
 Both are model extraction, so the use restrictions in W-035 apply: no rating, prediction extraction or
 embedding for a source whose terms forbid automated text analysis.
 
-## 1. Letter rating (W-036)
+## 1. Letter rating (W-036, simplified 2026-10-08)
 
-Each dimension is scored as a whole number from 1 to 5, using the anchors below. Each score carries a
-one-sentence reason and a short supporting quote (W-019); quotes are kept short (W-015). Every rating records
-the model, the prompt version and the date, so ratings can be compared over time and re-run. A person can
-override any score, and the override wins.
+The owner asked for this to stay simple: scoring many letters by hand on five dimensions is too much. So the
+model judges only two things, two more are counted, and the person's part is a quick verdict.
+
+**Judged by the model**, each a whole number from 1 to 5 against these anchors, with a one-sentence reason and
+a short supporting quote (W-019, W-015):
 
 | Dimension | Asks | 1 | 3 | 5 |
 |---|---|---|---|---|
-| **Insight** | Does it argue something the reader probably hasn't heard? | Restates consensus or the news | One or two original angles | A clearly different, well-argued view |
-| **Predictions** | Does it make explicit calls that can be checked? | None, or only vague hedges | Some calls, but loose about direction or timing | Several calls, each with a subject, direction and horizon |
-| **Evidence** | Are claims backed by data, filings or unit economics? | Assertion only | Mixed | Claims consistently backed by specifics |
-| **Candor** | Does it discuss mistakes, losses and changes of mind? | Only wins | Mentions setbacks briefly | Examines mistakes and what was learned |
+| **Insight** | Does it argue something the reader probably hasn't heard, and say where it parts from consensus? | Restates consensus or the news | One or two original angles | A clearly different, well-argued view |
 | **Clarity** | Is it well written: structured, concise, readable? | Hard to follow, padded | Adequate | A pleasure to read; no wasted words |
 
-Notes:
-- **No single overall score by default.** The profile tells you more than an average, and "well written but
-  no calls" is a different letter from "badly written but precise". If one number is wanted for sorting, the
-  owner sets the weights in config.
-- **Uniqueness is measured, not judged.** A model cannot know what every other manager wrote this quarter. A
-  computed score adds that: how far a letter's content sits from the other letters of the same quarter,
-  using text embeddings. It sits beside Insight; it does not replace it.
-- **"Relevant to us" is computed on the firm side.** Whether a letter touches the firm's holdings or coverage
-  needs APX and Tamale data, which this project never holds (W-012). The Research Assistant joins on that.
-- **Calibration.** Before ratings are shown to anyone:
-  - The owner, or the analyst who will use the ratings, rates 20 letters blind. The prompt is tuned until
-    the model is within one point on most of them.
-  - Five letters are re-checked each quarter.
-  - The 20 are re-run before any change of model.
-  - Model ratings tend to drift upwards and bunch at 4. The anchors and this check are the defence.
+**Counted, not judged:**
+- **Predictions:** the number of explicit calls with a stated horizon, taken from the prediction records (W-037).
+- **Uniqueness:** how far the letter's content sits from the other letters of the same quarter, measured with
+  text embeddings. A model cannot know what everyone else wrote; this can.
+
+Every rating records the model, the prompt version and the date, so it can be re-run and compared.
+
+**The person's part.**
+- **Calibration once:** the owner (later the `letters_reviewer`) sees 10 rated letters while reading them anyway,
+  and marks each rating "about right", "too high" or "too low". The prompt is tuned until most are "about right".
+  There are no scoring sheets.
+- **After that:** a thumbs up or down on any rating in the digest or the Research Assistant. Disagreements feed
+  the next prompt revision, and the 10 are re-run before any change of model.
+
+**Not scored:** Evidence and Candor (dropped for simplicity). "Relevant to us" is computed on the firm side,
+because it needs APX and Tamale data this project never holds (W-012).
+
+**No overall score.** Insight, Clarity, Predictions and Uniqueness are shown side by side, and any one can be
+used for sorting (the owner chose this).
 
 ## 2. Predictions as records (W-037)
 
-Each explicit call in a letter becomes its own row, which turns the Predictions score into a track record.
+Each explicit call in a letter becomes its own row. These rows give the Predictions count and, over time, a track record.
 Each row holds:
 - the call, paraphrased, with a short quote and page reference;
 - the subject: a security (must match `core.security`) or a topic (must match `core.topic`);
@@ -80,8 +82,8 @@ Rules:
 
 ## For the owner
 
-1. Edit the rubric: add, drop or rename dimensions, and change the anchors.
+1. Rubric settled 2026-10-08: two judged dimensions, two counted ones, a 1-5 scale and no overall score.
 2. Edit the tag list.
-3. Say who rates the calibration set of 20.
+3. Calibration: the owner gives quick verdicts on 10 rated letters (about right, too high, too low).
 4. Optionally ask the agent for a first-pass tag proposal for the watchlist and the topic writers, to correct
    by hand.
