@@ -141,10 +141,12 @@ Whale Tracker/
 
 ## Data model
 
-Database `whales` (development: `whales_dev`). Proposed home: the existing server
-`pg-tocqv-context.postgres.database.azure.com` (Azure Database for PostgreSQL Flexible Server, Central US,
-Entra sign-in only, Peter is the admin). That server's `context` database is the Tamale context layer and holds
-firm-confidential derived research, so see W-004 and the open decision in STATUS.md before creating anything.
+Database `whales` (development: `whales_dev`) on the existing server
+`pg-tocqv-context.postgres.database.azure.com` (Azure Database for PostgreSQL Flexible Server, Burstable
+B1ms, Central US, Entra sign-in only, Peter is the admin). That server's `context` database is the Tamale
+context layer and holds firm-confidential derived research. Sharing is allowed only under W-004's four
+conditions: CONNECT revoked from PUBLIC on every database, the ingest identity limited to `whales`, no shared
+roles or secrets. Never weaken those conditions.
 
 | Schema | Holds | Written by |
 |---|---|---|

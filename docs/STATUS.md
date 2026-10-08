@@ -28,10 +28,16 @@ finds the pilot useful.
 
 Blocking phase 1 or 2:
 
-- [ ] **W-004, where the database lives.** The owner deferred this until the Tamale repo was read; it now has
-      been. Recommended: its own small server. Sharing `pg-tocqv-context` would mean changing Tamale's server
-      first (revoking CONNECT on `context` from PUBLIC) and sharing its public endpoint, sole admin, restores
-      and B1ms capacity with an internet-facing job. Its own server could also sit in East US beside the job.
+- [x] **W-004, where the database lives:** the existing `pg-tocqv-context`, under four hardening conditions
+      (owner, 2026-10-08). The steps below are phase-1 work and need the owner, as the server's only Entra
+      admin, to run them or approve them:
+      - [ ] in the Tamale repo, add `REVOKE CONNECT ON DATABASE context FROM PUBLIC` to
+            `scripts/context_db_roles.py` and apply it;
+      - [ ] create `whales_dev` (and later `whales`) and revoke CONNECT from PUBLIC on each;
+      - [ ] check whether `vector` (pgvector) is in the server's `azure.extensions` allow-list; letter
+            search and the Uniqueness score need it;
+      - [ ] add a temporary firewall rule for the development machine, the same practice as the context
+            layer.
 - [ ] **How the ingest job runs in Azure.** Settled in outline by W-020 and W-021 (own image, identity and
       environment; ledger rows through D-052; no immediate failure email). Still open: subscription, resource
       group and region, and whether to report to the fleet ledger at all (that needs a row and a role
