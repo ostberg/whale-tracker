@@ -182,7 +182,10 @@ Consumer views (the only objects consumers may read): `api.current_holders`, `ap
 by quarter), `api.topic_trend` (mentions and stance by quarter).
 
 Raw files go to Blob Storage keyed by accession number or content hash. The database must always be
-rebuildable from the blobs.
+rebuildable from the blobs. The exception is letters whose source terms forbid storage (W-032): those keep
+the URL, the hash and the extracted data only, and are rebuilt by re-fetching.
+
+The letter-source register, with each source's tier, robots and terms evidence, is `docs/LETTER_SOURCES.md`.
 
 ## Ingestion
 
