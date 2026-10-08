@@ -14,7 +14,7 @@ proposals, not commitments.
 | # | Phase | Target | Gate | Status |
 |---|---|---|---|---|
 | 1 | Setup: git repo and private remote, `whales_dev` database, blocking decisions, letter-source inventory, compliance ruling on source tiers (W-029, W-030) | 2026-10-23 | Migrations run against the Azure server; compliance has ruled on tiers 1 to 3 | In progress: local repo done; source inventory running |
-| 2 | Letters pilot, run by hand: fetch and store tier-1 and tier-2 letters for about ten managers, two years back, including activist letters filed as 13D exhibits (W-031); extract company mentions and topic stances, each with its quote, through the in-tenant model seam | November 2026 | The owner finds the extraction useful on 20 letters; every stance carries its quote and link (W-019) | Not started; needs a Foundry model endpoint for this project |
+| 2 | Letters pilot, run by hand: fetch and store tier-1 and tier-2 letters for about ten managers, two years back, including activist letters filed as 13D exhibits (W-031); extract company mentions, topic stances and predictions, each with its quote, and rate each letter, through the in-tenant model seam | November 2026 | The owner finds the extraction useful on 20 letters; every stance carries its quote and link (W-019); ratings calibrated on 20 letters (W-036) | Not started; needs a Foundry model endpoint for this project |
 | 3 | Thin 13F layer (W-028): SEC bulk-data backfill, current quarters from the filing XML, filer map (W-024), unit detection (W-025), check against WhaleWisdom; 13G stakes (W-031); topic exposure and the said-versus-owned view | Nov to Dec 2026 (Q3 13Fs due Monday 2026-11-16) | Every filing reconciles; sampled positions match WhaleWisdom | Not started |
 | 4 | Azure job and weekly digest: letters weekly, 13F after each deadline | December 2026 | A week of clean unattended runs | Not started |
 | 5 | Firm-side consumers, in the Tamale repo: Research Assistant source and "Why Now" prompts, Tamale publisher, alerts | January 2027 | Owner approves the Tamale note format on five companies | Not started |
@@ -81,6 +81,8 @@ Blocking phase 1 or 2:
 
 Later:
 
+- [ ] **Rating rubric and tag list (W-036 to W-038).** The owner edits the drafts in `docs/RATINGS_AND_TAGS.md`
+      and says who rates the calibration set of 20 letters. Needed before ratings are shown (phase 2).
 - [ ] **Topic list and its source of truth (W-018).** The starting list is interest rates, US Treasuries,
       European macro, housing, AI, edge compute, gold, inflation, lumber and oil. Tamale already has about 250
       Topic entities, applied unevenly. The Tamale code reads them live and keeps no copy (D-026, D-109), but

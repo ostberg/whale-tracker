@@ -119,7 +119,9 @@ Whale Tracker/
   AGENTS.md, CLAUDE.md
   pyproject.toml, requirements*.lock
   config/
-    managers.yaml        watchlist: manager, style cohort, filer CIKs with quarter ranges, excluded filings
+    managers.yaml        watchlist: manager, tags, filer CIKs with quarter ranges, excluded filings
+    tags.yaml            controlled manager-tag list by facet (W-038)
+    rating_rubric.yaml   letter-rating dimensions and anchors (W-036)
     topics.yaml          controlled topic list and the securities mapped to each
     letter_sources.yaml  one entry per approved public letter source
   src/whales/
@@ -154,7 +156,10 @@ firm-confidential derived research, so see W-004 and the open decision in STATUS
 
 Key tables:
 
-- `core.manager`: tracked manager (name, style cohort, active flag). No CIK: see `core.filer`.
+- `core.manager`: tracked manager or writer (name, active flag). No CIK: see `core.filer`; a writer with no
+  SEC filer is normal.
+- `core.manager_tag`: dated tags from the controlled list (facet, tag, from, to, proposed by, ratified by,
+  evidence) (W-038).
 - `core.filer`: one SEC filer CIK, the manager it belongs to, and the first and last quarter it counts for
   (W-024). Successions and parallel books are common.
 - `raw.filing`: one row per SEC filing, keyed by accession number.
@@ -172,6 +177,10 @@ Key tables:
 - `letters.document`: source URL, publish date, content hash, tier, how it was collected, permitted use,
   whether the raw file is kept (W-032), and the PDF permission flags (W-030).
 - `letters.mention`: company named in a letter; stance, short summary, page reference.
+- `letters.rating`: one row per letter and rubric dimension: score, reason, quote, model, prompt version,
+  human override (W-036).
+- `letters.prediction`: one row per explicit call: subject, direction, horizon, condition, confidence
+  wording, quote, status (open, right, wrong, partly right, unresolvable) and who scored it (W-037).
 - `core.topic`: the controlled topic list (id, name, parent, description, aliases). Loaded from
   `config/topics.yaml`.
 - `core.topic_security`: which securities count toward a topic (for example gold miners and gold ETFs for
