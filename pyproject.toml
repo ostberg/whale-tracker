@@ -27,6 +27,10 @@ dev = [
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+# migrations ship with the package, so the job image can check the database is current
+whales = ["db/migrations/*.sql"]
+
 [tool.ruff]
 line-length = 110
 src = ["src", "tests"]

@@ -66,3 +66,29 @@ def quote_ident(name: str) -> str:
 
 def revoke_public_connect_sql(dbname: str) -> str:
     return f"REVOKE CONNECT ON DATABASE {quote_ident(dbname)} FROM PUBLIC"
+
+
+OWNER, INGEST, REVIEWER = "whales_owner", "whales_ingest", "whales_reviewer"
+
+
+def bootstrap_statements(admin_role: str, dbname: str) -> list[str]:
+    """The group roles (cluster-wide, so created here and not in a migration) and their database rights
+    (W-039). Idempotent.
+
+    On PostgreSQL 16 and later, a CREATEROLE admin who creates a role is granted it WITH ADMIN only, so the
+    admin must grant itself SET to use ``SET ROLE``. INHERIT FALSE on owner and ingest means an ordinary
+    session never acts as either without saying so; reviewer is inherited, because the admin reviews."""
+    q = quote_ident
+    statements = [
+        f"DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = '{role}') "
+        f"THEN CREATE ROLE {role} NOLOGIN; END IF; END $$"
+        for role in (OWNER, INGEST, REVIEWER)
+    ]
+    statements += [
+        f"GRANT {OWNER} TO {q(admin_role)} WITH INHERIT FALSE, SET TRUE",
+        f"GRANT {INGEST} TO {q(admin_role)} WITH INHERIT FALSE, SET TRUE",
+        f"GRANT {REVIEWER} TO {q(admin_role)} WITH INHERIT TRUE, SET TRUE",
+        f"GRANT CREATE ON DATABASE {q(dbname)} TO {OWNER}",
+        f"REVOKE TEMPORARY ON DATABASE {q(dbname)} FROM PUBLIC",
+    ]
+    return statements

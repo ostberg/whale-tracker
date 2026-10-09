@@ -4,8 +4,8 @@ Instructions for anyone, human or AI agent on any platform, working in this proj
 points to are the complete memory of the project. Nothing depends on a particular assistant's chat history or
 private memory; if you learn something the next person needs, it goes in the repo.
 
-Status on 2026-10-08: planning complete. Python package scaffolded (database connector and admin commands
-only); `whales_dev` exists on the shared server. Private remote not yet created.
+Status on 2026-10-09: phase 1 gate met. Migration 0001 (the letters-pilot schema) is applied to `whales_dev`
+on the shared server and verified live. No pipeline code yet. Private remote not yet created.
 
 ## What this is
 
@@ -98,7 +98,9 @@ Everyday checks: `.venv\Scripts\python.exe -m ruff check src tests`, `-m ruff fo
 
 Database work from a developer machine needs `az login` as the Entra admin and a temporary firewall rule for
 the machine's address, removed afterwards. `whales db connect-paths <database>` shows who can connect (read
-only); `whales db revoke-public-connect <database> --apply` removes PUBLIC's default grant.
+only); `whales db revoke-public-connect <database> --apply` removes PUBLIC's default grant;
+`whales db bootstrap-roles <database> --apply` creates the `whales_` roles; `whales db migrate --apply`
+applies pending migrations. `pytest -m live` checks the database's ownership, grants and safeguards.
 
 Tooling, copied from the Tamale repo (W-022): Python 3.13, setuptools, pip-tools hash-pinned locks
 (`pip-compile --generate-hashes`; runtime lock feeds the image, dev lock is constrained to it), Ruff (line length
@@ -164,8 +166,12 @@ context layer and holds firm-confidential derived research. Sharing is allowed o
 conditions: CONNECT revoked from PUBLIC on every database, the ingest identity limited to `whales`, no shared
 roles or secrets. Never weaken those conditions.
 
+Conventions, roles and the reasons for them: [docs/SCHEMA.md](docs/SCHEMA.md) (W-039). Columns: the
+migration files.
+
 | Schema | Holds | Written by |
 |---|---|---|
+| `meta` | Migration ledger | Migrations only; invisible to ingest |
 | `raw` | Filing index, document registry, run log | Ingest job |
 | `core` | Managers, securities, holdings, quarterly positions, events, prices, event returns | Ingest job |
 | `letters` | Letter documents, per-company mentions, search embeddings | Ingest job |
@@ -321,9 +327,12 @@ From the Tamale repo (read in full 2026-10-08: `docs/OPS_AUTOMATION_PLAN.md`, `d
 - Data tiers: Public (this database); Licensed (vendor prices, per vendor terms); Restricted (LP letters:
   separate schema and blob container, off by default); Firm-confidential (APX, Tamale, the context layer:
   never stored here).
-- Identity: the ingest job has its own managed identity and signs in to Postgres with Entra. Roles:
-  `whales_ingest` (writes `raw`, `core`, `letters`), `whales_reader` (select on `api` only),
-  `whales_restricted` (unused until cleared). The ingest identity must have CONNECT on `whales` only.
+- Identity: the ingest job has its own managed identity and signs in to Postgres with Entra. Group roles
+  (W-039): `whales_owner` (owns everything; migrations only), `whales_ingest` (reads, inserts, updates
+  working columns; no DDL, no DELETE, no `meta`), `whales_reviewer` (insert-only decisions, stamped by the
+  database), `whales_reader` (select on `api` only; created with the first view), `whales_restricted`
+  (unused until cleared). CONNECT is granted per database to login identities, never to groups; the
+  ingest identity must have CONNECT on `whales` only.
 - Network: the job has no inbound endpoint; outbound is limited to an allowlist (SEC, OpenFIGI, the price
   source, approved `auto` letter domains, the Foundry endpoint, the Teams Workflows flow URL).
 - The Teams Workflows flow URL is a secret: anyone holding it can post to the channel (W-034).

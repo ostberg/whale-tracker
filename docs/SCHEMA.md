@@ -1,89 +1,97 @@
 # Database schema
 
-The design of database `whales` (development `whales_dev`), decision W-039. AGENTS.md "Data model" lists
-the tables; this file fixes the conventions and the columns. Migration `0001` creates what phase 2 (the
-letters pilot) needs. The 13F tables come with phase 3 and are only sketched here.
+How database `whales` (development `whales_dev`) is built, and why (decision W-039). Columns, constraints and
+grants live in the migration files, `src/whales/db/migrations/NNNN_*.sql`. They are the source of truth;
+this file keeps the conventions and the reasoning. Migration 0001 (applied to `whales_dev` on 2026-10-09)
+covers phase 2, the letters pilot. The 13F tables come with phase 3.
 
-## Conventions (decide once)
+An independent review on 2026-10-09 checked the first draft against Azure's managed Postgres and the
+decisions. Its fixes are folded in below.
 
-1. **Ownership.** A NOLOGIN role `whales_owner` owns every schema, table, view and sequence. Migrations run
-   as an admin who switches to it (`SET ROLE whales_owner`), so no object belongs to a person's account.
-   Default privileges are set for `whales_owner`, so new tables get the right grants automatically.
-2. **Roles.** All of them are NOLOGIN groups; login identities are made members.
+## Conventions
 
-   | Role | Gets | Members |
+1. **Ownership.** A NOLOGIN role `whales_owner` owns every schema, table, function and type. Migrations run
+   as the Entra admin, who switches to it (`SET LOCAL ROLE whales_owner`). The runner rolls back any migration
+   that leaves an object owned by anyone else. Nothing belongs to a person's account.
+2. **Roles** are NOLOGIN groups. Login identities are made members; CONNECT is granted per database to login
+   roles, never to groups, so a developer added to a group for `whales_dev` gets nothing in `whales`.
+
+   | Role | Can | Cannot |
    |---|---|---|
-   | `whales_owner` | Owns everything; runs DDL | The Entra admin, for migrations only |
-   | `whales_ingest` | USAGE on `raw`, `core`, `letters`; SELECT, INSERT, UPDATE on their tables (DELETE only where noted); sequences. No DDL, so the internet-facing job cannot change the schema | The ingest job's identity; a developer while testing |
-   | `whales_reader` | USAGE on `api`; SELECT on its views | `id-research-assistant` (later), firm-side jobs |
-   | `whales_reviewer` | `whales_reader`, plus UPDATE on the review columns (overrides, verdicts, ratification, prediction scoring) | Whoever acts as `letters_reviewer` (W-034) |
+   | `whales_owner` | Everything, by owning it | Be used without an explicit `SET ROLE`: the admin holds it with INHERIT FALSE |
+   | `whales_ingest` | Read `raw`, `core` and `letters`. Insert collected data and model output. Update only working columns (run status, reminder counters, security mapping fields) | See `meta`; change config tables (managers, sources, tags, topics); change any permission or review column; delete anything |
+   | `whales_reviewer` | Read `core` and `letters`. Add decisions: tag ratification, topic-candidate approval, prediction scores, rating verdicts. Set an expected letter's status | Choose the `reviewed_by` name (the database stamps it); change model output; delete anything |
+   | `whales_reader` | (created with the first `api` view, W-005) | |
 
-   Every role name starts `whales_`; nothing is shared with Tamale (W-004).
-3. **Migrations.** Plain numbered SQL files in `src/whales/db/migrations/` (`0001_foundation.sql`, ...), each in
-   one transaction. They are recorded in `raw.schema_migration` with a checksum: an edited, already-applied
-   file is refused. They are applied by an admin command, never by the ingest job.
-4. **Keys.** Every table has a surrogate `id bigint GENERATED ALWAYS AS IDENTITY` primary key, plus a UNIQUE
-   constraint on its natural key (CIK, accession, content hash, source and period). Foreign keys reference `id`.
-5. **Fixed vocabularies** are `text` columns with CHECK constraints, not Postgres enum types: enums are
-   awkward to change. Vocabularies that people edit (tags, topics) are tables loaded from `config/`, and
-   foreign keys enforce them.
-6. **Time.** Business dates are `date`: quarter end, period covered, publication date, horizon. System
-   moments are `timestamptz` in UTC: fetched, created, reviewed. A quarter is stored as its end date, and a
-   CHECK constraint makes sure it is one.
-7. **Provenance.** Each row derived by a model references `letters.extraction_run` (model, prompt version,
-   input file, time), and through it `raw.run_log`. Rows are never overwritten by a re-run: a new run adds new
-   rows, and views choose the latest successful run. People's verdicts live in their own columns or tables,
-   so a re-run never erases them.
-8. **No silent deletes** of collected or derived data. Corrections are new rows or versions. DELETE is granted
-   only on working tables (for example a failed run's partial rows).
-9. **Quotes stay short** (W-015): CHECK constraint `length(quote) <= 400`.
-10. **The `public` schema stays empty.**
+   Roles are server-wide, so they are created by `whales db bootstrap-roles <database>`, not by a migration.
+   On PostgreSQL 16 and later, an admin who creates a role holds it only WITH ADMIN, so the bootstrap grants
+   the admin SET explicitly. Never grant `pg_read_all_data` or `pg_write_all_data`: they reach the whole
+   shared server.
+3. **Migrations.** Numbered SQL files, each applied in one transaction by `whales db migrate --apply`. They are
+   recorded in `meta.schema_migration` with a checksum taken over normalised line endings, and an
+   applied file that has been edited is refused. `meta` is invisible to the ingest job.
+4. **Keys.** Each table has a surrogate `id` (identity) plus a UNIQUE natural key: CIK, slug, content hash,
+   source and period. **Surrogate ids are internal:** they change if the database is rebuilt from blobs, so
+   `api` views and Tamale notes expose natural keys (slug, sha256, accession), never `id`.
+5. **Fixed vocabularies** are snake_case codes in named CHECK constraints (`not_yet_published`,
+   `listed_vehicle`), never enum types; a later migration can drop and re-add a constraint by name.
+   Vocabularies that people edit (tags, topics) are tables, loaded from `config/` by an admin.
+6. **Time.** Business dates are `date`; system moments are `timestamptz` (UTC). A quarter is its last day, in
+   the domain `core.quarter_end`.
+7. **A letter versus its copies.** `letters.document` is the work; `letters.document_file` is each copy or
+   version. Rule: each new copy creates its own document, and a person merges duplicates by pointing the copy
+   at the surviving document. HTML pages are deduplicated on `text_sha256` (normalised text), because their
+   markup changes weekly.
+8. **Permissions are a snapshot per copy.** A trigger copies tier, use and storage permissions from the
+   source when a copy is inserted, overwriting whatever the job supplied. `machine_read_ok` is true only if use
+   is allowed and the PDF does not forbid text extraction. A composite foreign key then makes the database
+   itself refuse an extraction run on a copy that may not be machine-read (W-030, W-032, W-035).
+9. **Provenance.** Every model output belongs to a `letters.extraction_run` with a `task`: mentions, topics,
+   predictions or rating. Composite keys stop a row from claiming a run of another task. Re-runs add rows and
+   never overwrite. "Current" means the latest successful run per document and task, so re-running ratings
+   does not hide mentions.
+10. **People's decisions are insert-only rows** (`core.tag_decision`, `letters.candidate_decision`,
+    `letters.prediction_score`, `letters.rating_verdict`). The database stamps who and when. A prediction is
+    open until it has a score. Code refuses to re-extract a document's predictions once any of them is scored,
+    so scores never point at superseded rows.
+11. **No DELETE** for any non-owner role. A failed run's partial output stays, and views filter on
+    `status = 'ok'`.
+12. **Quotes** are required on mentions, topic mentions, predictions and ratings (W-019), and are at most 400
+    characters (W-015).
+13. **The `public` schema stays empty.** TEMPORARY on the database is revoked from PUBLIC.
 
-## Phase 2 tables (migration 0001)
+## What migration 0001 created
 
-### `raw`
+| Schema | Tables |
+|---|---|
+| `meta` | `schema_migration` |
+| `raw` | `run_log` |
+| `core` | `manager` (slug, kind), `tag`, `manager_tag` (proposals, dated), `tag_decision`, `filer` (CIK, quarter range), `security` (unique `composite_figi`, and `cusip` when present), `topic` (with `tamale_topic_id`) |
+| `letters` | `source` (tier 1 to 3, mode, cadence, permissions), `document`, `document_file`, `fetch_attempt` (every fetch, so the digest can name stale sources), `expected` (the reminder calendar; status changes are stamped), `extraction_run`, `mention`, `topic_mention`, `topic_candidate`, `candidate_decision`, `prediction`, `prediction_score`, `rating`, `rating_verdict` |
+| `api` | (empty until the first consumer, W-005) |
 
-| Table | Columns (beyond `id`, `created_at`) | Notes |
-|---|---|---|
-| `raw.schema_migration` | `version int UNIQUE`, `name`, `checksum`, `applied_at`, `applied_by` | |
-| `raw.run_log` | `command`, `started_at`, `finished_at`, `status` (running, ok, failed), `detail jsonb`, `git_sha`, `host` | One row per CLI run |
+Every foreign key column is indexed.
 
-### `core`
+## Verified on 2026-10-09
 
-| Table | Columns | Notes |
-|---|---|---|
-| `core.manager` | `name UNIQUE`, `kind` (manager, listed vehicle, independent writer, economist or strategist), `active`, `notes` | A manager or writer. Kind is a column because each has exactly one (W-038) |
-| `core.tag` | `facet` (style, strategy, asset focus, geography), `tag`, `description`; UNIQUE (`facet`, `tag`) | The controlled list, loaded from `config/tags.yaml` |
-| `core.manager_tag` | `manager_id`, `tag_id`, `valid_from date`, `valid_to date NULL`, `proposed_by`, `evidence`, `ratified_by NULL`, `ratified_at NULL` | Applies only once ratified |
-| `core.filer` | `cik bigint UNIQUE`, `manager_id`, `edgar_name`, `first_quarter date`, `last_quarter date NULL`, `note` | W-024. Created now, because the survey already holds this data and 13D/G (W-031) needs it |
-| `core.security` | `figi UNIQUE NULL`, `composite_figi`, `share_class_figi`, `cusip NULL`, `ticker`, `exch_code`, `name`, `security_type`, `mapped_at`, `mapping_source` | The security master. In phase 2 it is filled from OpenFIGI for tickers named in letters (public data only, D-127); in phase 3 from 13F CUSIPs as well |
-| `core.topic` | `slug UNIQUE`, `name`, `parent_id NULL`, `description`, `aliases text[]`, `tamale_topic_id NULL` | W-018, recommended option (a): a short list owned here, each topic carrying the id of its Tamale twin |
+Run with `pytest -m live`, against `whales_dev`:
+- the migration is current;
+- every object is owned by `whales_owner`;
+- PUBLIC cannot connect;
+- the admin holds owner and ingest with SET only, and reviewer with inherit;
+- eleven privilege checks pass, covering ingest and reviewer;
+- no role can delete;
+- a forged permission snapshot is overwritten, and an extraction run on a forbidden copy is refused.
 
-### `letters`
-
-| Table | Columns | Notes |
-|---|---|---|
-| `letters.source` | `manager_id`, `name`, `url`, `tier` (1 to 4), `mode` (auto, manual), `cadence` (annual, semiannual, quarterly, monthly, irregular), `access_restricted bool`, `storage_allowed bool`, `use_allowed bool`, `permission_basis text`, `terms_url`, `approved_by`, `approved_at`, `active` | W-029, W-033, W-035. Loaded from `config/letter_sources.yaml`. `use_allowed = false` blocks model extraction |
-| `letters.expected` | `source_id`, `period_end date`, `due_from date`, `due_to date`, `status` (awaiting, loaded, not yet published, skipped), `assignee_role` (default `letters_reviewer`), `reminders int`, `last_reminded_at`, `document_id NULL`; UNIQUE (`source_id`, `period_end`) | W-033 reminder calendar |
-| `letters.document` | `manager_id`, `title`, `kind` (annual letter, quarterly letter, memo, commentary, activist letter, presentation, essay, filing exhibit, other), `period_end date NULL`, `published_on date NULL`, `language` | The letter as a work, whatever copy it came from |
-| `letters.document_file` | `document_id`, `source_id`, `tier`, `url`, `sha256`, `content_type`, `byte_size`, `fetched_at`, `collected` (auto, manual), `collected_by NULL`, `raw_kept bool`, `blob_path NULL`, `pdf_encrypted NULL`, `pdf_extract_allowed NULL`, `use_allowed bool`, `permission_basis`; UNIQUE (`source_id`, `sha256`); CHECK `raw_kept = (blob_path IS NOT NULL)` | **One row per copy or version.** Permissions are copied from the source when fetched, so a later change to a source does not silently re-license old copies (W-030, W-032) |
-| `letters.document_text` | `document_file_id UNIQUE`, `text`, `extracted_at`, `extractor`, `pages int` | Only where `storage_allowed`. Otherwise text is held in memory during extraction and not stored (W-032) |
-| `letters.extraction_run` | `document_file_id`, `run_id`, `model`, `prompt_version`, `started_at`, `finished_at`, `status`, `dropped_mentions int` | Provenance for every model output. Refused in code when the copy's `use_allowed` is false (W-035) |
-| `letters.mention` | `extraction_run_id`, `document_id`, `security_id`, `stance` (positive, negative, mixed, neutral), `says_owned bool NULL`, `summary`, `quote`, `page NULL` | A ticker that doesn't match `core.security` is dropped and counted (AGENTS.md) |
-| `letters.topic_mention` | `extraction_run_id`, `document_id`, `topic_id`, `stance`, `summary`, `quote`, `page NULL` | |
-| `letters.topic_candidate` | `extraction_run_id`, `label`, `quote`, `status` (pending, approved, rejected), `reviewed_by`, `reviewed_at` | W-018 |
-| `letters.prediction` | `extraction_run_id`, `document_id`, `security_id NULL`, `topic_id NULL` (CHECK exactly one is set), `direction`, `horizon_date NULL`, `horizon_text`, `condition`, `confidence_wording`, `quote`, `page NULL`, `status` (open, right, wrong, partly right, unresolvable; default open), `scored_by`, `scored_at`, `score_note` | W-037 |
-| `letters.rating` | `extraction_run_id`, `document_id`, `dimension` (insight, clarity), `score smallint` 1 to 5, `reason`, `quote`; UNIQUE (`extraction_run_id`, `dimension`) | W-036. Predictions and Uniqueness are counted in views, not stored |
-| `letters.rating_verdict` | `rating_id`, `verdict` (about right, too high, too low), `by`, `at` | The owner's quick verdicts (W-036) |
-
-Views in `letters` (internal, not the `api` contract) pick the latest successful run per document:
-`letters.current_mention`, `letters.current_rating`, and so on.
+Writing tests run in transactions that roll back; the tables were empty afterwards.
 
 ## Later
 
 - **Phase 3:** `raw.filing`, `core.holding`, `core.position_quarter`, `core.event`, `core.topic_security`.
-  These follow AGENTS.md and W-024 and W-025, and get their own design pass then.
-- **Embeddings:** needs pgvector allow-listed on the shared server (STATUS.md). Phase 2, migration 0002 or
-  later.
-- **`api` views:** created when the first consumer exists (W-005); none in 0001.
-- **`restricted` schema:** only if compliance ever clears LP letters (W-014).
+  They get their own design pass; W-024 and W-025 already fix the filer ranges and the value-unit detection.
+- **Full text and embeddings** (`letters.document_text`): in a later migration, once pgvector is allow-listed
+  on the shared server. Text is stored only where the copy's `storage_allowed` is true (W-032).
+- **The ingest identity:** create it with `pgaadauth_create_principal_with_oid`, make it a member of
+  `whales_ingest`, and grant CONNECT on `whales` only. This is phase 4, with the Azure job.
+- **`whales config sync`:** the admin command that loads managers, filers, sources, tags and topics from
+  `config/`.

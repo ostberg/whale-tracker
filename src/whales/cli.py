@@ -2,9 +2,11 @@
 
     whales db connect-paths <database>               who can connect, and who would lose access (read-only)
     whales db revoke-public-connect <database>       show the statement; add --apply to run it
+    whales db bootstrap-roles <database>             the whales_ group roles and database rights; --apply
+    whales db migrate                                pending migrations on WHALES_DB_NAME; --apply
 
-Admin commands connect to the ``postgres`` database as the Entra admin (``az login``), so they need
-``WHALES_DB_HOST`` and a firewall rule for this machine.
+Admin commands run as the Entra admin (``az login``), so they need ``WHALES_DB_HOST`` and a temporary
+firewall rule for this machine. Every command shows what it would do unless given --apply.
 """
 
 from __future__ import annotations
@@ -14,7 +16,7 @@ import os
 import sys
 from pathlib import Path
 
-from .db import admin
+from .db import admin, migrate
 from .db.connect import Database, DbSettings
 
 
@@ -70,6 +72,39 @@ def cmd_revoke_public_connect(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_bootstrap_roles(args: argparse.Namespace) -> int:
+    settings = DbSettings.from_env("postgres")
+    statements = admin.bootstrap_statements(settings.user, args.database)
+    for s in statements:
+        print(s)
+    if not args.apply:
+        print("(dry run: nothing changed; add --apply)")
+        return 0
+    with Database(settings) as db:
+        for s in statements:
+            db.run(s)
+        roles = db.run("SELECT rolname FROM pg_roles WHERE rolname LIKE 'whales\\_%' ORDER BY 1")
+    print(f"done: roles {[r[0] for r in roles]}")
+    return 0
+
+
+def cmd_migrate(args: argparse.Namespace) -> int:
+    available = migrate.discover()
+    with Database(DbSettings.from_env()) as db:
+        todo = migrate.pending(available, migrate.applied_versions(db))
+        print(f"database {db.settings.dbname}: {len(available) - len(todo)} applied, {len(todo)} pending")
+        for m in todo:
+            print(f"   pending {m.version:04d}_{m.name}")
+        if not todo or not args.apply:
+            if todo:
+                print("(dry run: nothing changed; add --apply)")
+            return 0
+        for m in todo:
+            migrate.apply(db, m)
+            print(f"   applied {m.version:04d}_{m.name}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(
         prog="whales", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
@@ -86,6 +121,15 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--apply", action="store_true", help="run it (default: show only)")
     p.add_argument("--force", action="store_true", help="run it even if some role would lose access")
     p.set_defaults(func=cmd_revoke_public_connect)
+
+    p = db.add_parser("bootstrap-roles", help="create the whales_ group roles and grant database rights")
+    p.add_argument("database")
+    p.add_argument("--apply", action="store_true", help="run it (default: show only)")
+    p.set_defaults(func=cmd_bootstrap_roles)
+
+    p = db.add_parser("migrate", help="apply pending migrations to WHALES_DB_NAME as whales_owner")
+    p.add_argument("--apply", action="store_true", help="apply them (default: list only)")
+    p.set_defaults(func=cmd_migrate)
     return ap
 
 

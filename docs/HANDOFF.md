@@ -2,6 +2,46 @@
 
 Dated entries, newest first: what changed, what is verified, what is next.
 
+## 2026-10-09: schema designed, reviewed and applied (migration 0001); phase 1 gate met
+
+**Owner direction.**
+- "Is it worth making sure the schema is set right?" Yes: the agent drafted `docs/SCHEMA.md` and an
+  independent agent reviewed it.
+- "Go ahead with migration 0001 after the review."
+
+**The review's main findings, all fixed.**
+- On PG16+, an admin who creates a role gets only ADMIN on it. Fix: an explicit `GRANT ... WITH SET TRUE`,
+  in a separate `bootstrap-roles` command, because roles are server-wide.
+- The ingest grant was too broad: it could have flipped permission columns and forged approvals. Ingest now
+  gets reads, inserts and named working columns only, and permission snapshots are set by a trigger.
+- Reviewer rows could have been signed as someone else. Decisions are now insert-only tables, and the
+  database stamps `reviewed_by`.
+
+**What changed.**
+- `src/whales/db/migrate.py`: numbered SQL, one transaction each, run as `whales_owner`, with checksums,
+  refusal of edited files, and a rollback if anything is mis-owned.
+- `src/whales/db/migrations/0001_foundation.sql`: schemas `meta`, `raw`, `core`, `letters` and `api`, with
+  22 tables. Applied to `whales_dev`.
+- New commands: `whales db bootstrap-roles` and `whales db migrate`.
+- Roles `whales_owner`, `whales_ingest` and `whales_reviewer` were created on the server. The admin holds
+  owner and ingest with SET only, and reviewer with inherit.
+- TEMPORARY on `whales_dev` was revoked from PUBLIC.
+- Tests: 26 unit tests, including static guards on the SQL, and 17 live tests (`pytest -m live`).
+- `docs/SCHEMA.md` was rewritten to match the build. W-039 is final; W-038 is amended (kind is a column).
+
+**Verified (live, 2026-10-09).**
+- Every object is owned by `whales_owner`; PUBLIC cannot connect; no role can delete.
+- Ingest cannot see `meta` or change permissions.
+- A forged copy permission is overwritten, and an extraction run on a forbidden copy is refused.
+- All 22 tables were empty after the rolled-back tests.
+- The temporary firewall rule `whales-dev-temp-20261009` was removed.
+
+**Next.**
+1. The GitHub remote (owner).
+2. `config/` files and `whales config sync`: managers, filers, tags, topics and sources from the registers.
+3. The first auto source collector (Oaktree memos or Praetorian), pending the compliance ruling.
+4. The model seam and the Foundry endpoint.
+
 ## 2026-10-08 (second session, end): database set up and hardened; package scaffolded
 
 **Owner decisions.**

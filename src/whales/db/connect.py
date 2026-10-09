@@ -135,12 +135,17 @@ class Database:
         )
         return self._conn
 
+    def connection(self):
+        """The underlying psycopg connection, for work that needs an explicit transaction (migrations)."""
+        return self._conn or self._connect()
+
     def run(self, sql: str, params: tuple = ()) -> list[tuple]:
         for attempt in (1, 2):
             conn = self._conn or self._connect()
             try:
                 with conn.cursor() as cur:
-                    cur.execute(sql, params)
+                    # None, not (): with an empty tuple psycopg still parses '%' in the SQL as a placeholder
+                    cur.execute(sql, params or None)
                     return cur.fetchall() if cur.description else []
             except Exception:  # noqa: BLE001 - an expired token or a dropped connection: once more, fresh
                 self.close()
