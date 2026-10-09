@@ -1,0 +1,616 @@
+# Letter sources (W-029, W-033, W-035). Loaded into letters.source by `whales config sync`.
+# Evidence for each: docs/LETTER_SOURCES.md.
+#
+# EVERY SOURCE IS INACTIVE until compliance rules. To activate one, set approved_by, approved_at and
+# active = true; the sync refuses an active source without an approval.
+#
+# The permission flags are the agent's reading of each site's terms on 2026-10-08, not legal advice:
+#   access_restricted  bots banned, or a form, gate or bot wall  -> mode must be "manual" (a person downloads)
+#   storage_allowed    false everywhere except SEC filings: most terms bar copying or reproduction (W-032)
+#   use_allowed        false where terms ban AI, automated text analysis, text mining or data mining (W-035)
+# Tier: 1 published by the manager, 2 an SEC filing, 3 a licensed republisher (none yet). Tier 4 never here.
+
+# --- Owner's priority managers ------------------------------------------------------------------------
+
+[[source]]
+slug = "oaktree-memos"
+manager = "oaktree"
+name = "Howard Marks memos"
+url = "https://www.oaktreecapital.com/insights/memos"
+tier = 1
+mode = "auto"
+cadence = "irregular"
+access_restricted = false
+storage_allowed = false
+use_allowed = true
+permission_basis = "Agent reading 2026-10-08: nothing on automated access; personal downloads allowed; no republication without consent. Pending compliance ruling"
+terms_url = "https://www.oaktreecapital.com/terms-and-conditions"
+
+[[source]]
+slug = "southeastern-commentaries"
+manager = "southeastern"
+name = "Longleaf fund commentaries"
+url = "https://southeasternasset.com/mutual-fund-commentaries/"
+tier = 1
+mode = "auto"
+cadence = "quarterly"
+access_restricted = false
+storage_allowed = false
+use_allowed = true
+permission_basis = "Agent reading 2026-10-08: personal use only; no commercial or external distribution; nothing on automated access. Pending compliance ruling"
+terms_url = "https://southeasternasset.com/terms-of-use/"
+
+[[source]]
+slug = "elliott-letters"
+manager = "elliott"
+name = "Elliott campaign letters"
+url = "https://www.elliottletters.com"
+tier = 1
+mode = "auto"
+cadence = "irregular"
+access_restricted = false
+storage_allowed = false
+use_allowed = true
+permission_basis = "Agent reading 2026-10-08: copyright reserved; nothing on automated access. Pending compliance ruling"
+terms_url = "https://www.elliottletters.com/terms"
+
+[[source]]
+slug = "starboard-presentations"
+manager = "starboard"
+name = "Starboard board letters and presentations"
+url = "https://www.starboardvalue.com/presentations/"
+tier = 1
+mode = "auto"
+cadence = "irregular"
+access_restricted = false
+storage_allowed = false
+use_allowed = true
+permission_basis = "Agent reading 2026-10-08: no terms page, only a privacy notice; robots crawl-delay 10. Pending compliance ruling"
+
+[[source]]
+slug = "pershing-square-inc-letters"
+manager = "pershing-square"
+name = "Pershing Square Inc. quarterly letters"
+url = "https://pershingsquareinc.com/investor-relations/financial-reporting/"
+tier = 1
+mode = "manual"
+cadence = "quarterly"
+access_restricted = true
+storage_allowed = false
+use_allowed = true
+permission_basis = "Agent reading 2026-10-08: no terms page found, but bot protection refused automated fetches (403), so collected by hand. Pending compliance ruling"
+
+[[source]]
+slug = "pershing-square-holdings-reports"
+manager = "pershing-square"
+name = "Pershing Square Holdings annual and interim reports"
+url = "https://pershingsquareholdings.com/materials/"
+tier = 1
+mode = "manual"
+cadence = "semiannual"
+access_restricted = true
+storage_allowed = false
+use_allowed = true
+permission_basis = "Agent reading 2026-10-08: accept-terms gate; terms ban spidering and scraping. Extract only the letter section. Pending compliance ruling"
+terms_url = "https://pershingsquareholdings.com/terms-of-use/"
+
+[[source]]
+slug = "third-point-malibu"
+manager = "third-point"
+name = "Third Point letters via Malibu Life Holdings (formerly Third Point Investors)"
+url = "https://www.malibulifeinsurance.com/resources/"
+tier = 1
+mode = "manual"
+cadence = "quarterly"
+access_restricted = true
+storage_allowed = false
+use_allowed = false
+permission_basis = "Agent reading 2026-10-08: terms ban bots, crawlers and data mining; data mining read as a use restriction. Ask, or a ruling"
+terms_url = "https://www.malibulifeinsurance.com/terms/"
+
+[[source]]
+slug = "fundsmith-letters"
+manager = "fundsmith"
+name = "Fundsmith owner's letters"
+url = "https://www.fundsmith.co.uk/documents/"
+tier = 1
+mode = "manual"
+cadence = "semiannual"
+access_restricted = true
+storage_allowed = false
+use_allowed = false
+permission_basis = "Legal notice re-read 2026-10-08: no automated collection and no automated text analysis without express written consent. Needs Fundsmith's consent (W-035)"
+terms_url = "https://www.fundsmith.co.uk/legal-notice/"
+
+[[source]]
+slug = "berkshire-letters"
+manager = "berkshire-hathaway"
+name = "Berkshire Hathaway shareholder letters"
+url = "https://www.berkshirehathaway.com/letters/letters.html"
+tier = 1
+mode = "auto"
+cadence = "annual"
+access_restricted = false
+storage_allowed = false
+use_allowed = true
+permission_basis = "Agent reading 2026-10-08: no reproduction, distribution or linking without permission; nothing on automated access; no robots.txt. Pending compliance ruling"
+terms_url = "https://www.berkshirehathaway.com/disclaimer.html"
+
+[[source]]
+slug = "himalaya-publications"
+manager = "himalaya"
+name = "Li Lu essays and speeches"
+url = "https://www.himcap.com/publications"
+tier = 1
+mode = "auto"
+cadence = "irregular"
+access_restricted = false
+storage_allowed = false
+use_allowed = true
+permission_basis = "Agent reading 2026-10-08: no copying without permission; nothing on automated access. Pending compliance ruling"
+terms_url = "https://www.himcap.com/terms-of-services"
+
+[[source]]
+slug = "trian-letters"
+manager = "trian"
+name = "Trian open letters and decks"
+url = "https://trianpartners.com/press-releases/"
+tier = 1
+mode = "auto"
+cadence = "irregular"
+access_restricted = false
+storage_allowed = false
+use_allowed = true
+permission_basis = "Agent reading 2026-10-08: personal use only; nothing on automated access. Pending compliance ruling"
+terms_url = "https://trianpartners.com/terms"
+
+[[source]]
+slug = "coatue-decks"
+manager = "coatue"
+name = "Coatue East Meets West and other decks"
+url = "https://www.coatue.com/east-meets-west"
+tier = 1
+mode = "auto"
+cadence = "irregular"
+access_restricted = false
+storage_allowed = false
+use_allowed = true
+permission_basis = "Agent reading 2026-10-08: one personal copy; no republication; nothing on automated access. Pending compliance ruling"
+terms_url = "https://www.coatue.com/terms-of-use"
+
+# --- Owner-named sources ------------------------------------------------------------------------------
+
+[[source]]
+slug = "praetorian-letters"
+manager = "praetorian"
+name = "Praetorian Capital investor letters"
+url = "https://pracap.com/investor-letters/"
+tier = 1
+mode = "auto"
+cadence = "quarterly"
+access_restricted = false
+storage_allowed = false
+use_allowed = true
+permission_basis = "Agent reading 2026-10-08: PDFs openly linked; no terms page, only a privacy policy; robots allows all but /bullpen. Pending compliance ruling"
+
+[[source]]
+slug = "laughing-water-letters"
+manager = "laughing-water"
+name = "Laughing Water Capital letters"
+url = "https://www.laughingwatercapital.com/letters"
+tier = 1
+mode = "manual"
+cadence = "quarterly"
+access_restricted = true
+storage_allowed = false
+use_allowed = true
+permission_basis = "Agent reading 2026-10-08: the owner met a details form before downloading, so a person collects (W-033); no terms pages found. Pending compliance ruling"
+
+[[source]]
+slug = "pm-capital-insights"
+manager = "pm-capital"
+name = "PM Capital insights"
+url = "https://www.pmcapital.com.au/insights"
+tier = 1
+mode = "auto"
+cadence = "irregular"
+access_restricted = false
+storage_allowed = false
+use_allowed = true
+permission_basis = "Agent reading 2026-10-08: Regal Partners terms need prior written consent to copy or store; nothing on bots or AI. Extracts only (W-032). Pending compliance ruling"
+terms_url = "https://regalpartners.com/terms-of-use/"
+
+# --- SEC filings (tier 2): public record --------------------------------------------------------------
+
+[[source]]
+slug = "psus-ncsrs"
+manager = "pershing-square"
+name = "Pershing Square USA semi-annual report (N-CSRS): manager's letter"
+url = "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0002002660&type=N-CSR"
+tier = 2
+mode = "auto"
+cadence = "semiannual"
+access_restricted = false
+storage_allowed = true
+use_allowed = true
+permission_basis = "Public SEC filing"
+
+[[source]]
+slug = "greenlight-re-8k"
+manager = "greenlight"
+name = "Greenlight Re quarterly results (8-K): commentary on the Greenlight-managed portfolio"
+url = "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0001385613&type=8-K"
+tier = 2
+mode = "auto"
+cadence = "quarterly"
+access_restricted = false
+storage_allowed = true
+use_allowed = true
+permission_basis = "Public SEC filing"
+
+[[source]]
+slug = "elliott-edgar"
+manager = "elliott"
+name = "Elliott 13D exhibits and proxy materials"
+url = "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0001791786&type=SCHEDULE+13D"
+tier = 2
+mode = "auto"
+cadence = "irregular"
+access_restricted = false
+storage_allowed = true
+use_allowed = true
+permission_basis = "Public SEC filing (W-031)"
+
+[[source]]
+slug = "starboard-edgar"
+manager = "starboard"
+name = "Starboard 13D exhibits and proxy materials"
+url = "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0001517137&type=SCHEDULE+13D"
+tier = 2
+mode = "auto"
+cadence = "irregular"
+access_restricted = false
+storage_allowed = true
+use_allowed = true
+permission_basis = "Public SEC filing (W-031)"
+
+[[source]]
+slug = "jana-edgar"
+manager = "jana"
+name = "JANA 13D exhibits and proxy materials"
+url = "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0001998597&type=SCHEDULE+13D"
+tier = 2
+mode = "auto"
+cadence = "irregular"
+access_restricted = false
+storage_allowed = true
+use_allowed = true
+permission_basis = "Public SEC filing (W-031)"
+
+[[source]]
+slug = "trian-edgar"
+manager = "trian"
+name = "Trian 13D exhibits and proxy materials"
+url = "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0001345471&type=SCHEDULE+13D"
+tier = 2
+mode = "auto"
+cadence = "irregular"
+access_restricted = false
+storage_allowed = true
+use_allowed = true
+permission_basis = "Public SEC filing (W-031)"
+
+[[source]]
+slug = "pershing-square-edgar"
+manager = "pershing-square"
+name = "Pershing Square 13D exhibits and proxy materials"
+url = "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0001336528&type=SCHEDULE+13D"
+tier = 2
+mode = "auto"
+cadence = "irregular"
+access_restricted = false
+storage_allowed = true
+use_allowed = true
+permission_basis = "Public SEC filing (W-031)"
+
+[[source]]
+slug = "third-point-edgar"
+manager = "third-point"
+name = "Third Point 13D exhibits and proxy materials"
+url = "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0001040273&type=SCHEDULE+13D"
+tier = 2
+mode = "auto"
+cadence = "irregular"
+access_restricted = false
+storage_allowed = true
+use_allowed = true
+permission_basis = "Public SEC filing (W-031)"
+
+[[source]]
+slug = "valueact-edgar"
+manager = "valueact"
+name = "ValueAct 13D exhibits and proxy materials"
+url = "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0001418814&type=SCHEDULE+13D"
+tier = 2
+mode = "auto"
+cadence = "irregular"
+access_restricted = false
+storage_allowed = true
+use_allowed = true
+permission_basis = "Public SEC filing (W-031)"
+
+[[source]]
+slug = "tci-edgar"
+manager = "tci"
+name = "TCI 13D exhibits and proxy materials"
+url = "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0001647251&type=SCHEDULE+13D"
+tier = 2
+mode = "auto"
+cadence = "irregular"
+access_restricted = false
+storage_allowed = true
+use_allowed = true
+permission_basis = "Public SEC filing (W-031)"
+
+[[source]]
+slug = "appaloosa-edgar"
+manager = "appaloosa"
+name = "Appaloosa 13D exhibits"
+url = "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0001656456&type=SCHEDULE+13D"
+tier = 2
+mode = "auto"
+cadence = "irregular"
+access_restricted = false
+storage_allowed = true
+use_allowed = true
+permission_basis = "Public SEC filing (W-031)"
+
+[[source]]
+slug = "praetorian-edgar"
+manager = "praetorian"
+name = "Praetorian 13D exhibits"
+url = "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0001337851&type=SCHEDULE+13D"
+tier = 2
+mode = "auto"
+cadence = "irregular"
+access_restricted = false
+storage_allowed = true
+use_allowed = true
+permission_basis = "Public SEC filing (W-031)"
+
+# --- Topic writers -------------------------------------------------------------------------------------
+
+[[source]]
+slug = "hussman-comment"
+manager = "hussman"
+name = "Hussman market comment"
+url = "https://www.hussmanfunds.com/comment/"
+tier = 1
+mode = "auto"
+cadence = "monthly"
+access_restricted = false
+storage_allowed = false
+use_allowed = true
+permission_basis = "Agent reading 2026-10-08: no terms page, only a copyright notice; a reprint policy exists but was not found. Pending compliance ruling"
+
+[[source]]
+slug = "hoisington-review"
+manager = "hoisington"
+name = "Hoisington Quarterly Review and Outlook"
+url = "https://hoisington.com/economic_overview.html"
+tier = 1
+mode = "auto"
+cadence = "quarterly"
+access_restricted = false
+storage_allowed = false
+use_allowed = true
+permission_basis = "Agent reading 2026-10-08: no terms found, no robots.txt; only back to Q3 2024. Pending compliance ruling"
+
+[[source]]
+slug = "gmo-research"
+manager = "gmo"
+name = "GMO quarterly letter and insights"
+url = "https://www.gmo.com/americas/research-library/"
+tier = 1
+mode = "auto"
+cadence = "quarterly"
+access_restricted = false
+storage_allowed = false
+use_allowed = true
+permission_basis = "Agent reading 2026-10-08: print or download with notices kept; no commercial reproduction; no bot clause. Pending compliance ruling"
+terms_url = "https://www.gmo.com/americas/terms-and-conditions/"
+
+[[source]]
+slug = "smead-missives"
+manager = "smead"
+name = "Smead missives"
+url = "https://www.smeadcap.com/missives/"
+tier = 1
+mode = "auto"
+cadence = "monthly"
+access_restricted = false
+storage_allowed = false
+use_allowed = true
+permission_basis = "Agent reading 2026-10-08: personal, non-commercial use; no copying without consent; no bot clause. Pending compliance ruling"
+terms_url = "https://www.smeadcap.com/terms-use"
+
+[[source]]
+slug = "kopernik-insights"
+manager = "kopernik"
+name = "Kopernik Iben Insights and Perspectives"
+url = "https://www.kopernikglobal.com/news-views/"
+tier = 1
+mode = "auto"
+cadence = "irregular"
+access_restricted = false
+storage_allowed = false
+use_allowed = true
+permission_basis = "Agent reading 2026-10-08: personal or informational use; no commercial reproduction; no scraping clause. Pending compliance ruling"
+terms_url = "https://www.kopernikglobal.com/terms-of-use/"
+
+[[source]]
+slug = "lyn-alden-newsletter"
+manager = "lyn-alden"
+name = "Lyn Alden newsletter"
+url = "https://www.lynalden.com/newsletter-archives/"
+tier = 1
+mode = "auto"
+cadence = "irregular"
+access_restricted = false
+storage_allowed = false
+use_allowed = true
+permission_basis = "Agent reading 2026-10-08: copying needs permission; short credited excerpts allowed; nothing on bots. Pending compliance ruling"
+terms_url = "https://www.lynalden.com/legal"
+
+[[source]]
+slug = "fairfax-letters"
+manager = "fairfax"
+name = "Fairfax chairman's annual letter"
+url = "https://www.fairfax.ca/investors/"
+tier = 1
+mode = "auto"
+cadence = "annual"
+access_restricted = false
+storage_allowed = false
+use_allowed = true
+permission_basis = "Agent reading 2026-10-08: one copy for personal, non-commercial use; no bot clause. Pending compliance ruling"
+terms_url = "https://www.fairfax.ca/legal-notice/"
+
+[[source]]
+slug = "fpa-commentary"
+manager = "fpa"
+name = "FPA quarterly commentary"
+url = "https://fpa.com/insights/"
+tier = 1
+mode = "auto"
+cadence = "quarterly"
+access_restricted = false
+storage_allowed = false
+use_allowed = true
+permission_basis = "Agent reading 2026-10-08: browser viewing for personal use only; robots crawl-delay 10. Pending compliance ruling"
+terms_url = "https://fpa.com/terms-of-use/"
+
+[[source]]
+slug = "us-global-investor-alert"
+manager = "us-global-investors"
+name = "U.S. Global Investors Investor Alert"
+url = "https://www.usfunds.com/investor-library/"
+tier = 1
+mode = "auto"
+cadence = "irregular"
+access_restricted = false
+storage_allowed = false
+use_allowed = true
+permission_basis = "Agent reading 2026-10-08: personal, non-commercial; written consent for other uses; no bot clause. Pending compliance ruling"
+terms_url = "https://www.usfunds.com/terms-of-use/"
+
+[[source]]
+slug = "in-gold-we-trust"
+manager = "incrementum"
+name = "In Gold We Trust annual report"
+url = "https://ingoldwetrust.report/archiv/"
+tier = 1
+mode = "auto"
+cadence = "annual"
+access_restricted = false
+storage_allowed = false
+use_allowed = true
+permission_basis = "Agent reading 2026-10-08: private, non-commercial copies only (German law). Pending compliance ruling"
+terms_url = "https://ingoldwetrust.report/impressum/"
+
+[[source]]
+slug = "apollo-daily-spark"
+manager = "apollo-slok"
+name = "Apollo Daily Spark (Torsten Sløk)"
+url = "https://www.apollo.com/insights-news/insights/daily-spark"
+tier = 1
+mode = "manual"
+cadence = "irregular"
+access_restricted = true
+storage_allowed = false
+use_allowed = true
+permission_basis = "Agent reading 2026-10-08: terms ban bots and crawlers used to scrape; personal, non-commercial. Daily, so manual collection is heavy: consider asking Apollo"
+terms_url = "https://www.apollo.com/governance/terms-of-use"
+
+[[source]]
+slug = "brookfield-letters"
+manager = "brookfield"
+name = "Brookfield quarterly letters to shareholders"
+url = "https://bam.brookfield.com/reports-sec-filings/letters-shareholders"
+tier = 1
+mode = "manual"
+cadence = "quarterly"
+access_restricted = true
+storage_allowed = false
+use_allowed = true
+permission_basis = "Agent reading 2026-10-08: terms ban scraping, bots and spiders; personal use. Pending compliance ruling"
+terms_url = "https://bam.brookfield.com/terms-use"
+
+[[source]]
+slug = "horizon-kinetics-commentary"
+manager = "horizon-kinetics"
+name = "Horizon Kinetics quarterly commentary"
+url = "https://horizonkinetics.com/insights/library/"
+tier = 1
+mode = "manual"
+cadence = "quarterly"
+access_restricted = true
+storage_allowed = false
+use_allowed = true
+permission_basis = "Agent reading 2026-10-08: terms ban bots and intelligent agents; personal use. Pending compliance ruling"
+terms_url = "https://horizonkinetics.com/terms-conditions/"
+
+[[source]]
+slug = "sprott-insights"
+manager = "sprott"
+name = "Sprott gold, silver and uranium reports"
+url = "https://sprott.com/insights/"
+tier = 1
+mode = "manual"
+cadence = "irregular"
+access_restricted = true
+storage_allowed = false
+use_allowed = false
+permission_basis = "Agent reading 2026-10-08: terms ban scraping and data mining; data mining read as a use restriction. Ask, or a ruling"
+terms_url = "https://sprott.com/disclaimers-and-terms-of-use/"
+
+[[source]]
+slug = "oakmark-commentary"
+manager = "oakmark"
+name = "Oakmark quarterly commentaries"
+url = "https://oakmark.com/news-insights/"
+tier = 1
+mode = "manual"
+cadence = "quarterly"
+access_restricted = true
+storage_allowed = false
+use_allowed = true
+permission_basis = "Agent reading 2026-10-08: terms ban bots and intelligent agents; personal use. Pending compliance ruling"
+terms_url = "https://oakmark.com/terms-of-use/"
+
+[[source]]
+slug = "crescat-letters"
+manager = "crescat"
+name = "Crescat research letters"
+url = "https://www.crescat.net/investment-process/investor-letters/"
+tier = 1
+mode = "manual"
+cadence = "monthly"
+access_restricted = true
+storage_allowed = false
+use_allowed = true
+permission_basis = "Agent reading 2026-10-08: terms ban bots harvesting a large portion; minimal personal copies. Pending compliance ruling"
+terms_url = "https://www.crescat.net/terms-and-conditions/"
+
+[[source]]
+slug = "goehring-rozencwajg-commentary"
+manager = "goehring-rozencwajg"
+name = "Goehring & Rozencwajg natural-resource commentary"
+url = "https://gorozen.com/research/commentaries"
+tier = 1
+mode = "manual"
+cadence = "quarterly"
+access_restricted = true
+storage_allowed = false
+use_allowed = true
+permission_basis = "Agent reading 2026-10-08: full text needs a form; no terms page found. Pending compliance ruling"

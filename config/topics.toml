@@ -1,0 +1,67 @@
+# The controlled topic list (W-018). Loaded into core.topic by `whales config sync`.
+# The model may tag only these; anything else waits in letters.topic_candidate for a person to approve.
+# Source of truth is still an open owner decision (STATUS.md). This follows the recommended option (a):
+# a short list owned here, each topic carrying `tamale_topic_id` once its Tamale twin is identified.
+# A parent must be defined above its children.
+
+[[topic]]
+slug = "interest-rates"
+name = "Interest rates"
+description = "Policy rates, the path of central-bank decisions, and the level and shape of the yield curve"
+aliases = ["rates", "fed policy", "fed funds", "monetary policy", "yield curve"]
+
+[[topic]]
+slug = "us-treasuries"
+name = "US Treasuries"
+description = "US government bonds: yields, supply, term premium, demand and the deficit's effect on them"
+aliases = ["treasuries", "10-year", "long bond", "term premium", "us debt"]
+
+[[topic]]
+slug = "inflation"
+name = "Inflation"
+description = "Consumer and producer prices, wages and inflation expectations"
+aliases = ["cpi", "pce", "price level", "wage growth"]
+
+[[topic]]
+slug = "european-macro"
+name = "European macro"
+description = "Euro-area and UK growth, ECB and Bank of England policy, sovereign spreads, European politics"
+aliases = ["europe", "eurozone", "ecb", "bank of england", "bund", "btp spreads", "oat spreads"]
+
+[[topic]]
+slug = "housing"
+name = "Housing"
+description = "Home prices, building, mortgage rates and the businesses that depend on them"
+aliases = ["homebuilders", "mortgage rates", "residential construction", "home prices"]
+
+[[topic]]
+slug = "lumber"
+name = "Lumber"
+description = "Lumber and timber prices, sawmills and timberland"
+aliases = ["timber", "wood products", "timberland"]
+parent = "housing"
+
+[[topic]]
+slug = "ai"
+name = "Artificial intelligence"
+description = "AI models, adoption, spending, and its effect on companies and markets"
+aliases = ["artificial intelligence", "llm", "large language models", "genai", "ai capex", "ai bubble"]
+
+[[topic]]
+slug = "edge-compute"
+name = "Edge compute"
+description = "Computing near the user or device rather than in central data centres: devices, networks, chips"
+aliases = ["edge computing", "on-device ai", "edge ai"]
+parent = "ai"
+
+[[topic]]
+slug = "gold"
+name = "Gold"
+description = "Gold and precious metals, miners and central-bank buying"
+aliases = ["precious metals", "gold miners", "bullion", "silver"]
+
+[[topic]]
+slug = "oil"
+name = "Oil"
+description = "Crude oil and products: supply, demand, OPEC, prices and energy equities"
+aliases = ["crude", "opec", "energy", "brent", "wti"]

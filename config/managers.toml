@@ -1,0 +1,728 @@
+# Managers and writers, their SEC filers, and first-pass tag PROPOSALS. Loaded by `whales config sync`.
+#
+# - Evidence for every filer: docs/MANAGER_SURVEY.md (watchlist) and the CIK check of 2026-10-09 (writers).
+# - Tags here are proposals only (W-038). They apply once ratified in core.tag_decision. A trailing "?" marks
+#   a tag the agent was unsure of (docs/RATINGS_AND_TAGS.md, section 4).
+# - Filer quarter ranges (W-024): first_quarter and last_quarter are quarter-end dates; leave one out for
+#   "from the start" or "still filing".
+# - excluded_filing lists filings that must not count (duplicates); it is stored from phase 3.
+# - `active = false` keeps a manager on file without tracking it. Whether to track all of them is W-026.
+
+tags_proposed_by = "agent first pass, 2026-10-08"
+tags_valid_from = 2026-10-08
+
+# --- Watchlist: technology and growth ----------------------------------------------------------------
+
+[[manager]]
+slug = "tiger-global"
+name = "Tiger Global Management"
+kind = "manager"
+style = ["growth"]
+strategy = ["long_short", "crossover"]
+asset_focus = ["equities"]
+geography = ["global"]
+notes = "Large private book; the 13F shows the public slice only"
+  [[manager.filer]]
+  cik = 1167483
+  edgar_name = "TIGER GLOBAL MANAGEMENT LLC"
+
+[[manager]]
+slug = "coatue"
+name = "Coatue Management"
+kind = "manager"
+style = ["growth"]
+strategy = ["long_short", "crossover"]
+asset_focus = ["equities"]
+geography = ["global"]
+notes = "27 other included managers on its 13F; two affiliates file notices only"
+  [[manager.filer]]
+  cik = 1135730
+  edgar_name = "COATUE MANAGEMENT LLC"
+
+[[manager]]
+slug = "altimeter"
+name = "Altimeter Capital Management"
+kind = "manager"
+style = ["growth"]
+strategy = ["long_only?", "crossover"]
+asset_focus = ["equities"]
+geography = ["us"]
+  [[manager.filer]]
+  cik = 1541617
+  edgar_name = "Altimeter Capital Management, LP"
+
+[[manager]]
+slug = "atreides"
+name = "Atreides Management"
+kind = "manager"
+style = ["growth"]
+strategy = ["long_short?", "crossover"]
+asset_focus = ["equities"]
+geography = ["us"]
+  [[manager.filer]]
+  cik = 1777813
+  edgar_name = "Atreides Management, LP"
+
+[[manager]]
+slug = "whale-rock"
+name = "Whale Rock Capital Management"
+kind = "manager"
+style = ["growth"]
+strategy = ["long_short"]
+asset_focus = ["equities"]
+geography = ["us"]
+  [[manager.filer]]
+  cik = 1387322
+  edgar_name = "Whale Rock Capital Management LLC"
+
+[[manager]]
+slug = "light-street"
+name = "Light Street Capital Management"
+kind = "manager"
+style = ["growth"]
+strategy = ["long_short"]
+asset_focus = ["equities"]
+geography = ["global"]
+  [[manager.filer]]
+  cik = 1569049
+  edgar_name = "LIGHT STREET CAPITAL MANAGEMENT, LLC"
+
+[[manager]]
+slug = "dragoneer"
+name = "Dragoneer Investment Group"
+kind = "manager"
+style = ["growth"]
+strategy = ["long_only", "crossover"]
+asset_focus = ["equities"]
+geography = ["us"]
+  [[manager.filer]]
+  cik = 1602189
+  edgar_name = "Dragoneer Investment Group, LLC"
+
+[[manager]]
+slug = "durable"
+name = "Durable Capital Partners"
+kind = "manager"
+style = ["growth", "quality"]
+strategy = ["long_only", "crossover"]
+asset_focus = ["equities"]
+geography = ["us"]
+  [[manager.filer]]
+  cik = 1798849
+  edgar_name = "Durable Capital Partners LP"
+
+[[manager]]
+slug = "situational-awareness"
+name = "Situational Awareness"
+kind = "manager"
+style = ["growth"]
+strategy = ["long_short?"]
+asset_focus = ["equities"]
+geography = ["us"]
+notes = "AI-thematic; large put lines (about $1.5bn of AMD and ASML puts at 2026 Q1)"
+  [[manager.filer]]
+  cik = 2045724
+  edgar_name = "Situational Awareness LP"
+  first_quarter = 2024-12-31
+  [[manager.filer]]
+  cik = 2038540
+  edgar_name = "Situational Awareness Partners LP"
+  first_quarter = 2026-03-31
+  last_quarter = 2026-03-31
+  note = "Filed one report, identical to Situational Awareness LP's for 2026 Q1"
+  [[manager.excluded_filing]]
+  accession = "0002038540-26-000004"
+  reason = "Identical to 0002045724-26-000008 (42 lines, $13,676,657,577); counting both would double (W-024)"
+
+[[manager]]
+slug = "lone-pine"
+name = "Lone Pine Capital"
+kind = "manager"
+style = ["growth", "quality"]
+strategy = ["long_short"]
+asset_focus = ["equities"]
+geography = ["global"]
+  [[manager.filer]]
+  cik = 1061165
+  edgar_name = "LONE PINE CAPITAL LLC"
+
+[[manager]]
+slug = "viking"
+name = "Viking Global Investors"
+kind = "manager"
+style = ["growth?"]
+strategy = ["long_short"]
+asset_focus = ["equities"]
+geography = ["global"]
+  [[manager.filer]]
+  cik = 1103804
+  edgar_name = "VIKING GLOBAL INVESTORS LP"
+
+[[manager]]
+slug = "d1"
+name = "D1 Capital Partners"
+kind = "manager"
+style = ["growth"]
+strategy = ["long_short", "crossover"]
+asset_focus = ["equities"]
+geography = ["global"]
+  [[manager.filer]]
+  cik = 1747057
+  edgar_name = "D1 Capital Partners L.P."
+
+[[manager]]
+slug = "maverick"
+name = "Maverick Capital"
+kind = "manager"
+style = ["growth?"]
+strategy = ["long_short"]
+asset_focus = ["equities"]
+geography = ["global"]
+  [[manager.filer]]
+  cik = 934639
+  edgar_name = "MAVERICK CAPITAL LTD"
+
+# --- Watchlist: value and quality --------------------------------------------------------------------
+
+[[manager]]
+slug = "berkshire-hathaway"
+name = "Berkshire Hathaway"
+kind = "listed_vehicle"
+style = ["quality", "value"]
+strategy = ["long_only"]
+asset_focus = ["equities"]
+geography = ["us"]
+notes = "Mostly operating businesses; 14 other included managers on its 13F"
+  [[manager.filer]]
+  cik = 1067983
+  edgar_name = "BERKSHIRE HATHAWAY INC"
+
+[[manager]]
+slug = "baupost"
+name = "Baupost Group"
+kind = "manager"
+style = ["value", "deep_value"]
+strategy = ["event_driven", "credit_and_distressed"]
+asset_focus = ["multi_asset"]
+geography = ["global"]
+notes = "Still reports 13F values in thousands in 2026 (W-025)"
+  [[manager.filer]]
+  cik = 1061768
+  edgar_name = "BAUPOST GROUP LLC/MA"
+
+[[manager]]
+slug = "akre"
+name = "Akre Capital Management"
+kind = "manager"
+style = ["quality"]
+strategy = ["long_only"]
+asset_focus = ["equities"]
+geography = ["us"]
+  [[manager.filer]]
+  cik = 1112520
+  edgar_name = "AKRE CAPITAL MANAGEMENT LLC"
+
+[[manager]]
+slug = "himalaya"
+name = "Himalaya Capital Management"
+kind = "manager"
+style = ["value", "quality"]
+strategy = ["long_only"]
+asset_focus = ["equities"]
+geography = ["asia", "us"]
+  [[manager.filer]]
+  cik = 1709323
+  edgar_name = "Himalaya Capital Management LLC"
+
+[[manager]]
+slug = "fundsmith"
+name = "Fundsmith"
+kind = "manager"
+style = ["quality"]
+strategy = ["long_only"]
+asset_focus = ["equities"]
+geography = ["global"]
+notes = "Two parallel filers with separate books, summed (W-024)"
+  [[manager.filer]]
+  cik = 1569205
+  edgar_name = "Fundsmith LLP"
+  [[manager.filer]]
+  cik = 1868537
+  edgar_name = "FUNDSMITH INVESTMENT SERVICES LTD."
+
+[[manager]]
+slug = "southeastern"
+name = "Southeastern Asset Management (Longleaf)"
+kind = "manager"
+style = ["value"]
+strategy = ["long_only"]
+asset_focus = ["equities"]
+geography = ["global"]
+notes = "Engages with managements, short of formal activism"
+  [[manager.filer]]
+  cik = 807985
+  edgar_name = "SOUTHEASTERN ASSET MANAGEMENT INC/TN/"
+
+[[manager]]
+slug = "tci"
+name = "TCI Fund Management"
+kind = "manager"
+style = ["quality"]
+strategy = ["activist", "long_only"]
+asset_focus = ["equities"]
+geography = ["global"]
+notes = "Concentrated; much of the book in Europe"
+  [[manager.filer]]
+  cik = 1647251
+  edgar_name = "TCI Fund Management Ltd"
+
+[[manager]]
+slug = "greenlight"
+name = "Greenlight Capital"
+kind = "manager"
+style = ["value"]
+strategy = ["long_short"]
+asset_focus = ["equities"]
+geography = ["us"]
+notes = "Also holds gold and macro positions the 13F does not show"
+  [[manager.filer]]
+  cik = 1079114
+  edgar_name = "GREENLIGHT CAPITAL INC"
+  last_quarter = 2023-12-31
+  [[manager.filer]]
+  cik = 1489933
+  edgar_name = "DME Capital Management, LP"
+  first_quarter = 2024-03-31
+  note = "Filed 13F-NT through 2023 Q4, full reports from 2024 Q1; lists Greenlight Masters as an included manager"
+
+# --- Watchlist: activist -----------------------------------------------------------------------------
+
+[[manager]]
+slug = "pershing-square"
+name = "Pershing Square"
+kind = "manager"
+style = ["quality"]
+strategy = ["activist", "long_only"]
+asset_focus = ["equities"]
+geography = ["us"]
+notes = "Concentrated; uses hedges"
+  [[manager.filer]]
+  cik = 1336528
+  edgar_name = "Pershing Square Capital Management, L.P."
+  last_quarter = 2026-03-31
+  note = "13F-NT from 2026 Q2"
+  [[manager.filer]]
+  cik = 2026053
+  edgar_name = "PERSHING SQUARE INC."
+  first_quarter = 2025-06-30
+  note = "2025 Q2 to 2026 Q1: one line (its own 9.0m Howard Hughes shares) beside PSCM's report, summed; full report from 2026 Q2"
+
+[[manager]]
+slug = "third-point"
+name = "Third Point"
+kind = "manager"
+style = ["special_situations"]
+strategy = ["event_driven", "activist", "long_short"]
+asset_focus = ["multi_asset"]
+geography = ["global"]
+  [[manager.filer]]
+  cik = 1040273
+  edgar_name = "Third Point LLC"
+
+[[manager]]
+slug = "elliott"
+name = "Elliott Investment Management"
+kind = "manager"
+style = ["special_situations"]
+strategy = ["activist", "event_driven", "credit_and_distressed", "multi_strategy"]
+asset_focus = ["multi_asset"]
+geography = ["global"]
+  [[manager.filer]]
+  cik = 1791786
+  edgar_name = "Elliott Investment Management L.P."
+
+[[manager]]
+slug = "starboard"
+name = "Starboard Value"
+kind = "manager"
+style = ["value"]
+strategy = ["activist"]
+asset_focus = ["equities"]
+geography = ["us"]
+  [[manager.filer]]
+  cik = 1517137
+  edgar_name = "Starboard Value LP"
+
+[[manager]]
+slug = "valueact"
+name = "ValueAct"
+kind = "manager"
+style = ["value", "quality"]
+strategy = ["activist"]
+asset_focus = ["equities"]
+geography = ["us"]
+  [[manager.filer]]
+  cik = 1418814
+  edgar_name = "ValueAct Holdings, L.P."
+
+[[manager]]
+slug = "trian"
+name = "Trian Fund Management"
+kind = "manager"
+style = ["value", "quality"]
+strategy = ["activist"]
+asset_focus = ["equities"]
+geography = ["us"]
+  [[manager.filer]]
+  cik = 1345471
+  edgar_name = "TRIAN FUND MANAGEMENT, L.P."
+
+[[manager]]
+slug = "jana"
+name = "JANA Partners"
+kind = "manager"
+style = ["value"]
+strategy = ["activist", "event_driven"]
+asset_focus = ["equities"]
+geography = ["us"]
+  [[manager.filer]]
+  cik = 1159159
+  edgar_name = "JANA PARTNERS LLC"
+  last_quarter = 2023-06-30
+  [[manager.filer]]
+  cik = 1998597
+  edgar_name = "JANA Partners Management, LP"
+  first_quarter = 2023-09-30
+
+# --- Watchlist: macro, opportunistic and credit ------------------------------------------------------
+
+[[manager]]
+slug = "duquesne"
+name = "Duquesne Family Office"
+kind = "manager"
+style = ["growth?"]
+strategy = ["macro"]
+asset_focus = ["multi_asset"]
+geography = ["global"]
+notes = "Still reports 13F values in thousands in 2026 (W-025); equity book only in the 13F"
+  [[manager.filer]]
+  cik = 1536411
+  edgar_name = "Duquesne Family Office LLC"
+
+[[manager]]
+slug = "appaloosa"
+name = "Appaloosa"
+kind = "manager"
+style = ["deep_value", "special_situations"]
+strategy = ["event_driven", "credit_and_distressed"]
+asset_focus = ["multi_asset"]
+geography = ["us"]
+  [[manager.filer]]
+  cik = 1656456
+  edgar_name = "Appaloosa LP"
+
+[[manager]]
+slug = "oaktree"
+name = "Oaktree Capital Management"
+kind = "manager"
+style = ["deep_value"]
+strategy = ["credit_and_distressed"]
+asset_focus = ["credit"]
+geography = ["global"]
+notes = "Mostly credit: the 13F shows a small slice. Howard Marks's memos are the richer source"
+  [[manager.filer]]
+  cik = 949509
+  edgar_name = "OAKTREE CAPITAL MANAGEMENT LP"
+
+[[manager]]
+slug = "whitebox"
+name = "Whitebox Advisors"
+kind = "manager"
+active = false
+style = ["special_situations?"]
+strategy = ["multi_strategy", "credit_and_distressed"]
+asset_focus = ["multi_asset"]
+geography = ["us"]
+notes = "Not tracked (W-010): multi-strategy book; Andy Redleaf has left. His public writing is a possible letters source"
+  [[manager.filer]]
+  cik = 1257391
+  edgar_name = "WHITEBOX ADVISORS LLC"
+
+# --- Added by the owner ------------------------------------------------------------------------------
+
+[[manager]]
+slug = "pm-capital"
+name = "PM Capital"
+kind = "manager"
+style = ["value", "deep_value"]
+strategy = ["long_only?", "long_short?"]
+asset_focus = ["equities"]
+geography = ["global"]
+notes = "Australian; no US 13F. Single-company theses by named PMs"
+
+[[manager]]
+slug = "praetorian"
+name = "Praetorian Capital (Harris Kupperman)"
+kind = "manager"
+style = ["special_situations", "deep_value?"]
+strategy = ["event_driven", "long_short?"]
+asset_focus = ["natural_resources", "equities"]
+geography = ["global"]
+  [[manager.filer]]
+  cik = 1337851
+  edgar_name = "Praetorian Capital Management LLC"
+  note = "No 13F-HR since 2023; files 13D and 13G (W-031)"
+
+[[manager]]
+slug = "laughing-water"
+name = "Laughing Water Capital (Matt Sweeney)"
+kind = "manager"
+style = ["value", "special_situations"]
+strategy = ["long_only?"]
+asset_focus = ["equities"]
+geography = ["us"]
+notes = "Small caps; no 13F"
+
+[[manager]]
+slug = "stone-sentinel"
+name = "Stone Sentinel Capital"
+kind = "manager"
+active = false
+notes = "Seen on Hedge Fund Alpha; too little known to tag"
+
+# --- Topic writers (CIKs checked against EDGAR 2026-10-09) --------------------------------------------
+
+[[manager]]
+slug = "apollo-slok"
+name = "Torsten Sløk (Apollo)"
+kind = "economist_or_strategist"
+strategy = ["credit_and_distressed", "multi_strategy"]
+asset_focus = ["multi_asset"]
+geography = ["global"]
+notes = "Apollo's chief economist. The firm's 13F (CIK 1449434) is not a public-equity book, so it is not linked"
+
+[[manager]]
+slug = "hussman"
+name = "Hussman Strategic Advisors"
+kind = "manager"
+style = ["value"]
+strategy = ["long_short?"]
+asset_focus = ["multi_asset"]
+geography = ["us"]
+  [[manager.filer]]
+  cik = 1179475
+  edgar_name = "HUSSMAN STRATEGIC ADVISORS, INC."
+
+[[manager]]
+slug = "lyn-alden"
+name = "Lyn Alden"
+kind = "independent_writer"
+strategy = ["macro"]
+asset_focus = ["multi_asset"]
+geography = ["global"]
+
+[[manager]]
+slug = "smead"
+name = "Smead Capital Management"
+kind = "manager"
+style = ["value"]
+strategy = ["long_only"]
+asset_focus = ["equities"]
+geography = ["us"]
+  [[manager.filer]]
+  cik = 1427008
+  edgar_name = "Smead Capital Management, Inc."
+
+[[manager]]
+slug = "gmo"
+name = "GMO (Grantham, Mayo, Van Otterloo)"
+kind = "manager"
+style = ["value", "quality"]
+strategy = ["macro", "multi_strategy"]
+asset_focus = ["multi_asset"]
+geography = ["global"]
+  [[manager.filer]]
+  cik = 1352662
+  edgar_name = "Grantham, Mayo, Van Otterloo & Co. LLC"
+
+[[manager]]
+slug = "crescat"
+name = "Crescat Capital"
+kind = "manager"
+strategy = ["macro", "long_short"]
+asset_focus = ["natural_resources", "multi_asset"]
+geography = ["global"]
+notes = "No 13F filer found"
+
+[[manager]]
+slug = "hoisington"
+name = "Hoisington Investment Management"
+kind = "manager"
+strategy = ["macro"]
+asset_focus = ["credit"]
+geography = ["us"]
+notes = "Treasuries; no 13F filer found"
+
+[[manager]]
+slug = "fairfax"
+name = "Fairfax Financial (Prem Watsa)"
+kind = "listed_vehicle"
+style = ["value", "deep_value"]
+strategy = ["macro?"]
+asset_focus = ["multi_asset"]
+geography = ["global"]
+notes = "Insurance float; macro hedges"
+  [[manager.filer]]
+  cik = 915191
+  edgar_name = "FAIRFAX FINANCIAL HOLDINGS LTD/ CAN"
+
+[[manager]]
+slug = "brookfield"
+name = "Brookfield (Bruce Flatt)"
+kind = "manager"
+style = ["quality"]
+strategy = ["long_only"]
+asset_focus = ["multi_asset"]
+geography = ["global"]
+notes = "Real assets (no separate tag, owner 2026-10-08)"
+  [[manager.filer]]
+  cik = 1001085
+  edgar_name = "BROOKFIELD Corp /ON/"
+
+[[manager]]
+slug = "goehring-rozencwajg"
+name = "Goehring & Rozencwajg"
+kind = "manager"
+style = ["deep_value"]
+strategy = ["long_only"]
+asset_focus = ["natural_resources"]
+geography = ["global"]
+  [[manager.filer]]
+  cik = 1863154
+  edgar_name = "Goehring & Rozencwajg Associates, LLC"
+
+[[manager]]
+slug = "horizon-kinetics"
+name = "Horizon Kinetics (Murray Stahl)"
+kind = "manager"
+style = ["value", "deep_value"]
+strategy = ["long_only"]
+asset_focus = ["equities", "natural_resources"]
+geography = ["global"]
+  [[manager.filer]]
+  cik = 1056823
+  edgar_name = "HORIZON KINETICS ASSET MANAGEMENT LLC"
+
+[[manager]]
+slug = "kopernik"
+name = "Kopernik Global Investors (David Iben)"
+kind = "manager"
+style = ["deep_value"]
+strategy = ["long_only"]
+asset_focus = ["equities", "natural_resources"]
+geography = ["global", "emerging_markets"]
+  [[manager.filer]]
+  cik = 1599814
+  edgar_name = "Kopernik Global Investors, LLC"
+
+[[manager]]
+slug = "sprott"
+name = "Sprott"
+kind = "manager"
+strategy = ["long_only"]
+asset_focus = ["natural_resources"]
+geography = ["global"]
+  [[manager.filer]]
+  cik = 1512920
+  edgar_name = "SPROTT INC."
+
+[[manager]]
+slug = "us-global-investors"
+name = "U.S. Global Investors (Frank Holmes)"
+kind = "manager"
+strategy = ["long_only"]
+asset_focus = ["natural_resources"]
+geography = ["global"]
+  [[manager.filer]]
+  cik = 754811
+  edgar_name = "U S GLOBAL INVESTORS INC"
+
+[[manager]]
+slug = "bridgewater"
+name = "Bridgewater Associates"
+kind = "manager"
+strategy = ["macro"]
+asset_focus = ["multi_asset"]
+geography = ["global"]
+  [[manager.filer]]
+  cik = 1350694
+  edgar_name = "Bridgewater Associates, LP"
+
+[[manager]]
+slug = "fpa"
+name = "FPA (Steven Romick)"
+kind = "manager"
+style = ["value"]
+strategy = ["long_only"]
+asset_focus = ["multi_asset"]
+geography = ["global"]
+  [[manager.filer]]
+  cik = 1377581
+  edgar_name = "First Pacific Advisors, LP"
+
+[[manager]]
+slug = "incrementum"
+name = "Incrementum (In Gold We Trust)"
+kind = "manager"
+strategy = ["macro"]
+asset_focus = ["natural_resources"]
+geography = ["europe"]
+notes = "Not a US filer"
+
+[[manager]]
+slug = "semper-augustus"
+name = "Semper Augustus (Chris Bloomstran)"
+kind = "manager"
+style = ["quality", "value"]
+strategy = ["long_only"]
+asset_focus = ["equities"]
+geography = ["us"]
+  [[manager.filer]]
+  cik = 1115373
+  edgar_name = "SEMPER AUGUSTUS INVESTMENTS GROUP LLC"
+
+[[manager]]
+slug = "oakmark"
+name = "Oakmark (Harris Associates)"
+kind = "manager"
+style = ["value"]
+strategy = ["long_only"]
+asset_focus = ["equities"]
+geography = ["us", "europe"]
+  [[manager.filer]]
+  cik = 813917
+  edgar_name = "HARRIS ASSOCIATES L P"
+
+[[manager]]
+slug = "ark"
+name = "ARK Invest"
+kind = "manager"
+style = ["growth"]
+strategy = ["long_only"]
+asset_focus = ["equities"]
+geography = ["global"]
+  [[manager.filer]]
+  cik = 1697748
+  edgar_name = "ARK Investment Management LLC"
+
+[[manager]]
+slug = "baillie-gifford"
+name = "Baillie Gifford"
+kind = "manager"
+style = ["growth"]
+strategy = ["long_only"]
+asset_focus = ["equities"]
+geography = ["global"]
+  [[manager.filer]]
+  cik = 1088875
+  edgar_name = "BAILLIE GIFFORD & CO"

@@ -9,8 +9,9 @@ import os
 import psycopg
 import pytest
 
+from whales import config
 from whales.cli import load_env_file
-from whales.db import admin, migrate
+from whales.db import admin, migrate, sync
 from whales.db.connect import Database, DbSettings
 
 pytestmark = pytest.mark.live
@@ -81,6 +82,18 @@ def test_role_privileges(db, role, kind, target, privilege, expected):
     else:
         sql, params = f"SELECT has_{kind}_privilege(%s, %s, %s)", (role, target, privilege)
     assert _one(db, sql, params) is expected
+
+
+def test_config_is_in_sync(db):
+    changes = sync.plan(config.load(), sync.read_current(db))
+    assert [c.what for c in changes if c.sql] == []
+
+
+def test_synced_sources_are_inactive_until_approved(db):
+    rows = db.run(
+        "SELECT slug FROM letters.source WHERE active AND (approved_by IS NULL OR approved_at IS NULL)"
+    )
+    assert rows == []
 
 
 def test_no_role_can_delete(db):

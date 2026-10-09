@@ -1,0 +1,34 @@
+# The controlled manager-tag list (W-038). Loaded into core.tag by `whales config sync`.
+# A manager can carry several tags per facet. Kind (manager, listed vehicle, writer, economist) is not a
+# tag: it is a column on core.manager (W-039). Codes are snake_case; descriptions are for people.
+
+[style]
+value = "Buys below an estimate of intrinsic value"
+deep_value = "Statistically cheap, contrarian or distressed equity; accepts controversy"
+quality = "Durable, high-return businesses held for long periods"
+growth = "Pays up for revenue or earnings growth"
+special_situations = "Spin-offs, restructurings, catalysts and other one-off set-ups"
+
+[strategy]
+long_only = "Long book only, or nearly so"
+long_short = "Runs short positions as well as longs"
+market_neutral = "Longs and shorts balanced to limit market exposure"
+activist = "Seeks change at companies, publicly or privately"
+event_driven = "Trades around mergers, spin-offs, restructurings and other events"
+macro = "Positions on rates, currencies, commodities and economies"
+credit_and_distressed = "Credit, distressed debt and post-reorganisation equity"
+multi_strategy = "Several strategies under one roof"
+crossover = "Holds private as well as public companies; the 13F shows only the public part"
+
+[asset_focus]
+equities = "Mainly listed equities"
+credit = "Mainly bonds and loans"
+natural_resources = "Commodities, miners, energy and other resource businesses"
+multi_asset = "Several asset classes"
+
+[geography]
+us = "Mainly US"
+global = "Worldwide"
+europe = "Mainly Europe"
+asia = "Mainly Asia"
+emerging_markets = "Mainly emerging markets"

@@ -4,6 +4,8 @@
     whales db revoke-public-connect <database>       show the statement; add --apply to run it
     whales db bootstrap-roles <database>             the whales_ group roles and database rights; --apply
     whales db migrate                                pending migrations on WHALES_DB_NAME; --apply
+    whales config check                              validate config/ (no database)
+    whales config sync                               config/ into WHALES_DB_NAME; --apply
 
 Admin commands run as the Entra admin (``az login``), so they need ``WHALES_DB_HOST`` and a temporary
 firewall rule for this machine. Every command shows what it would do unless given --apply.
@@ -16,7 +18,8 @@ import os
 import sys
 from pathlib import Path
 
-from .db import admin, migrate
+from . import config
+from .db import admin, migrate, sync
 from .db.connect import Database, DbSettings
 
 
@@ -105,6 +108,38 @@ def cmd_migrate(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_config_check(args: argparse.Namespace) -> int:
+    cfg = config.load()
+    print(
+        f"config ok: {len(cfg.tags)} tags, {len(cfg.topics)} topics, {len(cfg.managers)} managers "
+        f"({sum(len(m.filers) for m in cfg.managers)} filers, "
+        f"{sum(len(m.tags) for m in cfg.managers)} tag proposals), {len(cfg.sources)} letter sources "
+        f"({sum(s.active for s in cfg.sources)} active)"
+    )
+    return 0
+
+
+def cmd_config_sync(args: argparse.Namespace) -> int:
+    cfg = config.load()
+    with Database(DbSettings.from_env()) as db:
+        changes = sync.plan(cfg, sync.read_current(db))
+        counts: dict[str, int] = {}
+        for c in changes:
+            counts[c.action] = counts.get(c.action, 0) + 1
+            if args.verbose or c.action in ("update", "deactivate", "note"):
+                print(f"   {c.action:<10} {c.what}")
+        print(
+            f"database {db.settings.dbname}: "
+            + (", ".join(f"{n} {a}" for a, n in sorted(counts.items())) or "in step")
+        )
+        if not args.apply:
+            if any(c.sql for c in changes):
+                print("(dry run: nothing changed; add --apply)")
+            return 0
+        print(f"applied {sync.apply(db, changes)} change(s)")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(
         prog="whales", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
@@ -130,6 +165,16 @@ def build_parser() -> argparse.ArgumentParser:
     p = db.add_parser("migrate", help="apply pending migrations to WHALES_DB_NAME as whales_owner")
     p.add_argument("--apply", action="store_true", help="apply them (default: list only)")
     p.set_defaults(func=cmd_migrate)
+
+    cfg = sub.add_parser("config", help="the config/ files").add_subparsers(dest="command", required=True)
+    p = cfg.add_parser("check", help="validate config/ without touching the database")
+    p.set_defaults(func=cmd_config_check)
+    p = cfg.add_parser("sync", help="write config/ to WHALES_DB_NAME as whales_owner")
+    p.add_argument("--apply", action="store_true", help="apply the changes (default: list only)")
+    p.add_argument(
+        "-v", "--verbose", action="store_true", help="list inserts too, not only updates and notes"
+    )
+    p.set_defaults(func=cmd_config_sync)
     return ap
 
 
