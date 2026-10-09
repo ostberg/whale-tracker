@@ -100,7 +100,9 @@ Database work from a developer machine needs `az login` as the Entra admin and a
 the machine's address, removed afterwards. `whales db connect-paths <database>` shows who can connect (read
 only); `whales db revoke-public-connect <database> --apply` removes PUBLIC's default grant;
 `whales db bootstrap-roles <database> --apply` creates the `whales_` roles; `whales db migrate --apply`
-applies pending migrations. `pytest -m live` checks the database's ownership, grants and safeguards.
+applies pending migrations. `whales config check` validates `config/` without a database; `whales config
+sync --apply` writes it to the database (inserts and updates only, never deletes). `pytest -m live` checks
+the database's ownership, grants, safeguards and that it is in step with config.
 
 Tooling, copied from the Tamale repo (W-022): Python 3.13, setuptools, pip-tools hash-pinned locks
 (`pip-compile --generate-hashes`; runtime lock feeds the image, dev lock is constrained to it), Ruff (line length
@@ -137,11 +139,14 @@ Whale Tracker/
   AGENTS.md, CLAUDE.md
   pyproject.toml, requirements*.lock
   config/
-    managers.yaml        watchlist: manager, tags, filer CIKs with quarter ranges, excluded filings
-    tags.yaml            controlled manager-tag list by facet (W-038)
-    rating_rubric.yaml   letter-rating dimensions and anchors (W-036)
-    topics.yaml          controlled topic list and the securities mapped to each
-    letter_sources.yaml  one entry per approved public letter source
+    (TOML, read with the standard library; loaded by `whales config sync`, W-040)
+    managers.toml        managers and writers, kind, filer CIKs with quarter ranges, excluded filings,
+                         tag proposals
+    tags.toml            controlled manager-tag list by facet (W-038)
+    topics.toml          controlled topic list (W-018); the securities mapped to each come in phase 3
+    letter_sources.toml  every candidate source with tier, mode, cadence and permission flags; inactive
+                         until approved
+    rating_rubric.toml   letter-rating dimensions and anchors (W-036), not yet written
   src/whales/
     sources/             edgar.py, figi.py, prices.py, letters.py
     parse/               form13f.py, schedule13.py, letter_extract.py
@@ -195,7 +200,7 @@ Key tables:
 - `core.price_daily`: adjusted close per security per day, with its source.
 - `core.event_return`: return per event per window against benchmarks.
 - `letters.source`: one approved source: manager, URL, tier (W-029), collection mode `auto` or `manual`
-  (W-033), cadence, permission basis. Loaded from `config/letter_sources.yaml`.
+  (W-033), cadence, permission basis. Loaded from `config/letter_sources.toml`.
 - `letters.expected`: the next letter due per source and period, with its due window (from cadence and past
   publication lag), reminder history, assignee and status (awaiting, loaded, not yet published, skipped).
 - `letters.document`: source URL, publish date, content hash, tier, how it was collected, permitted use,
@@ -206,7 +211,7 @@ Key tables:
 - `letters.prediction`: one row per explicit call: subject, direction, horizon, condition, confidence
   wording, quote, status (open, right, wrong, partly right, unresolvable) and who scored it (W-037).
 - `core.topic`: the controlled topic list (id, name, parent, description, aliases). Loaded from
-  `config/topics.yaml`.
+  `config/topics.toml`.
 - `core.topic_security`: which securities count toward a topic (for example gold miners and gold ETFs for
   gold; homebuilders, building products and timber for housing), with the reason for each.
 - `letters.topic_mention`: topic discussed in a letter; stance (positive, negative, mixed, neutral), short

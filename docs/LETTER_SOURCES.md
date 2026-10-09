@@ -2,7 +2,7 @@
 
 The register of candidate letter sources: each one's tier (W-029) and what is known about the right to fetch,
 store and machine-read it. This is evidence, not configuration: approved sources go into
-`config/letter_sources.yaml` after the compliance ruling. Everything here was checked on 2026-10-08 unless
+`config/letter_sources.toml`, inactive until the compliance ruling. Everything here was checked on 2026-10-08 unless
 marked (I) for inferred.
 
 ## Three kinds of restriction, and what fixes each (W-035)

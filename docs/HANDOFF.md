@@ -2,6 +2,36 @@
 
 Dated entries, newest first: what changed, what is verified, what is next.
 
+## 2026-10-09 (later): config files and `whales config sync`
+
+**Owner direction.** "Go ahead with config files and config sync."
+
+**What changed.**
+- `config/tags.toml` (23 tags) and `config/topics.toml` (10 topics; lumber under housing, edge compute under
+  AI).
+- `config/managers.toml`: 57 managers and writers, 54 filers with the verified successions, 261 tag proposals
+  (14 marked uncertain), and one excluded filing (the Situational Awareness duplicate).
+- `config/letter_sources.toml`: 44 sources (20 tier-1 auto, 12 tier-1 manual, 12 tier-2 SEC), every one
+  inactive. Fundsmith, Third Point/Malibu and Sprott have `use_allowed = false`.
+- `src/whales/config.py`: loads with `tomllib` and validates, reporting every problem at once.
+- `src/whales/db/sync.py`: plans, then applies as `whales_owner` in one transaction. Never deletes.
+- Commands `whales config check` and `whales config sync`.
+- Tests: 43 unit, 19 live. W-040 recorded; AGENTS.md layout and commands updated.
+
+**Verified.**
+- The writers' 17 CIKs were checked against EDGAR (2026-10-09); all match and file current 13Fs.
+  Praetorian, PSUS and Greenlight Re file no 13F, as expected.
+- The first sync wrote 449 rows to `whales_dev`; the second reported nothing to do.
+- Spot checks: the Greenlight hand-over (filer 1079114 to 2023 Q4, DME 1489933 from 2024 Q1) and the
+  restricted sources' flags are correct.
+- The temporary firewall rule `whales-dev-temp-20261009b` was removed.
+
+**Next.**
+1. A command to ratify, reject and correct tags (insert-only `core.tag_decision`).
+2. The first auto source collector, once compliance approves a source. A tier-2 SEC source (PSUS N-CSRS or a
+   13D exhibit) needs no ruling on terms and is a natural first.
+3. The model seam and the Foundry endpoint.
+
 ## 2026-10-09: schema designed, reviewed and applied (migration 0001); phase 1 gate met
 
 **Owner direction.**

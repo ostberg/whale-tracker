@@ -93,5 +93,5 @@ Writing tests run in transactions that roll back; the tables were empty afterwar
   on the shared server. Text is stored only where the copy's `storage_allowed` is true (W-032).
 - **The ingest identity:** create it with `pgaadauth_create_principal_with_oid`, make it a member of
   `whales_ingest`, and grant CONNECT on `whales` only. This is phase 4, with the Azure job.
-- **`whales config sync`:** the admin command that loads managers, filers, sources, tags and topics from
-  `config/`.
+- **`whales config sync`** (built 2026-10-09, W-040) loads managers, filers, tag proposals, sources, tags and
+  topics from `config/` as `whales_owner`. Ingest only reads these tables.

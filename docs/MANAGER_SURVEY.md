@@ -1,7 +1,7 @@
 # Manager survey, 2026-10-08
 
 The candidate managers checked against EDGAR, so the owner can choose the watchlist from facts. This is
-evidence, not configuration: the watchlist itself goes in `config/managers.yaml` once the owner has chosen.
+evidence, not configuration: the watchlist itself is `config/managers.toml`.
 
 ## Method
 
