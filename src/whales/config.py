@@ -110,6 +110,16 @@ class Source:
     approved_by: str | None
     approved_at: date | None
     active: bool
+    edgar: EdgarRule | None = None
+
+
+@dataclass(frozen=True)
+class EdgarRule:
+    """How a tier-2 source finds its documents: a preset from ``whales.sources.sec_letters`` and the filer
+    CIKs to watch. Not stored in the database; the collector reads it from config."""
+
+    preset: str
+    ciks: tuple[int, ...]
 
 
 @dataclass(frozen=True)
@@ -120,6 +130,7 @@ class Config:
     sources: tuple[Source, ...]
     tags_proposed_by: str
     tags_valid_from: date
+    edgar_since: date | None = None
 
 
 def _read(directory: Path, name: str) -> dict:
@@ -135,14 +146,20 @@ def load(directory: Path | None = None) -> Config:
     topics = _topics(_read(d, "topics.toml"), problems)
     raw_managers = _read(d, "managers.toml")
     managers = _managers(raw_managers, {(t.facet, t.tag) for t in tags}, problems)
-    sources = _sources(_read(d, "letter_sources.toml"), {m.slug for m in managers}, problems)
+    raw_sources = _read(d, "letter_sources.toml")
+    sources = _sources(raw_sources, {m.slug for m in managers}, problems)
     proposed_by = raw_managers.get("tags_proposed_by", "")
     valid_from = raw_managers.get("tags_valid_from")
     if not proposed_by or not isinstance(valid_from, date):
         problems.append("managers.toml: tags_proposed_by and tags_valid_from (a date) are required")
+    edgar_since = raw_sources.get("edgar_since")
+    if any(s.edgar for s in sources) and not isinstance(edgar_since, date):
+        problems.append(
+            "letter_sources.toml: edgar_since (a date) is required when any source has an edgar rule"
+        )
     if problems:
         raise ConfigError(problems)
-    return Config(tags, topics, managers, sources, proposed_by, valid_from)
+    return Config(tags, topics, managers, sources, proposed_by, valid_from, edgar_since)
 
 
 def _tags(raw: dict, problems: list[str]) -> tuple[Tag, ...]:
@@ -285,6 +302,7 @@ def _sources(raw: dict, managers: set[str], problems: list[str]) -> tuple[Source
             problems.append(
                 f"{where}: an active source needs approved_by and approved_at (compliance ruling)"
             )
+        edgar = _edgar_rule(s.get("edgar"), s.get("tier"), where, problems)
         out.append(
             Source(
                 slug,
@@ -302,6 +320,24 @@ def _sources(raw: dict, managers: set[str], problems: list[str]) -> tuple[Source
                 approved_by,
                 approved_at,
                 active,
+                edgar,
             )
         )
     return tuple(out)
+
+
+def _edgar_rule(raw: dict | None, tier: int | None, where: str, problems: list[str]) -> EdgarRule | None:
+    from .sources.sec_letters import PRESETS
+
+    if raw is None:
+        if tier == 2:
+            problems.append(f"{where}: a tier-2 (SEC) source needs an edgar rule")
+        return None
+    if tier != 2:
+        problems.append(f"{where}: only tier-2 (SEC) sources take an edgar rule")
+    preset, ciks = raw.get("preset"), raw.get("ciks", [])
+    if preset not in PRESETS:
+        problems.append(f"{where}: edgar preset must be one of {sorted(PRESETS)}")
+    if not ciks or not all(isinstance(c, int) and c > 0 for c in ciks):
+        problems.append(f"{where}: edgar ciks must be a non-empty list of positive integers")
+    return EdgarRule(str(preset), tuple(ciks))

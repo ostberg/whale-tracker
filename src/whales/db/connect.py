@@ -114,9 +114,14 @@ class DbSettings:
 class Database:
     """One autocommit connection, opened on first use and reopened once if a statement fails."""
 
-    def __init__(self, settings: DbSettings, token_source: Callable[[], str] | None = None):
+    def __init__(
+        self, settings: DbSettings, token_source: Callable[[], str] | None = None, *, role: str | None = None
+    ):
+        """``role``: a group role to act as for the whole session (``SET ROLE``), e.g. ``whales_ingest``, so a
+        developer's run is held to exactly the job's privileges."""
         self.settings = settings
         self._token_source = token_source or default_token_source()
+        self._role = role
         self._conn = None
 
     def _connect(self):
@@ -133,6 +138,10 @@ class Database:
             autocommit=True,
             connect_timeout=20,
         )
+        if self._role:
+            from .admin import quote_ident
+
+            self._conn.execute(f"SET ROLE {quote_ident(self._role)}")
         return self._conn
 
     def connection(self):

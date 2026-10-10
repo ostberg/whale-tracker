@@ -9,6 +9,11 @@
 #   storage_allowed    false everywhere except SEC filings: most terms bar copying or reproduction (W-032)
 #   use_allowed        false where terms ban AI, automated text analysis, text mining or data mining (W-035)
 # Tier: 1 published by the manager, 2 an SEC filing, 3 a licensed republisher (none yet). Tier 4 never here.
+#
+# SEC sources (tier 2) carry an `edgar` rule: a preset from src/whales/sources/sec_letters.py and the filer
+# CIKs to watch. `edgar_since` is the collection window: phase 2 looks two years back.
+
+edgar_since = 2024-10-01
 
 # --- Owner's priority managers ------------------------------------------------------------------------
 
@@ -233,7 +238,11 @@ cadence = "semiannual"
 access_restricted = false
 storage_allowed = true
 use_allowed = true
-permission_basis = "Public SEC filing"
+permission_basis = "Public SEC filing; the owner approved SEC collection on 2026-10-10"
+edgar = { preset = "ncsr", ciks = [2002660] }
+approved_by = "Peter Ostberg (owner): 'go ahead with the SEC collector'"
+approved_at = 2026-10-10
+active = true
 
 [[source]]
 slug = "greenlight-re-8k"
@@ -246,7 +255,11 @@ cadence = "quarterly"
 access_restricted = false
 storage_allowed = true
 use_allowed = true
-permission_basis = "Public SEC filing"
+permission_basis = "Public SEC filing; the owner approved SEC collection on 2026-10-10"
+edgar = { preset = "earnings_8k", ciks = [1385613] }
+approved_by = "Peter Ostberg (owner): 'go ahead with the SEC collector'"
+approved_at = 2026-10-10
+active = true
 
 [[source]]
 slug = "elliott-edgar"
@@ -259,7 +272,11 @@ cadence = "irregular"
 access_restricted = false
 storage_allowed = true
 use_allowed = true
-permission_basis = "Public SEC filing (W-031)"
+permission_basis = "Public SEC filing (W-031); the owner approved SEC collection on 2026-10-10"
+edgar = { preset = "activist", ciks = [1791786] }
+approved_by = "Peter Ostberg (owner): 'go ahead with the SEC collector'"
+approved_at = 2026-10-10
+active = true
 
 [[source]]
 slug = "starboard-edgar"
@@ -272,7 +289,11 @@ cadence = "irregular"
 access_restricted = false
 storage_allowed = true
 use_allowed = true
-permission_basis = "Public SEC filing (W-031)"
+permission_basis = "Public SEC filing (W-031); the owner approved SEC collection on 2026-10-10"
+edgar = { preset = "activist", ciks = [1517137] }
+approved_by = "Peter Ostberg (owner): 'go ahead with the SEC collector'"
+approved_at = 2026-10-10
+active = true
 
 [[source]]
 slug = "jana-edgar"
@@ -285,7 +306,11 @@ cadence = "irregular"
 access_restricted = false
 storage_allowed = true
 use_allowed = true
-permission_basis = "Public SEC filing (W-031)"
+permission_basis = "Public SEC filing (W-031); the owner approved SEC collection on 2026-10-10"
+edgar = { preset = "activist", ciks = [1998597, 1159159] }
+approved_by = "Peter Ostberg (owner): 'go ahead with the SEC collector'"
+approved_at = 2026-10-10
+active = true
 
 [[source]]
 slug = "trian-edgar"
@@ -298,7 +323,11 @@ cadence = "irregular"
 access_restricted = false
 storage_allowed = true
 use_allowed = true
-permission_basis = "Public SEC filing (W-031)"
+permission_basis = "Public SEC filing (W-031); the owner approved SEC collection on 2026-10-10"
+edgar = { preset = "activist", ciks = [1345471] }
+approved_by = "Peter Ostberg (owner): 'go ahead with the SEC collector'"
+approved_at = 2026-10-10
+active = true
 
 [[source]]
 slug = "pershing-square-edgar"
@@ -311,7 +340,11 @@ cadence = "irregular"
 access_restricted = false
 storage_allowed = true
 use_allowed = true
-permission_basis = "Public SEC filing (W-031)"
+permission_basis = "Public SEC filing (W-031); the owner approved SEC collection on 2026-10-10"
+edgar = { preset = "activist", ciks = [1336528, 2026053] }
+approved_by = "Peter Ostberg (owner): 'go ahead with the SEC collector'"
+approved_at = 2026-10-10
+active = true
 
 [[source]]
 slug = "third-point-edgar"
@@ -324,7 +357,11 @@ cadence = "irregular"
 access_restricted = false
 storage_allowed = true
 use_allowed = true
-permission_basis = "Public SEC filing (W-031)"
+permission_basis = "Public SEC filing (W-031); the owner approved SEC collection on 2026-10-10"
+edgar = { preset = "activist", ciks = [1040273] }
+approved_by = "Peter Ostberg (owner): 'go ahead with the SEC collector'"
+approved_at = 2026-10-10
+active = true
 
 [[source]]
 slug = "valueact-edgar"
@@ -337,7 +374,11 @@ cadence = "irregular"
 access_restricted = false
 storage_allowed = true
 use_allowed = true
-permission_basis = "Public SEC filing (W-031)"
+permission_basis = "Public SEC filing (W-031); the owner approved SEC collection on 2026-10-10"
+edgar = { preset = "activist", ciks = [1418814] }
+approved_by = "Peter Ostberg (owner): 'go ahead with the SEC collector'"
+approved_at = 2026-10-10
+active = true
 
 [[source]]
 slug = "tci-edgar"
@@ -350,7 +391,11 @@ cadence = "irregular"
 access_restricted = false
 storage_allowed = true
 use_allowed = true
-permission_basis = "Public SEC filing (W-031)"
+permission_basis = "Public SEC filing (W-031); the owner approved SEC collection on 2026-10-10"
+edgar = { preset = "activist", ciks = [1647251] }
+approved_by = "Peter Ostberg (owner): 'go ahead with the SEC collector'"
+approved_at = 2026-10-10
+active = true
 
 [[source]]
 slug = "appaloosa-edgar"
@@ -363,7 +408,11 @@ cadence = "irregular"
 access_restricted = false
 storage_allowed = true
 use_allowed = true
-permission_basis = "Public SEC filing (W-031)"
+permission_basis = "Public SEC filing (W-031); the owner approved SEC collection on 2026-10-10"
+edgar = { preset = "activist", ciks = [1656456] }
+approved_by = "Peter Ostberg (owner): 'go ahead with the SEC collector'"
+approved_at = 2026-10-10
+active = true
 
 [[source]]
 slug = "praetorian-edgar"
@@ -376,9 +425,13 @@ cadence = "irregular"
 access_restricted = false
 storage_allowed = true
 use_allowed = true
-permission_basis = "Public SEC filing (W-031)"
+permission_basis = "Public SEC filing (W-031); the owner approved SEC collection on 2026-10-10"
 
 # --- Topic writers -------------------------------------------------------------------------------------
+edgar = { preset = "activist", ciks = [1337851] }
+approved_by = "Peter Ostberg (owner): 'go ahead with the SEC collector'"
+approved_at = 2026-10-10
+active = true
 
 [[source]]
 slug = "hussman-comment"

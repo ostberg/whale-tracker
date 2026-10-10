@@ -6,6 +6,7 @@
     whales db migrate                                pending migrations on WHALES_DB_NAME; --apply
     whales config check                              validate config/ (no database)
     whales config sync                               config/ into WHALES_DB_NAME; --apply
+    whales collect sec [--source SLUG]               new SEC letters (tier 2) since edgar_since; --apply
 
 Admin commands run as the Entra admin (``az login``), so they need ``WHALES_DB_HOST`` and a temporary
 firewall rule for this machine. Every command shows what it would do unless given --apply.
@@ -18,9 +19,10 @@ import os
 import sys
 from pathlib import Path
 
-from . import config
+from . import collect, config
 from .db import admin, migrate, sync
 from .db.connect import Database, DbSettings
+from .sources.edgar import EdgarClient
 
 
 def load_env_file(path: Path = Path(".env")) -> None:
@@ -140,6 +142,29 @@ def cmd_config_sync(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_collect_sec(args: argparse.Namespace) -> int:
+    cfg = config.load()
+    sources = collect.sec_sources(cfg, args.source)
+    client = EdgarClient()
+    with Database(DbSettings.from_env(), role=collect.INGEST_ROLE) as db:
+        if args.apply:
+            results = collect.collect(db, client, cfg, sources, limit=args.limit)
+        else:
+            results = collect.survey(db, client, cfg, sources)
+    print(f"since {cfg.edgar_since}; {client.requests} SEC requests")
+    for r in results:
+        line = f"   {r.slug:<26} found {r.found:<4} new {len(r.new):<4}"
+        if args.apply:
+            line += f" collected {r.collected:<4} duplicates {r.duplicates}"
+        print(line + (f"  ERROR {r.error}" if r.error else ""))
+        if args.verbose:
+            for c in r.new:
+                print(f"        {c.filing.filed} {c.filing.accession} {c.title}")
+    if not args.apply:
+        print("(dry run: nothing fetched or written; add --apply)")
+    return 1 if any(r.error for r in results) else 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(
         prog="whales", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
@@ -175,6 +200,14 @@ def build_parser() -> argparse.ArgumentParser:
         "-v", "--verbose", action="store_true", help="list inserts too, not only updates and notes"
     )
     p.set_defaults(func=cmd_config_sync)
+
+    col = sub.add_parser("collect", help="collect letters").add_subparsers(dest="command", required=True)
+    p = col.add_parser("sec", help="tier-2 letters from SEC EDGAR, as whales_ingest")
+    p.add_argument("--source", action="append", help="only this source slug (repeatable)")
+    p.add_argument("--apply", action="store_true", help="fetch and record (default: list only)")
+    p.add_argument("--limit", type=int, help="at most this many new documents per source")
+    p.add_argument("-v", "--verbose", action="store_true", help="list each new document")
+    p.set_defaults(func=cmd_collect_sec)
     return ap
 
 

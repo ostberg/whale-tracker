@@ -77,6 +77,17 @@ def test_invalid_config_is_refused(tmp_path, managers, sources, expected):
     assert any(expected in p for p in e.value.problems), e.value.problems
 
 
+def test_sec_sources_need_an_edgar_rule(tmp_path):
+    sec = SOURCE.replace("tier = 1", "tier = 2")
+    with pytest.raises(config.ConfigError, match="needs an edgar rule"):
+        config.load(_write(tmp_path, sources=sec))
+    ruled = "edgar_since = 2024-10-01\n" + sec + 'edgar = { preset = "activist", ciks = [1] }\n'
+    assert config.load(_write(tmp_path, sources=ruled)).sources[0].edgar == config.EdgarRule("activist", (1,))
+    bad = "edgar_since = 2024-10-01\n" + sec + 'edgar = { preset = "nope", ciks = [] }\n'
+    with pytest.raises(config.ConfigError, match="preset must be one of"):
+        config.load(_write(tmp_path, sources=bad))
+
+
 def test_topic_parent_must_come_first(tmp_path):
     topics = TOPICS + '[[topic]]\nslug = "a"\nname = "A"\ndescription = "d"\nparent = "z"\n'
     with pytest.raises(config.ConfigError, match="defined earlier"):
