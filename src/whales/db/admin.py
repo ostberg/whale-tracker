@@ -9,6 +9,7 @@ PostgreSQL 15 and later already deny CREATE on schema ``public`` to PUBLIC, so o
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 
 from .connect import Database
@@ -69,6 +70,31 @@ def revoke_public_connect_sql(dbname: str) -> str:
 
 
 OWNER, INGEST, REVIEWER = "whales_owner", "whales_ingest", "whales_reviewer"
+IDENTITY_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{1,127}$")
+
+
+def add_identity_statements(identity: str, group: str, dbname: str) -> list[str]:
+    """Register a managed identity as a Postgres login role, put it in one group, and let it connect to one
+    database (W-039, W-042). Run in the ``postgres`` database by the Entra admin. Idempotent.
+
+    ``owner``: SET only, never inherited, so the admin job acts as owner only by saying so. ``ingest``:
+    inherited, because the collector simply works as ingest. CONNECT goes to the login role, never the group.
+    """
+    if not IDENTITY_NAME.match(identity):
+        raise ValueError(f"not a managed-identity name: {identity!r}")
+    q = quote_ident
+    statements = [
+        f"DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = '{identity}') "
+        f"THEN PERFORM pgaadauth_create_principal('{identity}', false, false); END IF; END $$"
+    ]
+    if group == "owner":
+        statements.append(f"GRANT {OWNER} TO {q(identity)} WITH INHERIT FALSE, SET TRUE")
+    elif group == "ingest":
+        statements.append(f"GRANT {INGEST} TO {q(identity)} WITH INHERIT TRUE, SET TRUE")
+    else:
+        raise ValueError(f"group must be owner or ingest, not {group!r}")
+    statements.append(f"GRANT CONNECT ON DATABASE {q(dbname)} TO {q(identity)}")
+    return statements
 
 
 def bootstrap_statements(admin_role: str, dbname: str) -> list[str]:

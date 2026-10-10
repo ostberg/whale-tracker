@@ -96,8 +96,13 @@ copy .env.example .env        # then fill in; no secrets go in it
 Everyday checks: `.venv\Scripts\python.exe -m ruff check src tests`, `-m ruff format --check src tests`,
 `-m pytest`. Regenerate locks only with `scripts\lock_deps.ps1` (versions held unless `-Upgrade`).
 
-Database work from a developer machine needs `az login` as the Entra admin and a temporary firewall rule for
-the machine's address, removed afterwards. `whales db connect-paths <database>` shows who can connect (read
+Routine runs happen in Azure (W-042): `job-whales-collect-sec` on a schedule, and `job-whales-admin`
+started on demand with arguments such as `config sync --apply`, `db migrate --apply` or `status`
+(`az containerapp job start -n job-whales-admin -g rg-whale-tracker --args ...`). Deploy with
+`python infra/deploy.py --apply` after committing (settings: `infra/azure.toml`). From a laptop, only the
+one-off steps that need the Entra admin's own rights: run them with `whales --open-firewall ...`, which
+opens the machine's address for that command and always closes it; `whales db close-firewall` removes
+leftovers. These need `az login` as the Entra admin. `whales db connect-paths <database>` shows who can connect (read
 only); `whales db revoke-public-connect <database> --apply` removes PUBLIC's default grant;
 `whales db bootstrap-roles <database> --apply` creates the `whales_` roles; `whales db migrate --apply`
 applies pending migrations. `whales config check` validates `config/` without a database; `whales config

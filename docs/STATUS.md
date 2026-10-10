@@ -16,7 +16,7 @@ proposals, not commitments.
 | 1 | Setup: git repo and private remote, `whales_dev` database, blocking decisions, letter-source inventory, compliance ruling on source tiers (W-029, W-030) | 2026-10-23 | Migrations run against the Azure server; compliance has ruled on tiers 1 to 3 | Gate met 2026-10-09: migration 0001 applied to `whales_dev` and verified live. Still open: the GitHub remote and the compliance ruling |
 | 2 | Letters pilot, run by hand: fetch and store tier-1 and tier-2 letters for about ten managers, two years back, including activist letters filed as 13D exhibits (W-031); extract company mentions, topic stances and predictions, each with its quote, and rate each letter, through the in-tenant model seam | November 2026 | The owner finds the extraction useful on 20 letters; every stance carries its quote and link (W-019); ratings checked with quick verdicts on 10 letters (W-036) | In progress: `config/` synced to `whales_dev` (57 managers, 54 filers, 261 tag proposals, 44 sources, all inactive). Needs the compliance ruling to activate sources, and a Foundry model endpoint |
 | 3 | Thin 13F layer (W-028): SEC bulk-data backfill, current quarters from the filing XML, filer map (W-024), unit detection (W-025), check against WhaleWisdom; 13G stakes (W-031); topic exposure and the said-versus-owned view | Nov to Dec 2026 (Q3 13Fs due Monday 2026-11-16) | Every filing reconciles; sampled positions match WhaleWisdom | Not started |
-| 4 | Azure job and weekly digest: letters weekly, 13F after each deadline | December 2026 | A week of clean unattended runs | Not started |
+| 4 | Azure job and weekly digest: letters weekly, 13F after each deadline | December 2026 | A week of clean unattended runs | Pulled forward (W-042, 2026-10-10): jobs and identities defined in `infra/`; the digest is still to build |
 | 5 | Firm-side consumers, in the Tamale repo: Research Assistant source and "Why Now" prompts, Tamale publisher, alerts | January 2027 | Owner approves the Tamale note format on five companies | Not started |
 | 6 | Broaden: tier-3 sources if licensed, forward performance from first mentions and initiations (W-007; needs a price source) | Q1 2027 | Ten events checked by hand | Not started |
 | 7 | Letter search in the Research Assistant; restricted tier only if cleared | After phase 5 | | Not started |
@@ -43,10 +43,9 @@ Blocking phase 1 or 2:
             databases `context`, `postgres`, `azure_sys` and `azure_maintenance`;
       - [x] a temporary firewall rule for the development machine was used and removed the same day
             (`whales-dev-temp-20261008`). Add one for each working session; remove it afterwards.
-- [ ] **How the ingest job runs in Azure.** Settled in outline by W-020 and W-021 (own image, identity and
-      environment; ledger rows through D-052; no immediate failure email). Still open: subscription, resource
-      group and region, and whether to report to the fleet ledger at all (that needs a row and a role
-      assignment made from the Tamale side).
+- [x] **How the ingest job runs in Azure:** W-042 (2026-10-10). `rg-whale-tracker`, Central US, the Tamale
+      subscription, own registry, environment and identities. Still open: whether to report to the Tamale
+      fleet ledger (W-021).
 - [ ] **Git remote.** The owner confirmed a private `whale-tracker` repository beside `tamale-tocqueville`. The
       local repository and first commit exist. `gh` is not installed, so the owner creates the empty private
       repository on github.com (no README, licence or .gitignore); the agent then adds `origin` and pushes.

@@ -1,0 +1,34 @@
+# Azure resources for Whale Tracker (W-042). Read by infra/deploy.py. No secrets here.
+# Separate from the Tamale fleet (W-020): its own resource group, registry, environment and identities.
+
+subscription = "98e321fa-d145-4d60-b897-db3942dc3e89"   # TOC-P013-Azure-Sandbox-CSP, as the Tamale fleet
+location = "centralus"                                   # beside the database server
+resource_group = "rg-whale-tracker"
+registry = "tocqvwhalesacr"                              # Basic SKU; globally unique name
+log_workspace = "log-whale-tracker"
+environment = "cae-whale-tracker"                        # consumption only: no standing cost
+image = "whale-tracker"
+
+[database]
+host = "pg-tocqv-context.postgres.database.azure.com"
+name = "whales_dev"                                      # `whales` once production starts
+
+[identities]
+ingest = "id-whales-ingest"   # the only identity that runs internet-facing code; Postgres group whales_ingest
+admin = "id-whales-admin"     # migrations and config sync; never fetches anything; holds whales_owner with SET
+
+[env]
+SEC_USER_AGENT = "Tocqueville Asset Management research@tocqueville.com"
+
+[[job]]
+name = "job-whales-collect-sec"
+identity = "ingest"
+cron = "0 11 * * *"           # 11:00 UTC daily (07:00 New York in summer, 06:00 in winter)
+args = ["collect", "sec", "--apply"]
+timeout_seconds = 3600
+
+[[job]]
+name = "job-whales-admin"
+identity = "admin"
+args = ["status"]             # the default; each start overrides it, e.g. `config sync --apply`
+timeout_seconds = 1800

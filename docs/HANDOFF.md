@@ -2,6 +2,51 @@
 
 Dated entries, newest first: what changed, what is verified, what is next.
 
+## 2026-10-10: SEC collector built; runs move into Azure
+
+**Owner direction.**
+- "Go ahead with the SEC collector first."
+- The SEC sources were activated with the owner as approver (his go-ahead), since they need no terms ruling.
+- On the laptop sign-in and firewall friction, "temporary firewall sounds like an absolute nightmare": he
+  chose to move runs into Azure now (W-042).
+
+**What changed.**
+- `whales collect sec`:
+  - `src/whales/sources/edgar.py` (SEC client) and `sec_letters.py` (presets `activist`, `ncsr`,
+    `earnings_8k`; boilerplate deny-list; PDF flags);
+  - `src/whales/collect.py` runs as `whales_ingest` and writes run_log and fetch_attempt rows;
+  - 12 SEC sources with `edgar` rules and `edgar_since = 2024-10-01`.
+- Azure: `Dockerfile`, `.dockerignore`, `infra/azure.toml`, `infra/deploy.py` (idempotent; dry run by
+  default; builds from `git archive HEAD`).
+- New commands: `whales db add-identity`, `whales db close-firewall`, `whales status`, and the global
+  `--open-firewall`. Migrations, config sync and status now run as `whales_owner` for the whole session.
+- Decisions W-041 and W-042. 84 unit tests.
+
+**Verified.**
+- An EDGAR-only preview found 180 documents since 2024-10-01 across 8 of the 12 sources:
+  - Elliott 100;
+  - Pershing Square 45;
+  - Starboard 13;
+  - Greenlight Re 7;
+  - Trian 5;
+  - Third Point 5;
+  - JANA 4;
+  - PSUS 1.
+
+  ValueAct, TCI, Appaloosa and Praetorian have no exhibits in the window.
+- Two parser fixes came from real pages: inline-XBRL links (`/ix?doc=`) hid the PSUS report, and
+  boilerplate labels sometimes sit in the type column.
+- Nothing has been written to the database yet. On 2026-10-10 the firm's Conditional Access policy
+  blocked the Azure CLI token refresh (AADSTS53003), which needs an interactive `az login` by the owner.
+
+**Next (needs the owner's `az login` once).**
+1. `python infra/deploy.py --apply`.
+2. Register the identities, from the laptop:
+   - `whales --open-firewall db add-identity id-whales-admin --group owner whales_dev --apply`;
+   - the same for `id-whales-ingest --group ingest`.
+3. Run the admin job with `config sync --apply`, then start `job-whales-collect-sec`, then the admin job
+   with `status`. Check the logs.
+
 ## 2026-10-09 (later): config files and `whales config sync`
 
 **Owner direction.** "Go ahead with config files and config sync."

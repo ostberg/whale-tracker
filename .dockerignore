@@ -1,0 +1,10 @@
+# Belt and braces: infra/deploy.py builds from `git archive HEAD`, which never contains these anyway.
+.env
+.venv/
+.git/
+**/__pycache__/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+docs/
+tests/

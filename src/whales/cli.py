@@ -7,9 +7,13 @@
     whales config check                              validate config/ (no database)
     whales config sync                               config/ into WHALES_DB_NAME; --apply
     whales collect sec [--source SLUG]               new SEC letters (tier 2) since edgar_since; --apply
+    whales db add-identity <name> --group G <db>     register a managed identity (owner or ingest); --apply
+    whales db close-firewall                         remove any temporary firewall rule left behind
+    whales status                                    counts and the latest runs (read-only)
 
-Admin commands run as the Entra admin (``az login``), so they need ``WHALES_DB_HOST`` and a temporary
-firewall rule for this machine. Every command shows what it would do unless given --apply.
+Routine runs happen in Azure as Container Apps jobs (W-042). From a laptop, the few admin steps that need the
+Entra admin's own rights run with ``whales --open-firewall ...``, which opens this machine's address for that
+one command and always closes it again. Every command shows what it would do unless given --apply.
 """
 
 from __future__ import annotations
@@ -20,7 +24,7 @@ import sys
 from pathlib import Path
 
 from . import collect, config
-from .db import admin, migrate, sync
+from .db import admin, firewall, migrate, sync
 from .db.connect import Database, DbSettings
 from .sources.edgar import EdgarClient
 
@@ -95,7 +99,7 @@ def cmd_bootstrap_roles(args: argparse.Namespace) -> int:
 
 def cmd_migrate(args: argparse.Namespace) -> int:
     available = migrate.discover()
-    with Database(DbSettings.from_env()) as db:
+    with Database(DbSettings.from_env(), role=migrate.OWNER_ROLE) as db:
         todo = migrate.pending(available, migrate.applied_versions(db))
         print(f"database {db.settings.dbname}: {len(available) - len(todo)} applied, {len(todo)} pending")
         for m in todo:
@@ -123,7 +127,7 @@ def cmd_config_check(args: argparse.Namespace) -> int:
 
 def cmd_config_sync(args: argparse.Namespace) -> int:
     cfg = config.load()
-    with Database(DbSettings.from_env()) as db:
+    with Database(DbSettings.from_env(), role=migrate.OWNER_ROLE) as db:
         changes = sync.plan(cfg, sync.read_current(db))
         counts: dict[str, int] = {}
         for c in changes:
@@ -165,9 +169,67 @@ def cmd_collect_sec(args: argparse.Namespace) -> int:
     return 1 if any(r.error for r in results) else 0
 
 
+def cmd_add_identity(args: argparse.Namespace) -> int:
+    statements = admin.add_identity_statements(args.name, args.group, args.database)
+    for s in statements:
+        print(s)
+    if not args.apply:
+        print("(dry run: nothing changed; add --apply)")
+        return 0
+    with _admin_db() as db:
+        for s in statements:
+            db.run(s)
+    print(f"done: {args.name} is in whales_{args.group} and may connect to {args.database}")
+    return 0
+
+
+def cmd_close_firewall(args: argparse.Namespace) -> int:
+    removed = firewall.close_leftovers()
+    print(f"removed {removed or 'nothing'}")
+    return 0
+
+
+STATUS_SQL = {
+    "managers (active)": "SELECT count(*) FILTER (WHERE active) FROM core.manager",
+    "filers": "SELECT count(*) FROM core.filer",
+    "sources (active / all)": "SELECT count(*) FILTER (WHERE active) || ' / ' || count(*) "
+    "FROM letters.source",
+    "documents": "SELECT count(*) FROM letters.document",
+    "document copies": "SELECT count(*) FROM letters.document_file",
+    "tag proposals / decisions": "SELECT (SELECT count(*) FROM core.manager_tag) || ' / ' || "
+    "(SELECT count(*) FROM core.tag_decision)",
+}
+
+
+def cmd_status(args: argparse.Namespace) -> int:
+    with Database(DbSettings.from_env(), role=migrate.OWNER_ROLE) as db:
+        print(f"database {db.settings.dbname}, migrations {sorted(migrate.applied_versions(db))}")
+        for label, sql in STATUS_SQL.items():
+            print(f"   {label:<28} {db.run(sql)[0][0]}")
+        print("   latest runs:")
+        for row in db.run(
+            "SELECT id, command, status, started_at::timestamp(0), started_by, detail::text FROM raw.run_log "
+            "ORDER BY id DESC LIMIT 5"
+        ):
+            print(f"      #{row[0]} {row[1]} {row[2]} {row[3]} by {row[4]}  {row[5][:300]}")
+        print("   documents by source:")
+        for slug, n, last in db.run(
+            "SELECT s.slug, count(f.id), max(f.fetched_at)::date FROM letters.source s "
+            "LEFT JOIN letters.document_file f ON f.source_id = s.id WHERE s.active "
+            "GROUP BY s.slug ORDER BY 2 DESC"
+        ):
+            print(f"      {slug:<28} {n:>5}  last {last}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(
         prog="whales", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    ap.add_argument(
+        "--open-firewall",
+        action="store_true",
+        help="from a laptop: open this machine's address on the database firewall for this one command",
     )
     sub = ap.add_subparsers(dest="group", required=True)
     db = sub.add_parser("db", help="database administration").add_subparsers(dest="command", required=True)
@@ -186,6 +248,16 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("database")
     p.add_argument("--apply", action="store_true", help="run it (default: show only)")
     p.set_defaults(func=cmd_bootstrap_roles)
+
+    p = db.add_parser("add-identity", help="register a managed identity as a login role in one group")
+    p.add_argument("name")
+    p.add_argument("--group", required=True, choices=["owner", "ingest"])
+    p.add_argument("database")
+    p.add_argument("--apply", action="store_true", help="run it (default: show only)")
+    p.set_defaults(func=cmd_add_identity)
+
+    p = db.add_parser("close-firewall", help="remove temporary firewall rules left behind")
+    p.set_defaults(func=cmd_close_firewall)
 
     p = db.add_parser("migrate", help="apply pending migrations to WHALES_DB_NAME as whales_owner")
     p.add_argument("--apply", action="store_true", help="apply them (default: list only)")
@@ -208,12 +280,18 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--limit", type=int, help="at most this many new documents per source")
     p.add_argument("-v", "--verbose", action="store_true", help="list each new document")
     p.set_defaults(func=cmd_collect_sec)
+
+    p = sub.add_parser("status", help="counts and the latest runs (read-only)")
+    p.set_defaults(func=cmd_status)
     return ap
 
 
 def main(argv: list[str] | None = None) -> int:
     load_env_file()
     args = build_parser().parse_args(argv)
+    if args.open_firewall:
+        with firewall.opening():
+            return args.func(args)
     return args.func(args)
 
 
