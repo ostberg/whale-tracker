@@ -2,6 +2,46 @@
 
 Dated entries, newest first: what changed, what is verified, what is next.
 
+## 2026-10-13 (later): pypdf and the inbox loader; the owner's 78-PDF library identified
+
+**Owner direction.**
+- "Go ahead with pypdf and build the loader."
+- He has a starting library of PDFs, from public websites and shared by managers, now in the inbox (W-044).
+- He allowed the inbox scan to read PDFs on the laptop (W-045).
+- He shared his email exchange with GreenWood's COO, now saved in the inbox's permissions folder.
+
+**What changed.**
+- pypdf 6.19.0 (pinned in the locks; the days-old 6.20.x avoided).
+- `src/whales/inbox.py`:
+  - scans the inbox by route and identifies the manager by slug folder or by name or alias;
+  - infers the period from file name, then title, then first page, covering `Q1'24`, `1H 2024`, `YE'25`,
+    `Year End 2016`, and annual or semi-annual letters with no year;
+  - takes the publication date from a date in the file name, a stated date or the PDF date, only when
+    plausible, and never treats an "as of" date as one;
+  - reads permission flags.
+- `src/whales/inbox_load.py`: records each file once by sha256 under the manager's source, as
+  `whales_ingest`.
+- Commands: `whales inbox scan` and `whales inbox load`.
+- Config:
+  - managers Alluvial, Bonsai and GreenWood, with aliases;
+  - sources `alluvial-writings` and `bonsai-letters` (auto, cleared);
+  - `greenwood-letters` (off: terms exclude data mining);
+  - `greenwood-shared` (recorded, not machine-read);
+  - `greenwood-edgar` (13D, auto).
+- W-045 recorded; AGENTS security rule amended. 115 unit tests.
+
+**Verified.**
+- `whales inbox scan` identifies all 78 PDFs: Laughing Water 20, Praetorian 16, Bonsai 15, Alluvial 14,
+  GreenWood 13.
+- None is unreadable or forbids text extraction, and every file maps to a source.
+- Some publication dates are inferred, not stated: Laughing Water's 2016 and 2017 letters fall back to the
+  period end.
+
+**Next.**
+1. `whales inbox load --apply` once Azure is reachable.
+2. The owner may ask GreenWood for explicit consent (a draft reply is in the chat, not sent).
+3. Auto collectors for the 22 cleared website sources.
+
 ## 2026-10-13: compliance position recorded (W-043); Azure sign-in with IT
 
 **Owner direction.**

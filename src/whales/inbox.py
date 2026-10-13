@@ -16,10 +16,11 @@ with a cap on pages; a file that cannot be read is reported and skipped.
 from __future__ import annotations
 
 import hashlib
+import logging
 import os
 import re
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 from .config import Config, Manager
@@ -88,9 +89,7 @@ def identify(f: InboxFile, managers: tuple[Manager, ...]) -> None:
             f.manager, f.manager_basis = part.lower(), "folder"
             return
     haystack = " \n ".join(
-        x
-        for x in (Path(f.rel).stem.replace("_", " ").replace("-", " "), f.title or "", f.author or "", f.head)
-        if x
+        x for x in (re.sub(r"[_+\-.]+", " ", Path(f.rel).stem), f.title or "", f.author or "", f.head) if x
     )
     first: dict[str, int] = {}
     for m in managers:
@@ -135,7 +134,7 @@ _MONTHS = {
         start=1,
     )
 }
-_YEAR = r"(20[0-4]\d)"
+_YEAR = r"(20[0-4]\d)(?!\d)"
 
 
 def _qend(q: int, year: int) -> date:
@@ -143,47 +142,93 @@ def _qend(q: int, year: int) -> date:
     return date(year, month, day)
 
 
+def normalise(text: str) -> str:
+    """Lower case; '+', '_', '-' and '.' as spaces (file names often use them); "Q1'24" as "Q1 2024"."""
+    t = re.sub(r"[_+\-.]+", " ", text.lower())
+    return re.sub(r"'\s?(\d{2})(?!\d)", r" 20\1", t)
+
+
+_PERIOD_PATTERNS = [
+    (rf"\bq([1-4])\s*{_YEAR}", lambda m: _qend(int(m[1]), int(m[2])), "quarterly_letter"),
+    (r"\b(20[0-4]\d)\s*q([1-4])\b", lambda m: _qend(int(m[2]), int(m[1])), "quarterly_letter"),
+    (
+        r"\b([1-4])q\s*(20[0-4]\d|\d{2})(?!\d)",
+        lambda m: _qend(int(m[1]), int(m[2][-2:]) + 2000),
+        "quarterly_letter",
+    ),
+    (
+        rf"\b(first|second|third|fourth|1st|2nd|3rd|4th) quarter(?: of)?,?\s*{_YEAR}",
+        lambda m: _qend(_ORDINAL[m[1]], int(m[2])),
+        "quarterly_letter",
+    ),
+    (rf"\b(?:h1|1h|first half)(?: of)?,?\s*{_YEAR}", lambda m: date(int(m[1]), 6, 30), "quarterly_letter"),
+    (rf"\b(?:h2|2h|second half)(?: of)?,?\s*{_YEAR}", lambda m: date(int(m[1]), 12, 31), "annual_letter"),
+    (
+        rf"\b(?:half year|semi ?annual|sem annual|interim)(?: letter| report)?(?: of)?,?\s*{_YEAR}",
+        lambda m: date(int(m[1]), 6, 30),
+        "quarterly_letter",
+    ),
+    (
+        rf"\b(?:ye|year ?end|full year|annual)(?: letter| report| review)?(?: of)?,?\s*{_YEAR}",
+        lambda m: date(int(m[1]), 12, 31),
+        "annual_letter",
+    ),
+    (
+        r"\b(20[0-4]\d)\s*(?:ye|year ?end|annual (?:letter|report|review))\b",
+        lambda m: date(int(m[1]), 12, 31),
+        "annual_letter",
+    ),
+]
+
+
 def infer_period(text: str) -> tuple[date | None, str]:
-    """(period end, kind) from phrases such as 'Q3 2026', '3Q26', 'second quarter 2026', 'H1 2026',
-    'year-end 2025' or 'annual letter 2025'."""
-    t = text.lower()
-    patterns = [
-        (rf"\bq([1-4])[\s'-]*{_YEAR}\b", lambda m: _qend(int(m[1]), int(m[2])), "quarterly_letter"),
-        (rf"\b{_YEAR}[\s-]*q([1-4])\b", lambda m: _qend(int(m[2]), int(m[1])), "quarterly_letter"),
-        (r"\b([1-4])q[\s'-]*(\d{2})\b", lambda m: _qend(int(m[1]), 2000 + int(m[2])), "quarterly_letter"),
-        (
-            rf"\b(first|second|third|fourth|1st|2nd|3rd|4th) quarter(?: of)?,? {_YEAR}\b",
-            lambda m: _qend(_ORDINAL[m[1]], int(m[2])),
-            "quarterly_letter",
-        ),
-        (
-            rf"\b(?:h1|first half|half[- ]year|semi[- ]annual|interim)(?: of)?,? {_YEAR}\b",
-            lambda m: date(int(m[1]), 6, 30),
-            "quarterly_letter",
-        ),
-        (rf"\b(?:h2|second half)(?: of)?,? {_YEAR}\b", lambda m: date(int(m[1]), 12, 31), "quarterly_letter"),
-        (
-            rf"\b(?:year[- ]end|annual(?: letter| report)?|full[- ]year)(?: of)?,? {_YEAR}\b",
-            lambda m: date(int(m[1]), 12, 31),
-            "annual_letter",
-        ),
-        (rf"\b{_YEAR} (?:year[- ]end|annual)\b", lambda m: date(int(m[1]), 12, 31), "annual_letter"),
-    ]
-    for pattern, to_date, kind in patterns:
-        m = re.search(pattern, t)
-        if m:
+    """(period end, kind) from the EARLIEST period phrase in ``text``: 'Q3 2026', "Q1'24", '3Q26',
+    'second quarter 2026', '1H 2024', 'H2 2025', 'YE 2025', 'Year End 2016', 'semi-annual 2026',
+    'annual letter 2025'."""
+    t = normalise(text)
+    best: tuple[int, date, str] | None = None
+    for pattern, to_date, kind in _PERIOD_PATTERNS:
+        for m in re.finditer(pattern, t):
             try:
-                return to_date(m), kind
+                d = to_date(m)
             except ValueError:
                 continue
+            if best is None or m.start() < best[0]:
+                best = (m.start(), d, kind)
+            break
+    return (best[1], best[2]) if best else (None, "other")
+
+
+def period_without_year(text: str, published: date | None) -> tuple[date | None, str]:
+    """'Annual Letter' or 'Semi-Annual Letter' with no year: the period from the publication date."""
+    if published is None:
+        return None, "other"
+    t = normalise(text)
+    if re.search(r"\b(?:semi ?annual|sem annual|half year|interim)\b", t):
+        if published.month >= 7:
+            return date(published.year, 6, 30), "quarterly_letter"
+        return date(published.year - 1, 12, 31), "annual_letter"
+    if re.search(r"\bannual\b", t) and published.month <= 6:
+        return date(published.year - 1, 12, 31), "annual_letter"
     return None, "other"
 
 
+def date_in_name(name: str) -> date | None:
+    """A date at the front of a file name, e.g. '2024.02.03-Annual-Letter'."""
+    m = re.match(r"(20[0-4]\d)[.\-_ ](\d{2})[.\-_ ](\d{2})(?!\d)", name)
+    if not m:
+        return None
+    try:
+        return date(int(m[1]), int(m[2]), int(m[3]))
+    except ValueError:
+        return None
+
+
 def infer_published(text: str) -> date | None:
-    """The first full date written out on the page, e.g. 'October 15, 2026' or '15 October 2026'."""
+    """The first full date written out, e.g. 'October 15, 2026' or '15 October 2026'."""
     names = "|".join(_MONTHS)
     for m in re.finditer(
-        rf"\b({names})\s+(\d{{1,2}}),?\s+{_YEAR}\b|\b(\d{{1,2}})\s+({names}),?\s+{_YEAR}\b", text, re.I
+        rf"\b({names})\s+(\d{{1,2}}),?\s+{_YEAR}|\b(\d{{1,2}})\s+({names}),?\s+{_YEAR}", text, re.I
     ):
         month, day, year = (m[1], m[2], m[3]) if m[1] else (m[5], m[4], m[6])
         try:
@@ -193,12 +238,22 @@ def infer_published(text: str) -> date | None:
     return None
 
 
+def plausible(d: date | None, period_end: date | None, today: date | None = None) -> bool:
+    """A publication date must not be in the future and, when the period is known, must fall between a few
+    days before the period end and 200 days after it."""
+    if d is None or d > (today or date.today()):
+        return False
+    return period_end is None or (period_end - timedelta(days=5)) <= d <= (period_end + timedelta(days=200))
+
+
 def infer_kind(f: InboxFile, period_kind: str) -> str:
-    name = f"{f.rel} {f.title or ''}".lower()
-    if re.search(r"presentation|deck|slides", name):
+    name = normalise(f"{f.rel} {f.title or ''}")
+    if re.search(r"presentation|\bdeck\b|slides", name):
         return "presentation"
     if re.search(r"\bmemo\b", name):
         return "memo"
+    if re.search(r"research (?:report|update)|\bfp\b", name):
+        return "commentary"
     return period_kind
 
 
@@ -245,6 +300,34 @@ def read_pdf(f: InboxFile, body: bytes) -> None:
     f.head = re.sub(r"[ \t]+", " ", "\n".join(parts))[:HEAD_CHARS]
 
 
+def date_and_kind(f: InboxFile, path: Path) -> None:
+    """Period from the file name first, then the title, then the first page; publication date from a date in
+    the file name, a date written near the top, or the PDF's creation date, each only if plausible for the
+    period; failing those, the period end itself (a lower bound), then the file's own date."""
+    name = Path(f.rel).stem
+    period, kind = None, "other"
+    for text in (name, f.title or "", f.head[:HEADER_CHARS]):
+        period, kind = infer_period(text)
+        if period:
+            break
+    stated = date_in_name(name) or infer_published(f.head[:400])
+    if period is None:
+        period, kind = period_without_year(f"{name} {f.title or ''}", stated or f.created)
+    f.period_end = period
+    f.kind = infer_kind(f, kind)
+    if stated is not None and stated == period:
+        stated = None  # 'as of June 30' is the period, not the day the letter came out
+    if plausible(stated, period):
+        f.published_on, f.published_basis = stated, "stated"
+    elif plausible(f.created, period):
+        f.published_on, f.published_basis = f.created, "inferred"
+    elif period is not None:
+        f.published_on, f.published_basis = period, "inferred"
+    else:
+        f.published_on = datetime.fromtimestamp(path.stat().st_mtime).date()
+        f.published_basis = "first_seen"
+
+
 def source_for(cfg: Config, f: InboxFile) -> str | None:
     """The letters.source a file belongs to. Shared by the manager: ``<manager>-shared``, which carries the
     manager's permission. From a public website: the manager's own tier-1 source (manual preferred, as a
@@ -261,6 +344,7 @@ def source_for(cfg: Config, f: InboxFile) -> str | None:
 
 def scan(cfg: Config, root: Path | None = None) -> list[InboxFile]:
     """Every PDF in the inbox, identified as far as the evidence allows. Reads nothing outside ``root``."""
+    logging.getLogger("pypdf").setLevel(logging.ERROR)  # malformed-but-readable PDFs are common; not news
     root = root or inbox_dir()
     out: list[InboxFile] = []
     for route_dir, route in ROUTES.items():
@@ -281,17 +365,6 @@ def scan(cfg: Config, root: Path | None = None) -> list[InboxFile]:
             except Exception as e:  # noqa: BLE001 - a malformed PDF is reported, never fatal
                 f.error = f"unreadable: {type(e).__name__}: {str(e)[:200]}"
             identify(f, cfg.managers)
-            text = " ".join(
-                x for x in (Path(f.rel).stem.replace("_", " "), f.title or "", f.head[:HEADER_CHARS]) if x
-            )
-            f.period_end, period_kind = infer_period(text)
-            f.kind = infer_kind(f, period_kind)
-            stated = infer_published(f.head[:HEADER_CHARS])
-            if stated:
-                f.published_on, f.published_basis = stated, "stated"
-            elif f.created:
-                f.published_on, f.published_basis = f.created, "inferred"
-            else:
-                f.published_on = datetime.fromtimestamp(path.stat().st_mtime).date()
+            date_and_kind(f, path)
             out.append(f)
     return out

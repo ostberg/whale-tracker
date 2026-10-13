@@ -726,3 +726,46 @@ geography = ["global"]
   [[manager.filer]]
   cik = 1088875
   edgar_name = "BAILLIE GIFFORD & CO"
+
+# --- From the owner's starting library (2026-10-13) ----------------------------------------------------
+
+[[manager]]
+slug = "alluvial"
+name = "Alluvial Capital Management (Dave Waters)"
+kind = "manager"
+aliases = ["Alluvial Capital", "Alluvial Fund"]
+style = ["value", "special_situations"]
+strategy = ["long_only?"]
+asset_focus = ["equities"]
+geography = ["global"]
+notes = "Small and overlooked companies, US and abroad; no 13F"
+  [[manager.filer]]
+  cik = 1958911
+  edgar_name = "Alluvial Capital Management, LLC"
+  note = "No 13F; one SC 13G (W-031)"
+
+[[manager]]
+slug = "bonsai"
+name = "Bonsai Partners (Andrew Rosenblum)"
+kind = "manager"
+aliases = ["Bonsai Partners"]
+style = ["quality", "growth?"]
+strategy = ["long_only?"]
+asset_focus = ["equities"]
+geography = ["us"]
+notes = "Concentrated (5 to 15 names); no 13F filer found (the fund entity files Form D only)"
+
+[[manager]]
+slug = "greenwood"
+name = "GreenWood Investors (Steven Wood)"
+kind = "manager"
+aliases = ["GreenWood Investors", "GreenWood Builders", "GreenWood", "Steven Wood"]
+style = ["value", "special_situations"]
+strategy = ["long_only?", "activist?"]
+asset_focus = ["equities"]
+geography = ["europe", "global"]
+notes = "Concentrated; Europe-heavy. Files 13D, no 13F. Contact: Josh Pesses (COO); owner in touch since 2026-10-08"
+  [[manager.filer]]
+  cik = 2096490
+  edgar_name = "GreenWood Investors LLC"
+  note = "13D only (W-031)"

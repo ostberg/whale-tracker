@@ -65,13 +65,13 @@ def _scan(cfg, box):
 
 def test_letterhead_identifies_manager_period_and_date(cfg, box):
     pdf = make_pdf(
-        ["Praetorian Capital Fund", "Q3 2026 Investor Letter", "October 15, 2026", "Dear Partners,"]
+        ["Praetorian Capital Fund", "Q3 2026 Investor Letter", "October 5, 2026", "Dear Partners,"]
     )
     (box / "public-websites" / "letter.pdf").write_bytes(pdf)
     f = _scan(cfg, box)["letter.pdf"]
     assert (f.manager, f.manager_basis) == ("praetorian", "text")
     assert f.period_end == date(2026, 9, 30) and f.kind == "quarterly_letter"
-    assert (f.published_on, f.published_basis) == (date(2026, 10, 15), "stated")
+    assert (f.published_on, f.published_basis) == (date(2026, 10, 5), "stated")
     assert f.pages == 1 and not f.encrypted and f.extract_allowed is True
 
 
@@ -126,11 +126,46 @@ def test_permissions_folder_is_ignored_and_junk_is_reported(cfg, box):
         ("Year-End 2025 Letter", date(2025, 12, 31), "annual_letter"),
         ("2025 Annual Letter", date(2025, 12, 31), "annual_letter"),
         ("Semi-Annual 2026", date(2026, 6, 30), "quarterly_letter"),
+        ("Laughing+Water+Capital+Q1'24+Letter", date(2024, 3, 31), "quarterly_letter"),
+        ("LWC+H1+2026+Letter", date(2026, 6, 30), "quarterly_letter"),
+        ("Laughing+Water+Capital+YE'25", date(2025, 12, 31), "annual_letter"),
+        ("LWC+Year+End+2016+Letter", date(2016, 12, 31), "annual_letter"),
+        ("Bonsai+Partners+1H+2024+Letter", date(2024, 6, 30), "quarterly_letter"),
+        ("Bonsai+Partners+2H+2025+Investor+Letter+Final", date(2025, 12, 31), "annual_letter"),
+        ("2023.08.04-1H-2023-Letter-v3", date(2023, 6, 30), "quarterly_letter"),
+        ("A note on markets, up 10% in 2025 annual returns", None, "other"),
         ("A note on markets", None, "other"),
     ],
 )
 def test_infer_period(text, expected, kind):
     assert inbox.infer_period(text) == (expected, kind)
+
+
+def test_earliest_phrase_wins():
+    # the letter's own label comes first; a comparison later in the text must not override it
+    assert inbox.infer_period("Q1 2024 letter. Compared with Q1 2023, results improved")[0] == date(
+        2024, 3, 31
+    )
+
+
+@pytest.mark.parametrize(
+    ("name", "published", "expected"),
+    [
+        ("2024.02.03-Annual-Letter_v7", date(2024, 2, 3), date(2023, 12, 31)),
+        ("2025.08.08-Semi-Annual-Letter-vF", date(2025, 8, 8), date(2025, 6, 30)),
+        ("2026.08.13-Sem-Annual-Letter-v4", date(2026, 8, 13), date(2026, 6, 30)),
+    ],
+)
+def test_annual_letters_without_a_year(name, published, expected):
+    assert inbox.date_in_name(name) == published
+    assert inbox.period_without_year(name, published)[0] == expected
+
+
+def test_implausible_dates_are_not_used():
+    period = date(2016, 12, 31)
+    assert not inbox.plausible(date(2022, 11, 18), period)  # the file's creation date, years later
+    assert inbox.plausible(date(2017, 1, 20), period)
+    assert not inbox.plausible(date(2099, 1, 1), None)  # never in the future
 
 
 def test_infer_published_both_orders():
@@ -166,3 +201,13 @@ def test_load_plan_sorts_files(cfg):
     assert [x.rel for x in result.known] == ["b"]
     assert [x.rel for x in result.unresolved] == ["c"]
     assert [x.rel for x in result.no_source] == ["d"]
+
+
+def test_as_of_date_is_not_a_publication_date(cfg, box):
+    pdf = make_pdf(
+        ["Bonsai Partners", "1H 2024 Letter", "Performance as of June 30, 2024"], title="1H 2024 Letter"
+    )
+    (box / "public-websites" / "b.pdf").write_bytes(pdf)
+    f = _scan(cfg, box)["b.pdf"]
+    assert f.manager == "bonsai" and f.period_end == date(2024, 6, 30)
+    assert f.published_basis != "stated"

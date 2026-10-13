@@ -48,6 +48,20 @@ clears those clauses. It does not lift explicit AI or text-analysis bans, bot ba
 | [Hedge Fund Alpha: Stone Sentinel Q3 2026](https://hedgefundalpha.com/investor-letters/stone-sentinel-capital-q3-2026/) | 3 | Letter to partners as full HTML | Open, posted 2026-10-08 | Allowed | As above | n/a (HTML) | Licence |
 | [Buy Side Digest: Greenlight](https://www.buysidedigest.com/funds/greenlight-capital) | 3 | Letter summaries, topic tags and scored fields open; full letters for paid members | Partly paywalled; site says accredited and professional investors only | Allowed | [Terms](https://www.buysidedigest.com/terms) forbid bots and scraping without written permission, internal business use, and any AI use including embeddings | n/a | Only through its [institutional feed](https://www.buysidedigest.com/institutional) (daily S3, JSON and CSV, source links to the manager, ticker and stance taxonomy) |
 
+## From the owner's starting library (2026-10-13)
+
+78 PDFs in `../Whale Tracker Inbox` (W-044), all identified by `whales inbox scan`:
+- 64 from public websites: Laughing Water 20, Praetorian 16, Bonsai 15, Alluvial 14;
+- 13 shared by GreenWood (6 annual or semi-annual letters, 7 research reports).
+
+| Source | Tier | Terms (checked 2026-10-13) | Verdict |
+|---|---|---|---|
+| [Alluvial writings](https://alluvialcapital.com/writings/) (Dave Waters) | 1 | robots.txt allows all but `/wp-admin/`; no terms page, only an "as is" disclaimer | Auto; cleared for internal use (W-043). No 13F; CIK 1958911 files 13G |
+| [Bonsai letters](https://bonsaipartners.com/letters-and-materials) (Andrew Rosenblum) | 1 | [Terms](https://bonsaipartners.com/terms-of-use): "solely for internal, personal, non-commercial purposes"; no copying or redistribution; nothing on bots or AI | Auto; cleared for internal use (W-043) |
+| [GreenWood investor letters](https://www.gwinvestors.com/investor-letters/) (Steven Wood) | 1 | Accredited-investor sign-up; [terms](https://www.gwinvestors.com/terms-conditions-use/) exclude "data mining, robots or similar data gathering" and adding content to another database. (`greenwoodinvestors.com` is an unrelated parked domain) | **Off** until GreenWood consents (W-035) |
+| GreenWood, shared with the owner | 1 | As above. Josh Pesses (COO) welcomed the connection on 2026-10-13, knowing the purpose (email in the inbox's permissions folder), but that is not explicit consent | Recorded; **not machine-read** until GreenWood agrees |
+| GreenWood 13D exhibits (CIK 2096490) | 2 | Public SEC filing | Auto (W-031) |
+
 ## Additional writers on the topic list
 
 From a research agent's survey on 2026-10-08. The agent opened every index page except Semper Augustus. These

@@ -346,7 +346,8 @@ From the Tamale repo (read in full 2026-10-08: `docs/OPS_AUTOMATION_PLAN.md`, `d
 - Network: the job has no inbound endpoint; outbound is limited to an allowlist (SEC, OpenFIGI, the price
   source, approved `auto` letter domains, the Foundry endpoint, the Teams Workflows flow URL).
 - The Teams Workflows flow URL is a secret: anyone holding it can post to the channel (W-034).
-- Untrusted content: hardened XML parsing; PDFs parsed only inside the job container. The letter-extraction
+- Untrusted content: hardened XML parsing; PDFs parsed only inside the job container, except the inbox scan
+  (W-045: pypdf only, first two pages, on a laptop, for files people collected). The letter-extraction
   model has no tools, receives text and returns a fixed JSON structure. Extracted tickers must match
   `core.security` or the mention is dropped. Letter text goes only to in-tenant models.
 - Audit: every derived row traces to its source filing or document.

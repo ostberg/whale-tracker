@@ -758,3 +758,85 @@ approved_by = "Peter Ostberg (owner): internal use only; no republication, exter
 approved_at = 2026-10-13
 active = true
 
+
+# --- From the owner's starting library (2026-10-13) ----------------------------------------------------
+
+[[source]]
+slug = "alluvial-writings"
+manager = "alluvial"
+name = "Alluvial letters to partners"
+url = "https://alluvialcapital.com/writings/"
+tier = 1
+mode = "auto"
+cadence = "quarterly"
+access_restricted = false
+storage_allowed = false
+use_allowed = true
+permission_basis = "Agent reading 2026-10-13: robots allows all but /wp-admin/; no terms page, only an 'as is' disclaimer. Cleared for internal use only (W-043)"
+approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
+approved_at = 2026-10-13
+active = true
+
+[[source]]
+slug = "bonsai-letters"
+manager = "bonsai"
+name = "Bonsai Partners letters and materials"
+url = "https://bonsaipartners.com/letters-and-materials"
+tier = 1
+mode = "auto"
+cadence = "semiannual"
+access_restricted = false
+storage_allowed = false
+use_allowed = true
+permission_basis = "Agent reading 2026-10-13: licence 'solely for internal, personal, non-commercial purposes'; no copying or redistribution; nothing on bots, AI or data mining; Squarespace robots defaults. Cleared for internal use only (W-043)"
+terms_url = "https://bonsaipartners.com/terms-of-use"
+approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
+approved_at = 2026-10-13
+active = true
+
+[[source]]
+slug = "greenwood-letters"
+manager = "greenwood"
+name = "GreenWood investor letters and public research"
+url = "https://www.gwinvestors.com/investor-letters/"
+tier = 1
+mode = "manual"
+cadence = "semiannual"
+access_restricted = true
+storage_allowed = false
+use_allowed = false
+permission_basis = "Agent reading 2026-10-13: sign-up gate for accredited investors; terms exclude 'data mining, robots or similar data gathering' and adding content to another database. Needs GreenWood's consent (W-035)"
+terms_url = "https://www.gwinvestors.com/terms-conditions-use/"
+
+[[source]]
+slug = "greenwood-shared"
+manager = "greenwood"
+name = "GreenWood letters and research shared with the owner"
+url = "https://www.gwinvestors.com/"
+tier = 1
+mode = "manual"
+cadence = "irregular"
+access_restricted = true
+storage_allowed = false
+use_allowed = false
+permission_basis = "Shared with the owner after he signed up on GreenWood's site; Josh Pesses (COO) welcomed the connection on 2026-10-13 knowing the purpose is idea generation and market intelligence (email in the inbox's permissions folder). Not explicit consent to machine-read, and GreenWood's terms exclude data mining, so files are recorded but not read until GreenWood agrees (W-035)"
+approved_by = "Peter Ostberg (owner): internal use only (W-043); recording only"
+approved_at = 2026-10-13
+active = true
+
+[[source]]
+slug = "greenwood-edgar"
+manager = "greenwood"
+name = "GreenWood 13D exhibits"
+url = "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0002096490&type=SCHEDULE+13D"
+tier = 2
+mode = "auto"
+cadence = "irregular"
+access_restricted = false
+storage_allowed = true
+use_allowed = true
+permission_basis = "Public SEC filing (W-031); the owner approved SEC collection on 2026-10-10"
+edgar = { preset = "activist", ciks = [2096490] }
+approved_by = "Peter Ostberg (owner): 'go ahead with the SEC collector'"
+approved_at = 2026-10-10
+active = true
