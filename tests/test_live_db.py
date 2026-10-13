@@ -5,11 +5,12 @@ machine. Everything that writes runs inside a transaction that is rolled back.
 """
 
 import os
+from datetime import date
 
 import psycopg
 import pytest
 
-from whales import config
+from whales import config, predictions
 from whales.cli import load_env_file
 from whales.db import admin, migrate, sync
 from whales.db.connect import Database, DbSettings
@@ -71,6 +72,12 @@ ING, REV = "whales_ingest", "whales_reviewer"
         (ING, "table", "letters.rating_verdict", "INSERT", False),
         (REV, "column", "letters.rating_verdict.verdict", "INSERT", True),
         (REV, "column", "letters.rating_verdict.reviewed_by", "INSERT", False),
+        (ING, "table", "letters.prediction_link", "INSERT", True),
+        (ING, "table", "letters.prediction_check", "INSERT", True),
+        (ING, "table", "letters.prediction_score", "INSERT", False),
+        (ING, "table", "letters.prediction", "UPDATE", False),
+        (REV, "column", "letters.prediction_score.check_id", "INSERT", True),
+        (REV, "column", "letters.prediction_score.reviewed_by", "INSERT", False),
         (REV, "table", "letters.mention", "UPDATE", False),
         (REV, "schema", "raw", "USAGE", False),
     ],
@@ -142,6 +149,142 @@ def test_ingest_cannot_forge_permissions_or_extract_a_forbidden_copy(db):
                 "prompt_version) VALUES (%s, %s, 'mentions', %s, 'test', 'v0')",
                 (file_id, document_id, run_id),
             )
+
+
+MSFT_LETTER = {
+    "predictions": [
+        {
+            "k": 1,
+            "role": "premise",
+            "subject": "MSFT capex growth",
+            "metric": "capex",
+            "ticker": "MSFT",
+            "comparator": "above",
+            "threshold": 30,
+            "unit": "% y/y",
+            "window_from": "2026-01-01",
+            "window_to": "2026-06-30",
+            "timing": "at_end",
+            "claim": "Capex grows over 30%.",
+            "quote": "If capex rises by over 30%",
+        },
+        {
+            "k": 2,
+            "role": "asserted",
+            "subject": "MSFT share price",
+            "metric": "price",
+            "ticker": "MSFT",
+            "comparator": "down",
+            "window_to": "2026-06-30",
+            "timing": "any_time",
+            "claim": "Shares fall.",
+            "quote": "investors will punish the shares",
+            "premises": [1],
+        },
+        {
+            "k": 3,
+            "role": "asserted",
+            "subject": "MSFT forward P/E",
+            "metric": "valuation_multiple",
+            "comparator": "at_most",
+            "threshold": 18,
+            "unit": "x",
+            "window_to": "2030-12-31",
+            "timing": "any_time",
+            "claim": "The multiple compresses to 18x.",
+            "quote": "compress to 18x",
+            "premises": [1],
+            "caused_by": [2],
+        },
+        {
+            "k": 4,
+            "role": "asserted",
+            "subject": "Brent crude",
+            "metric": "commodity_price",
+            "topic": "oil",
+            "comparator": "below",
+            "threshold": 100,
+            "unit": "USD/bbl",
+            "window_to": "2030-12-31",
+            "timing": "any_time",
+            "claim": "Brent trades below $100.",
+            "quote": "below $100 by the end of the year",
+        },
+    ]
+}
+
+
+def test_prediction_states_follow_premises_and_verdicts(db):
+    """W-048, on a letter dated 2026-01-01. Claim 1 is a premise of 2 (window closed) and 3 (window open).
+    While the premise is unscored, 2 awaits it. The premise scored wrong voids 2 and 3. A check on 4 makes
+    it proposed; a verdict makes it scored. The track record counts asserted claims only. Rolled back."""
+    x = predictions.parse(MSFT_LETTER, date(2026, 1, 1), {"oil"})
+    conn = db.connection()
+    with _rollback(conn) as cur:
+        cur.execute("SET LOCAL ROLE whales_owner")
+        manager_id = cur.execute(
+            "INSERT INTO core.manager (slug, name, kind) VALUES ('zz-test', 'Test', 'manager') RETURNING id"
+        ).fetchone()[0]
+        source_id = cur.execute(
+            "INSERT INTO letters.source (slug, manager_id, name, url, tier, mode, cadence, "
+            "access_restricted, storage_allowed, use_allowed, permission_basis) VALUES ('zz-test', %s, "
+            "'Test', 'https://x.test', 1, 'manual', 'quarterly', false, true, true, 'test') RETURNING id",
+            (manager_id,),
+        ).fetchone()[0]
+        cur.execute("SET LOCAL ROLE whales_ingest")
+        document_id = cur.execute(
+            "INSERT INTO letters.document (manager_id, title, kind, published_on, published_on_basis) "
+            "VALUES (%s, 'Test letter', 'quarterly_letter', '2026-01-01', 'stated') RETURNING id",
+            (manager_id,),
+        ).fetchone()[0]
+        file_id = cur.execute(
+            "INSERT INTO letters.document_file (document_id, source_id, url, sha256, content_type, "
+            "byte_size, collected, raw_kept) VALUES (%s, %s, 'https://x.test/b.pdf', repeat('b', 64), "
+            "'application/pdf', 10, 'manual', false) RETURNING id",
+            (document_id, source_id),
+        ).fetchone()[0]
+        run_id = cur.execute("INSERT INTO raw.run_log (command) VALUES ('test') RETURNING id").fetchone()[0]
+        extraction_id = cur.execute(
+            "INSERT INTO letters.extraction_run (document_file_id, document_id, task, run_id, model, "
+            "prompt_version, status) VALUES (%s, %s, 'predictions', %s, 'test', %s, 'ok') RETURNING id",
+            (file_id, document_id, run_id, predictions.PROMPT_VERSION),
+        ).fetchone()[0]
+        ids = predictions.store(cur, extraction_id, x)
+
+        def states():
+            return dict(
+                cur.execute(
+                    "SELECT ordinal, state FROM letters.prediction_state WHERE extraction_run_id = %s",
+                    (extraction_id,),
+                ).fetchall()
+            )
+
+        assert states() == {1: "due", 2: "awaiting_premise", 3: "open", 4: "open"}
+        cur.execute("SET LOCAL ROLE whales_reviewer")
+        cur.execute(
+            "INSERT INTO letters.prediction_score (prediction_id, outcome) VALUES (%s, 'wrong')", (ids[1],)
+        )
+        assert states() == {1: "scored", 2: "void", 3: "void", 4: "open"}
+        cur.execute("SET LOCAL ROLE whales_ingest")
+        check_id = cur.execute(
+            "INSERT INTO letters.prediction_check (prediction_id, run_id, method, source, observed, as_of, "
+            "proposed_outcome) VALUES (%s, %s, 'data', 'test series', '92.1 USD/bbl', '2026-10-01', 'right') "
+            "RETURNING id",
+            (ids[4], run_id),
+        ).fetchone()[0]
+        assert states()[4] == "proposed"
+        cur.execute("SET LOCAL ROLE whales_reviewer")
+        cur.execute(
+            "INSERT INTO letters.prediction_score (prediction_id, check_id, outcome) "
+            "VALUES (%s, %s, 'right')",
+            (ids[4], check_id),
+        )
+        assert states()[4] == "scored"
+        record = cur.execute(
+            "SELECT right_calls, wrong_calls, void_calls, open_calls, dated_calls FROM letters.track_record "
+            "WHERE manager = 'zz-test'"
+        ).fetchone()
+        assert record == (1, 0, 2, 0, 3)
 
 
 class _rollback:

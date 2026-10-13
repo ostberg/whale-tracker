@@ -4,8 +4,10 @@ Instructions for anyone, human or AI agent on any platform, working in this proj
 points to are the complete memory of the project. Nothing depends on a particular assistant's chat history or
 private memory; if you learn something the next person needs, it goes in the repo.
 
-Status on 2026-10-09: phase 1 gate met. Migration 0001 (the letters-pilot schema) is applied to `whales_dev`
-on the shared server and verified live. No pipeline code yet. Private remote not yet created.
+Status on 2026-10-13: phase 2 in progress. Migration 0001 (the letters-pilot schema) is applied to
+`whales_dev` and verified live; migration 0002 (predictions as linked claims, W-048) is written but not
+applied, because Azure sign-in is blocked (IT). Collectors exist for SEC, websites and the inbox; no model
+extraction yet. Private remote not yet created.
 
 ## What this is
 
@@ -157,6 +159,7 @@ Whale Tracker/
     sources/             edgar.py, figi.py, prices.py, letters.py
     parse/               form13f.py, schedule13.py, letter_extract.py
     db/                  models and migrations
+    predictions.py       the claims contract (W-048): parse the model's JSON, store claims and links
     events.py            initiations, adds, trims, exits
     topics.py            topic exposure from holdings; topic trend and stance changes
     performance.py       forward returns per event
@@ -214,8 +217,13 @@ Key tables:
 - `letters.mention`: company named in a letter; stance, short summary, page reference.
 - `letters.rating`: one row per letter and rubric dimension: score, reason, quote, model, prompt version,
   human override (W-036).
-- `letters.prediction`: one row per explicit call: subject, direction, horizon, condition, confidence
-  wording, quote, status (open, right, wrong, partly right, unresolvable) and who scored it (W-037).
+- `letters.prediction`: one row per testable claim (W-048): role (asserted, or a premise the writer only
+  supposes), subject, metric, security or topic, comparator and threshold, window and timing, confidence
+  wording, claim, quote, page. `letters.prediction_link` ties the claims of one letter together (premise_of,
+  causes); `letters.prediction_check` is the job's proposed outcome with its evidence;
+  `letters.prediction_score` is a person's verdict. The view `letters.prediction_state` derives open, due,
+  awaiting premise, proposed, void or scored, and `letters.track_record` counts each writer's calls. Design:
+  `docs/PREDICTIONS.md`.
 - `core.topic`: the controlled topic list (id, name, parent, description, aliases). Loaded from
   `config/topics.toml`.
 - `core.topic_security`: which securities count toward a topic (for example gold miners and gold ETFs for
@@ -352,7 +360,8 @@ From the Tamale repo (read in full 2026-10-08: `docs/OPS_AUTOMATION_PLAN.md`, `d
 - Untrusted content: hardened XML parsing; PDFs parsed only inside the job container, except the inbox scan
   (W-045: pypdf only, first two pages, on a laptop, for files people collected). The letter-extraction
   model has no tools, receives text and returns a fixed JSON structure. Extracted tickers must match
-  `core.security` or the mention is dropped. Letter text goes only to in-tenant models.
+  `core.security` or the mention is dropped (a prediction with an unknown ticker is kept, unlinked and
+  noted, since the claim itself is the value). Letter text goes only to in-tenant models.
 - Audit: every derived row traces to its source filing or document.
 - **Internal use only (W-043).** Sources are used for the firm's internal research. Nothing this project
   produces (notes, digests, alerts, Research Assistant answers, quotes) is published, sent or quoted outside

@@ -2,9 +2,9 @@
 
 What is done, in progress, outstanding or blocked, and on whom. Read this first, then DECISIONS.md.
 
-*Last updated 2026-10-08 (second session): letters made the primary product (W-027), phases re-planned;
-`whales_dev` created on the shared server and both databases hardened (W-004); Python package scaffolded
-with hash-pinned locks and an Entra-token connector. No pipeline code yet.*
+*Last updated 2026-10-13 (night): predictions redesigned as linked claims (W-048; migration 0002 written,
+not applied); collectors built for SEC, websites and the inbox; compliance position recorded (W-043). Azure
+sign-in is blocked, so nothing has run in Azure yet and the database is behind the config.*
 
 ## Phases
 
@@ -14,7 +14,7 @@ proposals, not commitments.
 | # | Phase | Target | Gate | Status |
 |---|---|---|---|---|
 | 1 | Setup: git repo and private remote, `whales_dev` database, blocking decisions, letter-source inventory, compliance ruling on source tiers (W-029, W-030) | 2026-10-23 | Migrations run against the Azure server; compliance has ruled on tiers 1 to 3 | Gate met 2026-10-09: migration 0001 applied to `whales_dev` and verified live. Compliance position recorded 2026-10-13 (W-043). Still open: the GitHub remote |
-| 2 | Letters pilot, run by hand: fetch and store tier-1 and tier-2 letters for about ten managers, two years back, including activist letters filed as 13D exhibits (W-031); extract company mentions, topic stances and predictions, each with its quote, and rate each letter, through the in-tenant model seam | November 2026 | The owner finds the extraction useful on 20 letters; every stance carries its quote and link (W-019); ratings checked with quick verdicts on 10 letters (W-036) | In progress: collectors built (SEC, websites, inbox); 2,210 website documents and 78 inbox PDFs listed or identified. `config/` synced to `whales_dev` (57 managers, 54 filers, 261 tag proposals, 44 sources, all inactive). Needs the compliance ruling to activate sources, and a Foundry model endpoint |
+| 2 | Letters pilot, run by hand: fetch and store tier-1 and tier-2 letters for about ten managers, two years back, including activist letters filed as 13D exhibits (W-031); extract company mentions, topic stances and predictions, each with its quote, and rate each letter, through the in-tenant model seam | November 2026 | The owner finds the extraction useful on 20 letters; every stance carries its quote and link (W-019); ratings checked with quick verdicts on 10 letters (W-036) | In progress: collectors built (SEC, websites, inbox); 2,210 website documents and 78 inbox PDFs listed or identified. `config/` synced to `whales_dev` (57 managers, 54 filers, 261 tag proposals, 44 sources, all inactive). Predictions redesigned as linked claims (W-048): migration 0002 written and unit-tested, applied by the next admin job. The compliance ruling is in (W-043); still needs Azure (IT) and a Foundry model endpoint |
 | 3 | Thin 13F layer (W-028): SEC bulk-data backfill, current quarters from the filing XML, filer map (W-024), unit detection (W-025), check against WhaleWisdom; 13G stakes (W-031); topic exposure and the said-versus-owned view | Nov to Dec 2026 (Q3 13Fs due Monday 2026-11-16) | Every filing reconciles; sampled positions match WhaleWisdom | Not started |
 | 4 | Azure job and weekly digest: letters weekly, 13F after each deadline | December 2026 | A week of clean unattended runs | Pulled forward (W-042, 2026-10-10): jobs and identities defined in `infra/`; the digest is still to build |
 | 5 | Firm-side consumers, in the Tamale repo: Research Assistant source and "Why Now" prompts, Tamale publisher, alerts | January 2027 | Owner approves the Tamale note format on five companies | Not started |
@@ -114,6 +114,13 @@ Later:
 - [x] **Pull a letters pilot forward?** Yes, and further: letters are now the product (W-027, 2026-10-08).
 - [ ] **Price source** for forward returns. APX closes are not split-adjusted (D-118) and the FactSet feed has
       stopped, so neither works as-is.
+- [ ] **Clippings route (W-049, proposed).** A third inbox folder for tweets, articles and notes clipped by
+      hand, each under its author's slug; authors and their `<slug>-clippings` source live in `config/`. To
+      confirm: the scope (no browser extension, no automated X collection, no podcasts or email) and the
+      reading of X's terms for model extraction on hand-clipped posts. Design: `docs/PREDICTIONS.md`, section 6.
+- [ ] **Topic-to-beneficiary edges.** The owner's financial-graph project links companies to topics with a
+      stance (benefits, at risk, linked). Here that becomes a `stance` column on `core.topic_security` in
+      phase 3, so "topic or technology → eventual beneficiary" chains can be followed. Not yet designed.
 - [ ] **Alert delivery.** Reminders and the digest go to Teams (W-034). Still open: whether event alerts (new
       letter from a watched manager, a 13D on a held name) use the same channel. Holdings-based alerts stay
       firm-side (W-012).

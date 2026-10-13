@@ -40,19 +40,18 @@ because it needs APX and Tamale data this project never holds (W-012).
 **No overall score.** Insight, Clarity, Predictions and Uniqueness are shown side by side, and any one can be
 used for sorting (the owner chose this).
 
-## 2. Predictions as records (W-037)
+## 2. Predictions as records (W-037, redesigned as linked claims in W-048)
 
-Each explicit call in a letter becomes its own row. These rows give the Predictions count and, over time, a track record.
-Each row holds:
-- the call, paraphrased, with a short quote and page reference;
-- the subject: a security (must match `core.security`) or a topic (must match `core.topic`);
-- the direction (up, down, above or below a level, happens or does not happen);
-- the horizon or date, if stated, and any condition;
-- the confidence wording as written ("we expect", "could", "will").
+Each testable call in a letter becomes its own row, with the writer's quote and page. The 2026-10-13
+redesign, with the owner's two examples worked through, is in `docs/PREDICTIONS.md`: a claim names what is
+measured (subject and metric), how it is tested (comparator, threshold, window, timing), and how it depends
+on other claims in the same letter (a premise the writer only supposes, or a cause the writer asserts). A
+failed premise voids the calls that depended on it; premises never count in a track record.
 
-Each call starts as **open**. When its horizon passes it becomes right, wrong, partly right or unresolvable.
-Scoring is done by a person at first; price-based calls are scored automatically once a price source exists
-(phase 6). Calls with no horizon stay open and are reported as such, never scored by guesswork.
+Each call starts as **open**. When its window closes, the job proposes an outcome where it can (a public
+data series, a price, a filing, or a model reading later evidence) and a person confirms it with one
+verdict: right, wrong, partly right or unresolvable. Calls with no deadline stay open and are never scored by
+guesswork. The "Predictions" count in the rating is the number of asserted calls with a deadline.
 
 Over time this gives each writer a hit rate by subject and horizon. That is the most useful thing the letters
 can produce, and it ties into W-007 (forward performance from first mentions).

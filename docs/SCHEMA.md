@@ -51,9 +51,11 @@ decisions. Its fixes are folded in below.
    never overwrite. "Current" means the latest successful run per document and task, so re-running ratings
    does not hide mentions.
 10. **People's decisions are insert-only rows** (`core.tag_decision`, `letters.candidate_decision`,
-    `letters.prediction_score`, `letters.rating_verdict`). The database stamps who and when. A prediction is
-    open until it has a score. Code refuses to re-extract a document's predictions once any of them is scored,
-    so scores never point at superseded rows.
+    `letters.prediction_score`, `letters.rating_verdict`). The database stamps who and when. A prediction's
+    state (open, due, awaiting premise, proposed, void, scored) is derived in `letters.prediction_state` from
+    its window, its links and the latest verdict, never stored. The job may propose an outcome with its
+    evidence (`letters.prediction_check`); only a person's verdict scores. Code refuses to re-extract a
+    document's predictions once any of them is scored, so scores never point at superseded rows.
 11. **No DELETE** for any non-owner role. A failed run's partial output stays, and views filter on
     `status = 'ok'`.
 12. **Quotes** are required on mentions, topic mentions, predictions and ratings (W-019), and are at most 400
@@ -71,6 +73,26 @@ decisions. Its fixes are folded in below.
 | `api` | (empty until the first consumer, W-005) |
 
 Every foreign key column is indexed.
+
+## What migration 0002 changes (written 2026-10-13, not yet applied)
+
+Predictions as linked claims (W-048; design and worked examples in `docs/PREDICTIONS.md`). The W-037 tables
+of 0001 were empty, so the migration drops and recreates them rather than altering them, and refuses to run
+if `letters.prediction` holds rows.
+
+| Object | Holds |
+|---|---|
+| `letters.prediction` | one testable claim: role (asserted or premise), subject, metric, security or topic, comparator, threshold and unit, window and timing, confidence wording, claim, quote, page. `ordinal` is the model's own numbering within the run |
+| `letters.prediction_link` | `premise_of` and `causes` links between claims of one run. Composite keys keep both ends in the run and make the from-claim's role match the kind |
+| `letters.prediction_check` | the job's proposed outcome, with method (data, price, filing, model), source, what was observed and when |
+| `letters.prediction_score` | a person's verdict, optionally confirming or overriding one check of the same prediction |
+| `letters.prediction_state` (view) | each claim's derived state |
+| `letters.track_record` (view) | each writer's counts over asserted claims, from the latest successful predictions run per document |
+
+It also adds `clipping` to `letters.document.kind` (W-049). Grants: the job inserts claims, links and checks;
+the reviewer inserts verdicts without choosing `reviewed_by`. The SQL is unit-checked (named constraints, no
+DELETE, vocabularies matching `whales.predictions`) but has not run against a server, because Azure sign-in is
+blocked. `pytest -m live` carries a test of the state view for when it has.
 
 ## Verified on 2026-10-09
 
