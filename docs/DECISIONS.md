@@ -53,3 +53,12 @@ Settled decisions and why, newest ids last. Ids are `W-nnn`; `D-nnn` refers to t
 - a scheduled job `job-whales-collect-sec` (daily 11:00 UTC) and a manual job `job-whales-admin` whose arguments are overridden at each start.
 
 One image for all jobs, built in Azure from `git archive HEAD` (`infra/deploy.py`, settings in `infra/azure.toml`). Laptop steps are only the one-off ones that need the Entra admin's own rights (creating roles, registering identities); `whales --open-firewall` opens and closes the firewall for them automatically | The owner, 2026-10-10, called temporary firewall rules for laptop runs "an absolute nightmare" and chose to move runs into Azure now. Jobs inside Azure pass the server's "Azure services" rule and sign in with managed identities, so the firm's periodic sign-in prompts do not touch them. Sharing Tamale's registry would save the $5 but let the internet-facing job pull Tamale's images (W-002, W-020) | Owner (move now); details proposed |
+| W-043 | Compliance position for letter sources: the firm uses them for internal research only. No republication, no quotation outside the firm, no sale or monetization; the firm publishes no research of its own. Every output of this project (Tamale notes, the Teams digest, the Research Assistant) stays inside the firm.
+
+This clears personal or non-commercial use clauses, so 29 tier-1 sources are active (20 auto, 9 manual). It does **not** lift:
+- explicit bans on AI, automated text analysis, text mining or data mining (Fundsmith, Sprott, Third Point's Malibu site stay inactive until the publisher consents, W-035);
+- bot bans (manual collection, W-033);
+- aggregator terms (a licence is still needed, W-029);
+- confidentiality on LP-received letters (excluded, W-014);
+- PDF permission flags (W-030);
+- storage limits: flags are left as read, conservatively, since raw copies are not needed yet (W-032) | The owner, 2026-10-13: "we are good if we only use the sources for internal purposes and we don't re-publish or quote externally. We do not publish our own research. And we will not be selling or monetizing the content in any way." | Owner (CCO sign-off to be confirmed for the record) |

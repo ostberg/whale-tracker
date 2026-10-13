@@ -13,8 +13,9 @@ marked (I) for inferred.
 | **Storage**: copying or storing | Regal Partners (PM Capital): storing needs prior written consent | Keep extracts, short quotes and the link, not the file (W-032) |
 | **Use**: automated text analysis or AI | Fundsmith: no "automated analytical technique aimed at analysing text" without express written consent; Ruffer: no text and data mining or AI; Buy Side Digest: no AI use, embeddings included | **Only the publisher's written consent, or a licence.** Downloading by hand does not help, because the restriction is on what we do with the text |
 
-Nearly every site also limits use to "personal, non-commercial". Whether the firm's internal research counts is
-the central question for the compliance ruling.
+Nearly every site also limits use to "personal, non-commercial". **Settled 2026-10-13 (W-043):** the firm
+uses sources for internal research only, with no republication, external quotation or monetization, which
+clears those clauses. It does not lift explicit AI or text-analysis bans, bot bans or aggregator terms.
 
 ## The owner's priority managers: where their own words can come from
 

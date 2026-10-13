@@ -1,8 +1,11 @@
 # Letter sources (W-029, W-033, W-035). Loaded into letters.source by `whales config sync`.
 # Evidence for each: docs/LETTER_SOURCES.md.
 #
-# EVERY SOURCE IS INACTIVE until compliance rules. To activate one, set approved_by, approved_at and
-# active = true; the sync refuses an active source without an approval.
+# Compliance position (W-043, owner, 2026-10-13): internal use only; no republication, no external quotation,
+# no sale or monetization. That clears personal-use clauses. It does NOT lift explicit bans on AI or text
+# analysis (those sources stay inactive until the publisher consents), bot bans (manual collection),
+# aggregator terms (licence needed) or storage limits (flags left as read). The sync refuses an active
+# source without approved_by and approved_at.
 #
 # The permission flags are the agent's reading of each site's terms on 2026-10-08, not legal advice:
 #   access_restricted  bots banned, or a form, gate or bot wall  -> mode must be "manual" (a person downloads)
@@ -28,8 +31,11 @@ cadence = "irregular"
 access_restricted = false
 storage_allowed = false
 use_allowed = true
-permission_basis = "Agent reading 2026-10-08: nothing on automated access; personal downloads allowed; no republication without consent. Pending compliance ruling"
+permission_basis = "Agent reading 2026-10-08: nothing on automated access; personal downloads allowed; no republication without consent. Cleared for internal use only (W-043)"
 terms_url = "https://www.oaktreecapital.com/terms-and-conditions"
+approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
+approved_at = 2026-10-13
+active = true
 
 [[source]]
 slug = "southeastern-commentaries"
@@ -42,8 +48,11 @@ cadence = "quarterly"
 access_restricted = false
 storage_allowed = false
 use_allowed = true
-permission_basis = "Agent reading 2026-10-08: personal use only; no commercial or external distribution; nothing on automated access. Pending compliance ruling"
+permission_basis = "Agent reading 2026-10-08: personal use only; no commercial or external distribution; nothing on automated access. Cleared for internal use only (W-043)"
 terms_url = "https://southeasternasset.com/terms-of-use/"
+approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
+approved_at = 2026-10-13
+active = true
 
 [[source]]
 slug = "elliott-letters"
@@ -56,8 +65,11 @@ cadence = "irregular"
 access_restricted = false
 storage_allowed = false
 use_allowed = true
-permission_basis = "Agent reading 2026-10-08: copyright reserved; nothing on automated access. Pending compliance ruling"
+permission_basis = "Agent reading 2026-10-08: copyright reserved; nothing on automated access. Cleared for internal use only (W-043)"
 terms_url = "https://www.elliottletters.com/terms"
+approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
+approved_at = 2026-10-13
+active = true
 
 [[source]]
 slug = "starboard-presentations"
@@ -70,7 +82,10 @@ cadence = "irregular"
 access_restricted = false
 storage_allowed = false
 use_allowed = true
-permission_basis = "Agent reading 2026-10-08: no terms page, only a privacy notice; robots crawl-delay 10. Pending compliance ruling"
+permission_basis = "Agent reading 2026-10-08: no terms page, only a privacy notice; robots crawl-delay 10. Cleared for internal use only (W-043)"
+approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
+approved_at = 2026-10-13
+active = true
 
 [[source]]
 slug = "pershing-square-inc-letters"
@@ -83,7 +98,10 @@ cadence = "quarterly"
 access_restricted = true
 storage_allowed = false
 use_allowed = true
-permission_basis = "Agent reading 2026-10-08: no terms page found, but bot protection refused automated fetches (403), so collected by hand. Pending compliance ruling"
+permission_basis = "Agent reading 2026-10-08: no terms page found, but bot protection refused automated fetches (403), so collected by hand. Cleared for internal use only (W-043)"
+approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
+approved_at = 2026-10-13
+active = true
 
 [[source]]
 slug = "pershing-square-holdings-reports"
@@ -96,8 +114,11 @@ cadence = "semiannual"
 access_restricted = true
 storage_allowed = false
 use_allowed = true
-permission_basis = "Agent reading 2026-10-08: accept-terms gate; terms ban spidering and scraping. Extract only the letter section. Pending compliance ruling"
+permission_basis = "Agent reading 2026-10-08: accept-terms gate; terms ban spidering and scraping. Extract only the letter section. Cleared for internal use only (W-043)"
 terms_url = "https://pershingsquareholdings.com/terms-of-use/"
+approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
+approved_at = 2026-10-13
+active = true
 
 [[source]]
 slug = "third-point-malibu"
@@ -138,8 +159,11 @@ cadence = "annual"
 access_restricted = false
 storage_allowed = false
 use_allowed = true
-permission_basis = "Agent reading 2026-10-08: no reproduction, distribution or linking without permission; nothing on automated access; no robots.txt. Pending compliance ruling"
+permission_basis = "Agent reading 2026-10-08: no reproduction, distribution or linking without permission; nothing on automated access; no robots.txt. Cleared for internal use only (W-043)"
 terms_url = "https://www.berkshirehathaway.com/disclaimer.html"
+approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
+approved_at = 2026-10-13
+active = true
 
 [[source]]
 slug = "himalaya-publications"
@@ -152,8 +176,11 @@ cadence = "irregular"
 access_restricted = false
 storage_allowed = false
 use_allowed = true
-permission_basis = "Agent reading 2026-10-08: no copying without permission; nothing on automated access. Pending compliance ruling"
+permission_basis = "Agent reading 2026-10-08: no copying without permission; nothing on automated access. Cleared for internal use only (W-043)"
 terms_url = "https://www.himcap.com/terms-of-services"
+approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
+approved_at = 2026-10-13
+active = true
 
 [[source]]
 slug = "trian-letters"
@@ -166,8 +193,11 @@ cadence = "irregular"
 access_restricted = false
 storage_allowed = false
 use_allowed = true
-permission_basis = "Agent reading 2026-10-08: personal use only; nothing on automated access. Pending compliance ruling"
+permission_basis = "Agent reading 2026-10-08: personal use only; nothing on automated access. Cleared for internal use only (W-043)"
 terms_url = "https://trianpartners.com/terms"
+approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
+approved_at = 2026-10-13
+active = true
 
 [[source]]
 slug = "coatue-decks"
@@ -180,10 +210,13 @@ cadence = "irregular"
 access_restricted = false
 storage_allowed = false
 use_allowed = true
-permission_basis = "Agent reading 2026-10-08: one personal copy; no republication; nothing on automated access. Pending compliance ruling"
+permission_basis = "Agent reading 2026-10-08: one personal copy; no republication; nothing on automated access. Cleared for internal use only (W-043)"
 terms_url = "https://www.coatue.com/terms-of-use"
 
 # --- Owner-named sources ------------------------------------------------------------------------------
+approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
+approved_at = 2026-10-13
+active = true
 
 [[source]]
 slug = "praetorian-letters"
@@ -196,7 +229,10 @@ cadence = "quarterly"
 access_restricted = false
 storage_allowed = false
 use_allowed = true
-permission_basis = "Agent reading 2026-10-08: PDFs openly linked; no terms page, only a privacy policy; robots allows all but /bullpen. Pending compliance ruling"
+permission_basis = "Agent reading 2026-10-08: PDFs openly linked; no terms page, only a privacy policy; robots allows all but /bullpen. Cleared for internal use only (W-043)"
+approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
+approved_at = 2026-10-13
+active = true
 
 [[source]]
 slug = "laughing-water-letters"
@@ -209,7 +245,10 @@ cadence = "quarterly"
 access_restricted = true
 storage_allowed = false
 use_allowed = true
-permission_basis = "Agent reading 2026-10-08: the owner met a details form before downloading, so a person collects (W-033); no terms pages found. Pending compliance ruling"
+permission_basis = "Agent reading 2026-10-08: the owner met a details form before downloading, so a person collects (W-033); no terms pages found. Cleared for internal use only (W-043)"
+approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
+approved_at = 2026-10-13
+active = true
 
 [[source]]
 slug = "pm-capital-insights"
@@ -222,10 +261,13 @@ cadence = "irregular"
 access_restricted = false
 storage_allowed = false
 use_allowed = true
-permission_basis = "Agent reading 2026-10-08: Regal Partners terms need prior written consent to copy or store; nothing on bots or AI. Extracts only (W-032). Pending compliance ruling"
+permission_basis = "Agent reading 2026-10-08: Regal Partners terms need prior written consent to copy or store; nothing on bots or AI. Extracts only (W-032). Cleared for internal use only (W-043)"
 terms_url = "https://regalpartners.com/terms-of-use/"
 
 # --- SEC filings (tier 2): public record --------------------------------------------------------------
+approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
+approved_at = 2026-10-13
+active = true
 
 [[source]]
 slug = "psus-ncsrs"
@@ -444,7 +486,10 @@ cadence = "monthly"
 access_restricted = false
 storage_allowed = false
 use_allowed = true
-permission_basis = "Agent reading 2026-10-08: no terms page, only a copyright notice; a reprint policy exists but was not found. Pending compliance ruling"
+permission_basis = "Agent reading 2026-10-08: no terms page, only a copyright notice; a reprint policy exists but was not found. Cleared for internal use only (W-043)"
+approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
+approved_at = 2026-10-13
+active = true
 
 [[source]]
 slug = "hoisington-review"
@@ -457,7 +502,10 @@ cadence = "quarterly"
 access_restricted = false
 storage_allowed = false
 use_allowed = true
-permission_basis = "Agent reading 2026-10-08: no terms found, no robots.txt; only back to Q3 2024. Pending compliance ruling"
+permission_basis = "Agent reading 2026-10-08: no terms found, no robots.txt; only back to Q3 2024. Cleared for internal use only (W-043)"
+approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
+approved_at = 2026-10-13
+active = true
 
 [[source]]
 slug = "gmo-research"
@@ -470,8 +518,11 @@ cadence = "quarterly"
 access_restricted = false
 storage_allowed = false
 use_allowed = true
-permission_basis = "Agent reading 2026-10-08: print or download with notices kept; no commercial reproduction; no bot clause. Pending compliance ruling"
+permission_basis = "Agent reading 2026-10-08: print or download with notices kept; no commercial reproduction; no bot clause. Cleared for internal use only (W-043)"
 terms_url = "https://www.gmo.com/americas/terms-and-conditions/"
+approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
+approved_at = 2026-10-13
+active = true
 
 [[source]]
 slug = "smead-missives"
@@ -484,8 +535,11 @@ cadence = "monthly"
 access_restricted = false
 storage_allowed = false
 use_allowed = true
-permission_basis = "Agent reading 2026-10-08: personal, non-commercial use; no copying without consent; no bot clause. Pending compliance ruling"
+permission_basis = "Agent reading 2026-10-08: personal, non-commercial use; no copying without consent; no bot clause. Cleared for internal use only (W-043)"
 terms_url = "https://www.smeadcap.com/terms-use"
+approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
+approved_at = 2026-10-13
+active = true
 
 [[source]]
 slug = "kopernik-insights"
@@ -498,8 +552,11 @@ cadence = "irregular"
 access_restricted = false
 storage_allowed = false
 use_allowed = true
-permission_basis = "Agent reading 2026-10-08: personal or informational use; no commercial reproduction; no scraping clause. Pending compliance ruling"
+permission_basis = "Agent reading 2026-10-08: personal or informational use; no commercial reproduction; no scraping clause. Cleared for internal use only (W-043)"
 terms_url = "https://www.kopernikglobal.com/terms-of-use/"
+approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
+approved_at = 2026-10-13
+active = true
 
 [[source]]
 slug = "lyn-alden-newsletter"
@@ -512,8 +569,11 @@ cadence = "irregular"
 access_restricted = false
 storage_allowed = false
 use_allowed = true
-permission_basis = "Agent reading 2026-10-08: copying needs permission; short credited excerpts allowed; nothing on bots. Pending compliance ruling"
+permission_basis = "Agent reading 2026-10-08: copying needs permission; short credited excerpts allowed; nothing on bots. Cleared for internal use only (W-043)"
 terms_url = "https://www.lynalden.com/legal"
+approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
+approved_at = 2026-10-13
+active = true
 
 [[source]]
 slug = "fairfax-letters"
@@ -526,8 +586,11 @@ cadence = "annual"
 access_restricted = false
 storage_allowed = false
 use_allowed = true
-permission_basis = "Agent reading 2026-10-08: one copy for personal, non-commercial use; no bot clause. Pending compliance ruling"
+permission_basis = "Agent reading 2026-10-08: one copy for personal, non-commercial use; no bot clause. Cleared for internal use only (W-043)"
 terms_url = "https://www.fairfax.ca/legal-notice/"
+approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
+approved_at = 2026-10-13
+active = true
 
 [[source]]
 slug = "fpa-commentary"
@@ -540,8 +603,11 @@ cadence = "quarterly"
 access_restricted = false
 storage_allowed = false
 use_allowed = true
-permission_basis = "Agent reading 2026-10-08: browser viewing for personal use only; robots crawl-delay 10. Pending compliance ruling"
+permission_basis = "Agent reading 2026-10-08: browser viewing for personal use only; robots crawl-delay 10. Cleared for internal use only (W-043)"
 terms_url = "https://fpa.com/terms-of-use/"
+approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
+approved_at = 2026-10-13
+active = true
 
 [[source]]
 slug = "us-global-investor-alert"
@@ -554,8 +620,11 @@ cadence = "irregular"
 access_restricted = false
 storage_allowed = false
 use_allowed = true
-permission_basis = "Agent reading 2026-10-08: personal, non-commercial; written consent for other uses; no bot clause. Pending compliance ruling"
+permission_basis = "Agent reading 2026-10-08: personal, non-commercial; written consent for other uses; no bot clause. Cleared for internal use only (W-043)"
 terms_url = "https://www.usfunds.com/terms-of-use/"
+approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
+approved_at = 2026-10-13
+active = true
 
 [[source]]
 slug = "in-gold-we-trust"
@@ -568,8 +637,11 @@ cadence = "annual"
 access_restricted = false
 storage_allowed = false
 use_allowed = true
-permission_basis = "Agent reading 2026-10-08: private, non-commercial copies only (German law). Pending compliance ruling"
+permission_basis = "Agent reading 2026-10-08: private, non-commercial copies only (German law). Cleared for internal use only (W-043)"
 terms_url = "https://ingoldwetrust.report/impressum/"
+approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
+approved_at = 2026-10-13
+active = true
 
 [[source]]
 slug = "apollo-daily-spark"
@@ -582,8 +654,11 @@ cadence = "irregular"
 access_restricted = true
 storage_allowed = false
 use_allowed = true
-permission_basis = "Agent reading 2026-10-08: terms ban bots and crawlers used to scrape; personal, non-commercial. Daily, so manual collection is heavy: consider asking Apollo"
+permission_basis = "Agent reading 2026-10-08: terms ban bots and crawlers used to scrape; personal, non-commercial. Daily, so manual collection is heavy: consider asking Apollo. Cleared for internal use only (W-043)"
 terms_url = "https://www.apollo.com/governance/terms-of-use"
+approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
+approved_at = 2026-10-13
+active = true
 
 [[source]]
 slug = "brookfield-letters"
@@ -596,8 +671,11 @@ cadence = "quarterly"
 access_restricted = true
 storage_allowed = false
 use_allowed = true
-permission_basis = "Agent reading 2026-10-08: terms ban scraping, bots and spiders; personal use. Pending compliance ruling"
+permission_basis = "Agent reading 2026-10-08: terms ban scraping, bots and spiders; personal use. Cleared for internal use only (W-043)"
 terms_url = "https://bam.brookfield.com/terms-use"
+approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
+approved_at = 2026-10-13
+active = true
 
 [[source]]
 slug = "horizon-kinetics-commentary"
@@ -610,8 +688,11 @@ cadence = "quarterly"
 access_restricted = true
 storage_allowed = false
 use_allowed = true
-permission_basis = "Agent reading 2026-10-08: terms ban bots and intelligent agents; personal use. Pending compliance ruling"
+permission_basis = "Agent reading 2026-10-08: terms ban bots and intelligent agents; personal use. Cleared for internal use only (W-043)"
 terms_url = "https://horizonkinetics.com/terms-conditions/"
+approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
+approved_at = 2026-10-13
+active = true
 
 [[source]]
 slug = "sprott-insights"
@@ -638,8 +719,11 @@ cadence = "quarterly"
 access_restricted = true
 storage_allowed = false
 use_allowed = true
-permission_basis = "Agent reading 2026-10-08: terms ban bots and intelligent agents; personal use. Pending compliance ruling"
+permission_basis = "Agent reading 2026-10-08: terms ban bots and intelligent agents; personal use. Cleared for internal use only (W-043)"
 terms_url = "https://oakmark.com/terms-of-use/"
+approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
+approved_at = 2026-10-13
+active = true
 
 [[source]]
 slug = "crescat-letters"
@@ -652,8 +736,11 @@ cadence = "monthly"
 access_restricted = true
 storage_allowed = false
 use_allowed = true
-permission_basis = "Agent reading 2026-10-08: terms ban bots harvesting a large portion; minimal personal copies. Pending compliance ruling"
+permission_basis = "Agent reading 2026-10-08: terms ban bots harvesting a large portion; minimal personal copies. Cleared for internal use only (W-043)"
 terms_url = "https://www.crescat.net/terms-and-conditions/"
+approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
+approved_at = 2026-10-13
+active = true
 
 [[source]]
 slug = "goehring-rozencwajg-commentary"
@@ -666,4 +753,8 @@ cadence = "quarterly"
 access_restricted = true
 storage_allowed = false
 use_allowed = true
-permission_basis = "Agent reading 2026-10-08: full text needs a form; no terms page found. Pending compliance ruling"
+permission_basis = "Agent reading 2026-10-08: full text needs a form; no terms page found. Cleared for internal use only (W-043)"
+approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
+approved_at = 2026-10-13
+active = true
+

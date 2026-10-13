@@ -2,6 +2,29 @@
 
 Dated entries, newest first: what changed, what is verified, what is next.
 
+## 2026-10-13: compliance position recorded (W-043); Azure sign-in with IT
+
+**Owner direction.**
+- Compliance: "we are good if we only use the sources for internal purposes and we don't re-publish or
+  quote externally. We do not publish our own research. And we will not be selling or monetizing the
+  content in any way." Recorded as W-043.
+- Azure CLI sign-in is blocked by Conditional Access on both of the owner's machines; IT is looking at it.
+
+**What changed.**
+- `config/letter_sources.toml`: the 29 tier-1 sources without an explicit AI or data-mining ban are now
+  active, approved under W-043. 41 of 44 sources are active.
+- Fundsmith, Sprott and Third Point's Malibu site stay inactive until the publisher consents.
+- AGENTS.md has a new standing rule: everything this project produces stays inside the firm.
+- STATUS, LETTER_SOURCES and DECISIONS updated.
+
+**Not done.**
+- The database is not synced, because the Azure block also stops database access. The next sync (from the
+  admin job once deployed) writes the activations.
+- No tier-1 collector exists yet: only the SEC collector is built. Activation matters once auto collectors
+  and the manual reminder calendar exist.
+- Before automating each tier-1 source, re-read its terms page. The agents' paraphrases were not all
+  re-checked (LETTER_SOURCES.md).
+
 ## 2026-10-10: SEC collector built; runs move into Azure
 
 **Owner direction.**

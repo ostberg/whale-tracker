@@ -350,8 +350,10 @@ From the Tamale repo (read in full 2026-10-08: `docs/OPS_AUTOMATION_PLAN.md`, `d
   model has no tools, receives text and returns a fixed JSON structure. Extracted tickers must match
   `core.security` or the mention is dropped. Letter text goes only to in-tenant models.
 - Audit: every derived row traces to its source filing or document.
-- Compliance (needs the firm's CCO): every letter source is checked for robots.txt and terms and carries its
-  tier (W-029). Third-party republishers are used only under a licence or written permission. Robots.txt
+- **Internal use only (W-043).** Sources are used for the firm's internal research. Nothing this project
+  produces (notes, digests, alerts, Research Assistant answers, quotes) is published, sent or quoted outside
+  the firm, sold or monetized. Never build a path that sends source content or derived output externally.
+- Compliance: every letter source is checked for robots.txt and terms and carries its tier (W-029). Third-party republishers are used only under a licence or written permission. Robots.txt
   allowing a fetch is not permission to store or analyse: Buy Side Digest's terms, for example, forbid
   automated access and any AI use, including embeddings. LP-received letters stay out unless cleared fund by
   fund. PDFs whose permission flags forbid text extraction are not machine-read without a ruling (W-030).

@@ -13,7 +13,7 @@ proposals, not commitments.
 
 | # | Phase | Target | Gate | Status |
 |---|---|---|---|---|
-| 1 | Setup: git repo and private remote, `whales_dev` database, blocking decisions, letter-source inventory, compliance ruling on source tiers (W-029, W-030) | 2026-10-23 | Migrations run against the Azure server; compliance has ruled on tiers 1 to 3 | Gate met 2026-10-09: migration 0001 applied to `whales_dev` and verified live. Still open: the GitHub remote and the compliance ruling |
+| 1 | Setup: git repo and private remote, `whales_dev` database, blocking decisions, letter-source inventory, compliance ruling on source tiers (W-029, W-030) | 2026-10-23 | Migrations run against the Azure server; compliance has ruled on tiers 1 to 3 | Gate met 2026-10-09: migration 0001 applied to `whales_dev` and verified live. Compliance position recorded 2026-10-13 (W-043). Still open: the GitHub remote |
 | 2 | Letters pilot, run by hand: fetch and store tier-1 and tier-2 letters for about ten managers, two years back, including activist letters filed as 13D exhibits (W-031); extract company mentions, topic stances and predictions, each with its quote, and rate each letter, through the in-tenant model seam | November 2026 | The owner finds the extraction useful on 20 letters; every stance carries its quote and link (W-019); ratings checked with quick verdicts on 10 letters (W-036) | In progress: `config/` synced to `whales_dev` (57 managers, 54 filers, 261 tag proposals, 44 sources, all inactive). Needs the compliance ruling to activate sources, and a Foundry model endpoint |
 | 3 | Thin 13F layer (W-028): SEC bulk-data backfill, current quarters from the filing XML, filer map (W-024), unit detection (W-025), check against WhaleWisdom; 13G stakes (W-031); topic exposure and the said-versus-owned view | Nov to Dec 2026 (Q3 13Fs due Monday 2026-11-16) | Every filing reconciles; sampled positions match WhaleWisdom | Not started |
 | 4 | Azure job and weekly digest: letters weekly, 13F after each deadline | December 2026 | A week of clean unattended runs | Pulled forward (W-042, 2026-10-10): jobs and identities defined in `infra/`; the digest is still to build |
@@ -62,8 +62,10 @@ Blocking phase 1 or 2:
       Elliott, Starboard, Jana and "Value Investor". **Open:** (1) what "Value Investor" means (no such 13F
       filer; ValueAct?); (2) W-026, ingest all 30 tagged by cohort rather than a first 20; (3) leave Whitebox's
       13F out and treat Andy Redleaf's writing as a letters source.
-- [ ] **Compliance ruling on letter sources** (W-029 tiers, W-030 PDF permission flags). This is the phase 1
-      gate now that letters come first. The owner takes it to the CCO; the agent can draft a one-page brief.
+- [x] **Compliance ruling on letter sources:** W-043 (owner, 2026-10-13). Internal use only; no
+      republication, external quotation or monetization. 29 tier-1 sources activated; Fundsmith, Sprott and
+      Third Point's Malibu site stay off (explicit AI or data-mining bans). Still open: whether the CCO has
+      signed off, for the record; the view on PDFs whose flags forbid text extraction (W-030).
 - [ ] **Buy or build the letters collection.** Two aggregators carry the letters the owner cares about:
       - **Buy Side Digest** sells an institutional feed: a daily S3 delivery in JSON and CSV, links verified back
         to each manager's own source, and a normalised ticker and stance taxonomy. No price shown; contact
@@ -118,8 +120,8 @@ Later:
       `tocquevilleapi` ("Research Automation", D-036). No entry type is agreed: the Tamale repo's
       `docs/NOTE_TYPE_CATALOG.md` is an unapproved draft. Needed before phase 5.
 - [x] **EDGAR client:** nothing exists in the Tamale repo to share, so build one here (W-023, proposed).
-- [ ] **Compliance sign-off:** fetching public letters, the position on LP-received letters, retention of
-      generated notes and alerts.
+- [ ] **Compliance, remaining:** fetching public letters and LP-received letters are settled (W-043, W-014).
+      Still open: retention of generated notes and alerts, and PDF permission flags (W-030).
 
 ## Answered on 2026-10-08 by reading the Tamale repo
 
