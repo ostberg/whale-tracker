@@ -14,11 +14,12 @@ $$;
 DROP TABLE letters.prediction_score;
 DROP TABLE letters.prediction;
 
--- A hand-clipped tweet, article or note (W-049) is a document like any other.
+-- Clippings (W-049): a tweet, an article, a transcript or a note is a document like any other. Kinds name
+-- the medium, so a writer's record can later be split by it; a new medium is one more code here.
 ALTER TABLE letters.document DROP CONSTRAINT document_kind_check;
 ALTER TABLE letters.document ADD CONSTRAINT document_kind_check CHECK (kind IN ('annual_letter',
     'quarterly_letter', 'memo', 'commentary', 'activist_letter', 'presentation', 'essay', 'filing_exhibit',
-    'clipping', 'other'));
+    'tweet', 'article', 'transcript', 'note', 'other'));
 
 -- One testable claim. `role` separates what the writer asserts from a premise the writer only supposes
 -- ("if capex rises 30%..."); premises never count in a track record. `ordinal` is the model's own numbering

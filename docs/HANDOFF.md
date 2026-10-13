@@ -6,8 +6,9 @@ Dated entries, newest first: what changed, what is verified, what is next.
 
 **Owner direction.** The owner's earlier document/idea/tweet parser produced a predictions table with
 dependencies ("Brent < $100, 12/31/2026, dependency: Iran peace"); the owner asked for the design and the
-migration, is undecided on clippings ("don't want to get caught going down a rabbit hole"), and noted that
-"not everything will be deterministic; this is where LLMs will really help". The earlier parser lives on the
+migration, was first undecided on clippings ("don't want to get caught going down a rabbit hole") and then
+confirmed the route (W-049: "seems like a good approach, another input, not built quite yet, but plan for
+flexibility"), and noted that "not everything will be deterministic; this is where LLMs will really help". The earlier parser lives on the
 owner's personal desktop. The financial-graph archive (`../financial-graph.zip`) was read for ideas only
 (`docs/PREDICTIONS.md`, section 7); it holds a `.env` with API keys and third-party research PDFs, and
 nothing from it was copied into this repo.
@@ -16,12 +17,15 @@ nothing from it was copied into this repo.
 - `src/whales/db/migrations/0002_predictions.sql`: `letters.prediction` rebuilt as one testable claim per
   row (role, subject, metric, comparator, threshold, window, timing), plus `prediction_link` (premise_of,
   causes), `prediction_check` (the job's proposed outcome with evidence), `prediction_score` (a person's
-  verdict), and the views `prediction_state` and `track_record`. `clipping` added to the document kinds. The
-  migration refuses to run if the old table holds rows (it is empty: no extraction has run).
+  verdict), and the views `prediction_state` and `track_record`. The clipping media (tweet, article,
+  transcript, note) added to the document kinds. The migration refuses to run if the old table holds rows
+  (it is empty: no extraction has run).
 - `src/whales/predictions.py`: the JSON contract the model must return, `parse` (every problem reported at
   once; unknown topics dropped and noted; links checked for roles and cycles), `store`, `refuse_if_scored`.
 - `docs/PREDICTIONS.md`: the design, the two examples parsed, the resolution flow, the clippings route
   (W-049, not built), what was taken from financial-graph and what was not.
+- `Whale Tracker Inbox/clippings/` created and the inbox README extended with the clipping file format, so
+  the owner can start clipping before the loader route exists.
 - Decisions W-048 and W-049. SCHEMA.md, STATUS.md, AGENTS.md and RATINGS_AND_TAGS.md updated.
 - Tests: 36 new unit tests (162 in all); live tests for the new grants and the state view, for
   `pytest -m live` once the migration is applied.
@@ -33,7 +37,8 @@ first `db migrate --apply` from the admin job is the real check, followed by `py
 1. When IT clears Azure: deploy, `db migrate --apply` (0002), `config sync --apply`, then the live tests.
 2. The model seam and a Foundry endpoint, then the predictions prompt (contract in `predictions.CONTRACT`,
    rules in `docs/PREDICTIONS.md`, section 2).
-3. The clippings route in the inbox loader, if the owner confirms W-049.
+3. The clippings route in the inbox loader (W-049, confirmed): the folder and file header are defined in
+   `docs/PREDICTIONS.md`, section 6, and in the inbox README.
 4. Open for the owner: the canonical subject list; X's terms for model use on hand-clipped posts; whether
    `data` and `price` checks may auto-score after a grace period (today a person always confirms).
 

@@ -89,7 +89,7 @@ if `letters.prediction` holds rows.
 | `letters.prediction_state` (view) | each claim's derived state |
 | `letters.track_record` (view) | each writer's counts over asserted claims, from the latest successful predictions run per document |
 
-It also adds `clipping` to `letters.document.kind` (W-049). Grants: the job inserts claims, links and checks;
+It also adds the clipping media `tweet`, `article`, `transcript` and `note` to `letters.document.kind` (W-049). Grants: the job inserts claims, links and checks;
 the reviewer inserts verdicts without choosing `reviewed_by`. The SQL is unit-checked (named constraints, no
 DELETE, vocabularies matching `whales.predictions`) but has not run against a server, because Azure sign-in is
 blocked. `pytest -m live` carries a test of the state view for when it has.

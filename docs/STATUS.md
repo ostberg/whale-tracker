@@ -114,10 +114,10 @@ Later:
 - [x] **Pull a letters pilot forward?** Yes, and further: letters are now the product (W-027, 2026-10-08).
 - [ ] **Price source** for forward returns. APX closes are not split-adjusted (D-118) and the FactSet feed has
       stopped, so neither works as-is.
-- [ ] **Clippings route (W-049, proposed).** A third inbox folder for tweets, articles and notes clipped by
-      hand, each under its author's slug; authors and their `<slug>-clippings` source live in `config/`. To
-      confirm: the scope (no browser extension, no automated X collection, no podcasts or email) and the
-      reading of X's terms for model extraction on hand-clipped posts. Design: `docs/PREDICTIONS.md`, section 6.
+- [x] **Clippings route (W-049).** Owner, 2026-10-13: a good approach, another input, not built yet, plan
+      for flexibility. The folder and file format are defined (`docs/PREDICTIONS.md`, section 6; the inbox
+      README), so files can be dropped now; the loader route follows the model seam. Still open: X's terms
+      for model extraction on hand-clipped posts.
 - [ ] **Topic-to-beneficiary edges.** The owner's financial-graph project links companies to topics with a
       stance (benefits, at risk, linked). Here that becomes a `stance` column on `core.topic_security` in
       phase 3, so "topic or technology → eventual beneficiary" chains can be followed. Not yet designed.

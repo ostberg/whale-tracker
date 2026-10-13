@@ -148,25 +148,44 @@ contract.
 **Letters** (now): every `letters.document` that may be machine-read gets a predictions run alongside
 mentions, topics and the rating.
 
-**Clippings** (W-049, proposed, not built): a third inbox route beside `public-websites` and
-`shared-by-manager`:
+**Clippings** (W-049; direction confirmed by the owner on 2026-10-13, loader not yet built): a third inbox
+route beside `public-websites` and `shared-by-manager`. The folder exists and files can be dropped now; the
+loader picks them up once it is built.
 
 ```
 Whale Tracker Inbox/clippings/<author-slug>/anything.txt | .md | .pdf
 ```
 
-- A text or Markdown file may start with a short header, one item per line: `url:`, `date:`, `note:`. The
-  note is the owner's reading guidance ("skeptical of the demand claim; focus on the capex comment"), passed
-  to the model as context, as the financial-graph project did with its context notes. It guides, never
-  overrides the contract.
+- A text or Markdown file may start with a header, one item per line, then a blank line, then the text:
+
+  ```
+  kind: tweet | article | transcript | note
+  url: https://...
+  date: 2026-10-13
+  title: ...
+  note: reading guidance for the model
+  ```
+
+  Every line is optional. `kind` names the medium and becomes `letters.document.kind`; without it the loader
+  takes `tweet` from an X or Twitter URL, else `note`. `date` is the publication date; without it the loader
+  uses the file's own date and records that basis, as it does for PDFs. The note is the owner's reading
+  guidance ("skeptical of the demand claim; focus on the capex comment"), passed to the model as context, as
+  the financial-graph project did with its context notes; it guides, never overrides the contract.
 - The author is a `core.manager` in `config/managers.toml` (usually kind `independent_writer` or
   `economist_or_strategist`) with one source `<slug>-clippings` in `config/letter_sources.toml`; `whales
   inbox scan` prints the TOML to paste for an author it does not know. Config stays the one home for authors
   and sources (W-040).
-- The document kind is `clipping`; its claims join the author's track record like a letter's.
+- Its claims join the author's track record like a letter's, and the kind lets the record be split by medium
+  later ("his tweets against his letters").
 - Collection is by hand only. X's terms forbid automated collection, so a tweet is copied by a person; whether
   model extraction on a hand-clipped post sits within the internal-use position (W-043) is for the owner to
   confirm. A clipped article by a third party is a tier-3 source and carries that source's terms.
+- **Built for later inputs** (the owner: "plan for flexibility"). The route is medium-agnostic: anything
+  someone else reduces to a text file (a podcast transcript, an email saved as text, an interview) enters the
+  same way, under the same author and source, and gets the same extraction. A new medium is one more `kind`
+  code (a constraint re-add, convention 5 in SCHEMA.md) and at most a file reader; the claims model, the
+  contract and the track record do not change. This project still does no transcription, mail reading or
+  scraping of its own.
 
 **Out of scope, on purpose** (the owner: "don't want to get caught going down a rabbit hole and never
 finishing"): a browser extension, automated collection from X or any feed, podcasts and audio, email
@@ -205,7 +224,8 @@ decision rule (W-039).
 
 ## 8. For the owner
 
-1. Confirm W-049 (clippings) and its scope, or park it.
+1. W-049 (clippings) confirmed on 2026-10-13 as direction, build later. Still open: X's terms for model
+   use on hand-clipped posts.
 2. Confirm the canonical subject list before the prompt is written (section 2).
 3. Decide whether `data` and `price` checks may auto-score after a grace period (section 4).
 4. Migration 0002 is applied by the admin job once IT clears Azure; `pytest -m live` then exercises the state
