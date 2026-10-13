@@ -7,6 +7,7 @@
     whales config check                              validate config/ (no database)
     whales config sync                               config/ into WHALES_DB_NAME; --apply
     whales collect sec [--source SLUG]               new SEC letters (tier 2) since edgar_since; --apply
+    whales collect web [--source SLUG] [--offline]   new letters from managers' websites; --apply (Azure only)
     whales db add-identity <name> --group G <db>     register a managed identity (owner or ingest); --apply
     whales db close-firewall                         remove any temporary firewall rule left behind
     whales status                                    counts and the latest runs (read-only)
@@ -25,10 +26,11 @@ import os
 import sys
 from pathlib import Path
 
-from . import collect, config, inbox, inbox_load
+from . import collect, collect_web, config, inbox, inbox_load
 from .db import admin, firewall, migrate, sync
 from .db.connect import Database, DbSettings
 from .sources.edgar import EdgarClient
+from .sources.web import WebClient
 
 
 def load_env_file(path: Path = Path(".env")) -> None:
@@ -146,6 +148,32 @@ def cmd_config_sync(args: argparse.Namespace) -> int:
             return 0
         print(f"applied {sync.apply(db, changes)} change(s)")
     return 0
+
+
+def cmd_collect_web(args: argparse.Namespace) -> int:
+    cfg = config.load()
+    sources = collect_web.web_sources(cfg, args.source)
+    client = WebClient(collect_web.user_agent())
+    if args.offline:
+        results = collect_web.survey(None, client, sources)
+    else:
+        with Database(DbSettings.from_env(), role=collect.INGEST_ROLE) as db:
+            if args.apply:
+                results = collect_web.collect(db, client, cfg, sources, limit=args.limit)
+            else:
+                results = collect_web.survey(db, client, sources)
+    print(f"{client.requests} requests")
+    for r in results:
+        line = f"   {r.slug:<30} found {r.found:<4} new {len(r.new):<4}"
+        if args.apply:
+            line += f" collected {r.collected:<4} duplicates {r.duplicates}"
+        print(line + (f"  ERROR {r.error}" if r.error else ""))
+        if args.verbose:
+            for c in r.new[:50]:
+                print(f"        {c.url}  {c.text[:80]}")
+    if not args.apply:
+        print("(dry run: nothing fetched beyond index pages, nothing written; add --apply in Azure)")
+    return 1 if any(r.error for r in results) else 0
 
 
 def cmd_collect_sec(args: argparse.Namespace) -> int:
@@ -341,6 +369,15 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--limit", type=int, help="at most this many new documents per source")
     p.add_argument("-v", "--verbose", action="store_true", help="list each new document")
     p.set_defaults(func=cmd_collect_sec)
+    p = col.add_parser("web", help="letters from managers' own websites, as whales_ingest")
+    p.add_argument("--source", action="append", help="only this source slug (repeatable)")
+    p.add_argument("--apply", action="store_true", help="fetch and record (Azure only; default: list only)")
+    p.add_argument(
+        "--offline", action="store_true", help="list without a database (all documents shown as new)"
+    )
+    p.add_argument("--limit", type=int, help="at most this many new documents per source")
+    p.add_argument("-v", "--verbose", action="store_true", help="list each new document")
+    p.set_defaults(func=cmd_collect_web)
 
     p = sub.add_parser("status", help="counts and the latest runs (read-only)")
     p.set_defaults(func=cmd_status)

@@ -300,7 +300,7 @@ def read_pdf(f: InboxFile, body: bytes) -> None:
     f.head = re.sub(r"[ \t]+", " ", "\n".join(parts))[:HEAD_CHARS]
 
 
-def date_and_kind(f: InboxFile, path: Path) -> None:
+def date_and_kind(f: InboxFile, first_seen: date) -> None:
     """Period from the file name first, then the title, then the first page; publication date from a date in
     the file name, a date written near the top, or the PDF's creation date, each only if plausible for the
     period; failing those, the period end itself (a lower bound), then the file's own date."""
@@ -324,7 +324,7 @@ def date_and_kind(f: InboxFile, path: Path) -> None:
     elif period is not None:
         f.published_on, f.published_basis = period, "inferred"
     else:
-        f.published_on = datetime.fromtimestamp(path.stat().st_mtime).date()
+        f.published_on = first_seen
         f.published_basis = "first_seen"
 
 
@@ -365,6 +365,6 @@ def scan(cfg: Config, root: Path | None = None) -> list[InboxFile]:
             except Exception as e:  # noqa: BLE001 - a malformed PDF is reported, never fatal
                 f.error = f"unreadable: {type(e).__name__}: {str(e)[:200]}"
             identify(f, cfg.managers)
-            date_and_kind(f, path)
+            date_and_kind(f, datetime.fromtimestamp(path.stat().st_mtime).date())
             out.append(f)
     return out

@@ -13,6 +13,10 @@ import tomllib
 from dataclasses import dataclass
 from datetime import date, timedelta
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .sources.web import WebRule
 
 KINDS = ("manager", "listed_vehicle", "independent_writer", "economist_or_strategist")
 FACETS = ("style", "strategy", "asset_focus", "geography")
@@ -112,6 +116,7 @@ class Source:
     approved_at: date | None
     active: bool
     edgar: EdgarRule | None = None
+    web: WebRule | None = None
 
 
 @dataclass(frozen=True)
@@ -312,6 +317,7 @@ def _sources(raw: dict, managers: set[str], problems: list[str]) -> tuple[Source
                 f"{where}: an active source needs approved_by and approved_at (compliance ruling)"
             )
         edgar = _edgar_rule(s.get("edgar"), s.get("tier"), where, problems)
+        web = _web_rule(s.get("web"), s.get("tier"), s.get("mode"), where, problems)
         out.append(
             Source(
                 slug,
@@ -330,9 +336,51 @@ def _sources(raw: dict, managers: set[str], problems: list[str]) -> tuple[Source
                 approved_at,
                 active,
                 edgar,
+                web,
             )
         )
     return tuple(out)
+
+
+def _web_rule(raw: dict | None, tier, mode, where: str, problems: list[str]) -> WebRule | None:
+    """How an automatic tier-1 source lists its documents (W-046). Not stored in the database."""
+    from .sources.web import WebRule
+
+    if raw is None:
+        return None
+    if tier != 1 or mode != "auto":
+        problems.append(f"{where}: only automatic tier-1 sources take a web rule")
+    method = raw.get("method")
+    if method not in ("links", "sitemap", "feed"):
+        problems.append(f"{where}: web method must be links, sitemap or feed")
+    index = raw.get("index", [])
+    if isinstance(index, str):
+        index = [index]
+    if not index or not all(isinstance(u, str) and u.startswith("https://") for u in index):
+        problems.append(f"{where}: web index must be one or more https URLs")
+    for key in ("match", "text", "exclude"):
+        if raw.get(key) is not None:
+            try:
+                re.compile(raw[key])
+            except re.error as e:
+                problems.append(f"{where}: web {key} is not a valid regex ({e})")
+    if raw.get("match") is None:
+        problems.append(f"{where}: web match (a regex on the document URL) is required")
+    pages, max_pages = raw.get("pages"), raw.get("max_pages", 1)
+    if pages is not None and ("{n}" not in pages or not pages.startswith("https://")):
+        problems.append(f"{where}: web pages must be an https URL template containing {{n}}")
+    if not isinstance(max_pages, int) or not 1 <= max_pages <= 100:
+        problems.append(f"{where}: web max_pages must be 1 to 100")
+    return WebRule(
+        str(method),
+        tuple(index),
+        str(raw.get("match", "")),
+        raw.get("text"),
+        raw.get("exclude"),
+        pages,
+        max_pages if isinstance(max_pages, int) else 1,
+        tuple(raw.get("hosts", [])),
+    )
 
 
 def _edgar_rule(raw: dict | None, tier: int | None, where: str, problems: list[str]) -> EdgarRule | None:
