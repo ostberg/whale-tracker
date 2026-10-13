@@ -364,6 +364,24 @@ def _web_rule(raw: dict | None, tier, mode, where: str, problems: list[str]) -> 
                 re.compile(raw[key])
             except re.error as e:
                 problems.append(f"{where}: web {key} is not a valid regex ({e})")
+    rewrite = raw.get("rewrite")
+    if rewrite is not None:
+        if not (isinstance(rewrite, list) and len(rewrite) == 2 and all(isinstance(x, str) for x in rewrite)):
+            problems.append(f"{where}: web rewrite must be [regex, replacement]")
+            rewrite = None
+        else:
+            try:
+                re.compile(rewrite[0])
+            except re.error as e:
+                problems.append(f"{where}: web rewrite is not a valid regex ({e})")
+    if raw.get("follow") is not None:
+        try:
+            re.compile(raw["follow"])
+        except re.error as e:
+            problems.append(f"{where}: web follow is not a valid regex ({e})")
+    first = raw.get("first", 0)
+    if not isinstance(first, int) or first < 0:
+        problems.append(f"{where}: web first must be a whole number, 0 or more")
     if raw.get("match") is None:
         problems.append(f"{where}: web match (a regex on the document URL) is required")
     pages, max_pages = raw.get("pages"), raw.get("max_pages", 1)
@@ -380,6 +398,9 @@ def _web_rule(raw: dict | None, tier, mode, where: str, problems: list[str]) -> 
         pages,
         max_pages if isinstance(max_pages, int) else 1,
         tuple(raw.get("hosts", [])),
+        tuple(rewrite) if rewrite else None,
+        first if isinstance(first, int) else 0,
+        raw.get("follow"),
     )
 
 

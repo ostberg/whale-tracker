@@ -96,7 +96,8 @@ copy .env.example .env        # then fill in; no secrets go in it
 Everyday checks: `.venv\Scripts\python.exe -m ruff check src tests`, `-m ruff format --check src tests`,
 `-m pytest`. Regenerate locks only with `scripts\lock_deps.ps1` (versions held unless `-Upgrade`).
 
-Routine runs happen in Azure (W-042): `job-whales-collect-sec` on a schedule, and `job-whales-admin`
+Routine runs happen in Azure (W-042): `job-whales-collect-sec` daily and `job-whales-collect-web` weekly
+(W-046; `whales collect web --offline` dry-runs it from anywhere, reading index pages only), and `job-whales-admin`
 started on demand with arguments such as `config sync --apply`, `db migrate --apply` or `status`
 (`az containerapp job start -n job-whales-admin -g rg-whale-tracker --args ...`). Deploy with
 `python infra/deploy.py --apply` after committing (settings: `infra/azure.toml`). From a laptop, only the
@@ -344,7 +345,9 @@ From the Tamale repo (read in full 2026-10-08: `docs/OPS_AUTOMATION_PLAN.md`, `d
   (unused until cleared). CONNECT is granted per database to login identities, never to groups; the
   ingest identity must have CONNECT on `whales` only.
 - Network: the job has no inbound endpoint; outbound is limited to an allowlist (SEC, OpenFIGI, the price
-  source, approved `auto` letter domains, the Foundry endpoint, the Teams Workflows flow URL).
+  source, approved `auto` letter domains, the Foundry endpoint, the Teams Workflows flow URL). The letter
+  domains are the hosts of the `web` rules in `config/letter_sources.toml` (W-046). The allowlist is not
+  enforced at the network level yet (that needs a VNet); the collector enforces it per source in code.
 - The Teams Workflows flow URL is a secret: anyone holding it can post to the channel (W-034).
 - Untrusted content: hardened XML parsing; PDFs parsed only inside the job container, except the inbox scan
   (W-045: pypdf only, first two pages, on a laptop, for files people collected). The letter-extraction

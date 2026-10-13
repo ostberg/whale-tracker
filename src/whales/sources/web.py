@@ -45,6 +45,9 @@ class WebRule:
     pages: str | None = None
     max_pages: int = 1
     hosts: tuple[str, ...] = ()
+    rewrite: tuple[str, str] | None = None  # (regex, replacement) applied to each URL first
+    first: int = 0  # the first number substituted into ``pages``
+    follow: str | None = None  # pages matching this are fetched once more and their links read too
 
     def allowed_hosts(self) -> set[str]:
         return {urllib.parse.urlsplit(u).hostname or "" for u in self.index} | set(self.hosts)
@@ -137,10 +140,17 @@ def _clean(fragment: str) -> str:
 
 
 def page_links(page: str, base: str) -> list[WebCandidate]:
+    """Every link on a page, made absolute. A ``javascript:`` link that carries an http(s) URL, such as
+    ``javascript:openPDF('Title','https://.../memo.pdf')``, yields that URL."""
     out = []
     for m in _A.finditer(page):
         href = html.unescape(m.group(1) or m.group(2) or "").strip()
-        if not href or href.startswith(("#", "mailto:", "javascript:", "tel:")):
+        if href.lower().startswith("javascript:"):
+            inner = re.search(r"https?://[^'\"\s)]+", href)
+            if not inner:
+                continue
+            href = inner.group(0)
+        if not href or href.startswith(("#", "mailto:", "tel:")):
             continue
         out.append(WebCandidate(urllib.parse.urljoin(base, href).split("#", 1)[0], _clean(m.group(3))[:300]))
     return out
@@ -176,38 +186,66 @@ def _wanted(rule: WebRule, c: WebCandidate) -> bool:
 def index_urls(rule: WebRule) -> list[str]:
     urls = list(rule.index)
     if rule.pages:
-        urls += [rule.pages.format(n=n) for n in range(rule.max_pages)]
+        urls += [rule.pages.format(n=n) for n in range(rule.first, rule.first + rule.max_pages)]
     seen: set[str] = set()
     return [u for u in urls if not (u in seen or seen.add(u))]
 
 
+def _items(client: WebClient, rule: WebRule, url: str, hosts: set[str]) -> list[WebCandidate]:
+    text = client.get(url, hosts)[0].decode("utf-8", "replace")
+    if rule.method == "links":
+        return page_links(text, url)
+    if rule.method == "feed":
+        return feed_links(text)
+    locs = sitemap_locations(text)  # sitemap; one level of sitemap index followed
+    if "<sitemapindex" in text[:2000].lower():
+        nested = []
+        for sub in locs:
+            if (urllib.parse.urlsplit(sub).hostname or "") in hosts:
+                nested += sitemap_locations(client.get(sub, hosts)[0].decode("utf-8", "replace"))
+        locs = nested
+    return [WebCandidate(u, "") for u in locs]
+
+
 def candidates(client: WebClient, rule: WebRule) -> list[WebCandidate]:
-    """Every wanted document URL, first occurrence kept, in page order. Stops paging at the first page that
-    adds nothing new."""
+    """Every wanted document URL, first occurrence kept, in page order.
+
+    Paging stops at the first page that adds nothing new, or that does not exist (404). With ``follow``,
+    pages matching it (for example campaign pages listed in a sitemap) are fetched once and their links read
+    as well."""
     hosts = rule.allowed_hosts()
     found: dict[str, WebCandidate] = {}
-    for url in index_urls(rule):
-        body, _ = client.get(url, hosts)
-        text = body.decode("utf-8", "replace")
-        if rule.method == "links":
-            items = page_links(text, url)
-        elif rule.method == "feed":
-            items = feed_links(text)
-        else:  # sitemap, one level of sitemap index followed
-            locs = sitemap_locations(text)
-            if "<sitemapindex" in text[:2000].lower():
-                nested = []
-                for sub in locs:
-                    if (urllib.parse.urlsplit(sub).hostname or "") in hosts:
-                        nested += sitemap_locations(client.get(sub, hosts)[0].decode("utf-8", "replace"))
-                locs = nested
-            items = [WebCandidate(u, "") for u in locs]
-        before = len(found)
+    followed: set[str] = set()
+
+    def take(items: list[WebCandidate]) -> int:
+        if rule.rewrite:
+            items = [WebCandidate(re.sub(rule.rewrite[0], rule.rewrite[1], c.url), c.text) for c in items]
+        added = 0
         for c in items:
             if _wanted(rule, c) and c.url not in found:
                 found[c.url] = c
+                added += 1
             elif c.url in found and not found[c.url].text and c.text:
                 found[c.url] = c
-        if rule.pages and url not in rule.index and len(found) == before:
+        return added
+
+    for url in index_urls(rule):
+        paged = url not in rule.index
+        try:
+            items = _items(client, rule, url, hosts)
+        except WebError as e:
+            if paged and "HTTP 404" in str(e):
+                break
+            raise
+        added = take(items)
+        if rule.follow:
+            for c in items:
+                if c.url in followed or not re.search(rule.follow, c.url):
+                    continue
+                if (urllib.parse.urlsplit(c.url).hostname or "") not in hosts:
+                    continue
+                followed.add(c.url)
+                added += take(page_links(client.get(c.url, hosts)[0].decode("utf-8", "replace"), c.url))
+        if paged and added == 0:
             break
     return list(found.values())

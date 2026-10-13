@@ -160,3 +160,53 @@ def test_web_rules_in_config_are_checked(tmp_path):
         config.load(_write(tmp_path, tags=TAGS, topics=TOPICS, managers=MANAGERS, sources=bad))
     text = " ".join(e.value.problems)
     assert "method must be" in text and "https URLs" in text and "not a valid regex" in text
+
+
+def test_javascript_links_yield_their_url():
+    page = (
+        "<a href=\"javascript:openPDF('Old memo','https://m.test/docs/memos/old.pdf?sfvrsn=2')\">Old memo</a>"
+        '<a href="javascript:void(0)">menu</a>'
+    )
+    links = web.page_links(page, "https://m.test/memos")
+    assert [link.url for link in links] == ["https://m.test/docs/memos/old.pdf?sfvrsn=2"]
+
+
+def test_follow_reads_one_hop_and_paging_starts_where_told():
+    sitemap = "<urlset><url><loc>https://m.test/campaign-a/</loc></url><url><loc>https://m.test/contact/</loc></url></urlset>"
+    pages = {
+        "https://m.test/robots.txt": ROBOTS_OPEN,
+        "https://m.test/page-sitemap.xml": sitemap,
+        "https://m.test/campaign-a/": '<a href="/up/letter.pdf">L</a> <a href="/up/JA-letter.pdf">JA</a>',
+    }
+    c, seen = client(pages)
+    rule = web.WebRule(
+        "sitemap",
+        ("https://m.test/page-sitemap.xml",),
+        r"/up/[^/]+\.pdf$",
+        exclude=r"/JA-",
+        follow=r"^https://m\.test/(?!contact/)[a-z-]+/$",
+    )
+    assert [x.url for x in web.candidates(c, rule)] == ["https://m.test/up/letter.pdf"]
+    assert "https://m.test/contact/" not in seen
+    paged = web.WebRule(
+        "links", ("https://m.test/l/",), "x", pages="https://m.test/l/page/{n}/", first=2, max_pages=3
+    )
+    assert web.index_urls(paged)[1:] == [
+        "https://m.test/l/page/2/",
+        "https://m.test/l/page/3/",
+        "https://m.test/l/page/4/",
+    ]
+
+
+def test_a_missing_page_ends_paging_quietly():
+    pages = {"https://m.test/robots.txt": ROBOTS_OPEN, "https://m.test/l/": '<a href="/d/1.pdf">1</a>'}
+    c, _ = client(pages)
+    rule = web.WebRule(
+        "links",
+        ("https://m.test/l/",),
+        r"/d/\d+\.pdf$",
+        pages="https://m.test/l/page/{n}/",
+        first=2,
+        max_pages=5,
+    )
+    assert [x.url for x in web.candidates(c, rule)] == ["https://m.test/d/1.pdf"]

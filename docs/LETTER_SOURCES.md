@@ -48,6 +48,42 @@ clears those clauses. It does not lift explicit AI or text-analysis bans, bot ba
 | [Hedge Fund Alpha: Stone Sentinel Q3 2026](https://hedgefundalpha.com/investor-letters/stone-sentinel-capital-q3-2026/) | 3 | Letter to partners as full HTML | Open, posted 2026-10-08 | Allowed | As above | n/a (HTML) | Licence |
 | [Buy Side Digest: Greenlight](https://www.buysidedigest.com/funds/greenlight-capital) | 3 | Letter summaries, topic tags and scored fields open; full letters for paid members | Partly paywalled; site says accredited and professional investors only | Allowed | [Terms](https://www.buysidedigest.com/terms) forbid bots and scraping without written permission, internal business use, and any AI use including embeddings | n/a | Only through its [institutional feed](https://www.buysidedigest.com/institutional) (daily S3, JSON and CSV, source links to the manager, ticker and stance taxonomy) |
 
+## Website collection (W-046), mapped and dry-run 2026-10-13
+
+Each automatic tier-1 source has a `web` rule in `config/letter_sources.toml`. Three research agents mapped the
+sites live and re-read each site's terms. A dry run (`whales collect web --offline`, index pages only, 94
+requests, no errors) lists:
+
+| Source | Documents | Method | Notes |
+|---|---|---|---|
+| Smead missives | 469 | sitemap index | Quarterly newsletters (56) could be a second rule |
+| PM Capital insights | 430 | sitemap | Podcasts, webinars and videos excluded. Raw files not stored (Regal terms) |
+| US Global Investor Alert | 419 | paged feed | Back to June 2013 |
+| GMO research | 258 | sitemap | The library page hides older items behind JavaScript; the sitemap has all |
+| Oaktree memos | 165 | links | 35 HTML memos since late 2020, and 130 older PDFs taken from `javascript:openPDF(...)` links |
+| Hussman comment | 117 | sitemap | Since Oct 2017; the 1999 to 2017 archive (`/wmc/`) would need a one-off backfill |
+| Kopernik | 109 | links, filtered by link text | Includes 3 third-party interview reprints; 3 undated items missed |
+| Southeastern commentaries | 56 | paged links | Partners, Small-Cap, Global and International funds, 4Q22 onward |
+| Fairfax chairman's letters | 45 | links | 1985 to 2025 |
+| Alluvial letters | 38 | links | On `/partnership-info/`, Q1 2017 onward. Its Substack is excluded (terms forbid crawling) |
+| In Gold We Trust | 22 | links | English Extended editions; malformed archive links repaired; the 2026 Compact edition is also listed |
+| Praetorian | 22 | links | 2021 to 2026, on two hosts (go.pracap.com and HubSpot's CDN). 2019 and 2020 letters are not public |
+| Hoisington | 18 | links | Ten of them are in an HTML comment but still resolve |
+| Trian | 14 | links | Includes about 9 corporate announcements; extraction sorts them |
+| Starboard | 11 | links | Since Oct 2025; robots crawl-delay 10 |
+| Elliott | 9 | sitemap, then campaign pages | New campaign pages are picked up automatically; Japanese copies excluded |
+| Himalaya | 8 | links | Essays and speeches on Webflow's CDN; no investor letters |
+
+**Switched to manual collection** (a person downloads; W-033):
+- **Berkshire:** the site firewall returns 403 "Bad bot access attempt" to our declared User-Agent; we do
+  not work around it. One letter a year, in late February.
+- **Lyn Alden:** every path, including robots.txt and the terms, returns 403 to our User-Agent. Her email
+  newsletter could be routed to the inbox (W-044) instead.
+- **Coatue:** the decks are on Google Drive, whose robots.txt disallows the download path.
+- **FPA:** the terms permit viewing "using HTML browser software" only, which reads as no automated clients.
+- **Bonsai:** letters sit behind a registration and accredited-investor gate. Its robots.txt also blocks 26
+  named AI crawlers, so its letters are recorded but not machine-read until Bonsai consents (W-047).
+
 ## From the owner's starting library (2026-10-13)
 
 78 PDFs in `../Whale Tracker Inbox` (W-044), all identified by `whales inbox scan`:

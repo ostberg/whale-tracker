@@ -32,3 +32,10 @@ name = "job-whales-admin"
 identity = "admin"
 args = ["status"]             # the default; each start overrides it, e.g. `config sync --apply`
 timeout_seconds = 1800
+
+[[job]]
+name = "job-whales-collect-web"
+identity = "ingest"
+cron = "0 10 * * 1"           # 10:00 UTC every Monday: letters are weekly at most (W-033)
+args = ["collect", "web", "--apply"]
+timeout_seconds = 7200        # polite per-site gaps (crawl-delays up to 10 s) make a full run slow

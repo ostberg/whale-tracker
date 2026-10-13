@@ -36,6 +36,7 @@ terms_url = "https://www.oaktreecapital.com/terms-and-conditions"
 approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
 approved_at = 2026-10-13
 active = true
+web = { method = "links", index = ["https://www.oaktreecapital.com/insights/memos"], match = '^https://www\.oaktreecapital\.com/(?:insights/memo/[a-z0-9-]+|docs/default-source/memos/[^?#]+\.pdf(?:\?.*)?)$', exclude = '/memo/the-best-of$|the-best-of\.pdf|the-complete-collection\.pdf' }
 
 [[source]]
 slug = "southeastern-commentaries"
@@ -53,12 +54,13 @@ terms_url = "https://southeasternasset.com/terms-of-use/"
 approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
 approved_at = 2026-10-13
 active = true
+web = { method = "links", index = ["https://southeasternasset.com/mutual-fund-commentaries/"], pages = "https://southeasternasset.com/mutual-fund-commentaries/page/{n}/", first = 2, max_pages = 12, match = '^https://southeasternasset\.com/commentary/[a-z0-9-]+/$' }
 
 [[source]]
 slug = "elliott-letters"
 manager = "elliott"
 name = "Elliott campaign letters"
-url = "https://www.elliottletters.com"
+url = "https://elliottletters.com/"
 tier = 1
 mode = "auto"
 cadence = "irregular"
@@ -70,6 +72,7 @@ terms_url = "https://www.elliottletters.com/terms"
 approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
 approved_at = 2026-10-13
 active = true
+web = { method = "sitemap", index = ["https://elliottletters.com/page-sitemap.xml"], follow = '^https://elliottletters\.com/(?!contact/)[a-z0-9-]+/$', match = '^https://elliottletters\.com/wp-content/uploads/[^?#]+\.pdf$', exclude = '(?i)/JA-|-JP\.pdf$' }
 
 [[source]]
 slug = "starboard-presentations"
@@ -86,6 +89,7 @@ permission_basis = "Agent reading 2026-10-08: no terms page, only a privacy noti
 approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
 approved_at = 2026-10-13
 active = true
+web = { method = "links", index = ["https://www.starboardvalue.com/presentations/"], match = '^https://www\.starboardvalue\.com/wp-content/uploads/[^?#]+\.pdf$' }
 
 [[source]]
 slug = "pershing-square-inc-letters"
@@ -154,12 +158,12 @@ manager = "berkshire-hathaway"
 name = "Berkshire Hathaway shareholder letters"
 url = "https://www.berkshirehathaway.com/letters/letters.html"
 tier = 1
-mode = "auto"
+mode = "manual"
 cadence = "annual"
-access_restricted = false
+access_restricted = true
 storage_allowed = false
 use_allowed = true
-permission_basis = "Agent reading 2026-10-08: no reproduction, distribution or linking without permission; nothing on automated access; no robots.txt. Cleared for internal use only (W-043)"
+permission_basis = "Checked 2026-10-13: the site firewall answers 403 Bad bot access attempt to our declared User-Agent, so a person collects (one letter a year, late February); not worked around. No reproduction or distribution without permission; nothing on AI. Cleared for internal use only (W-043)"
 terms_url = "https://www.berkshirehathaway.com/disclaimer.html"
 approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
 approved_at = 2026-10-13
@@ -181,6 +185,7 @@ terms_url = "https://www.himcap.com/terms-of-services"
 approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
 approved_at = 2026-10-13
 active = true
+web = { method = "links", index = ["https://www.himcap.com/publications"], match = '^https://cdn\.prod\.website-files\.com/5ef3c7300432b40ed865991a/[^/]+\.pdf$', text = '^(?!view document$).+', exclude = 'Recommended%20Book%20List', hosts = ["cdn.prod.website-files.com"] }
 
 [[source]]
 slug = "trian-letters"
@@ -198,6 +203,7 @@ terms_url = "https://trianpartners.com/terms"
 approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
 approved_at = 2026-10-13
 active = true
+web = { method = "links", index = ["https://trianpartners.com/press-releases/"], match = '^https://trianpartners\.com/wp-content/uploads/\d{4}/\d{2}/[^?#]+\.pdf$' }
 
 [[source]]
 slug = "coatue-decks"
@@ -205,12 +211,12 @@ manager = "coatue"
 name = "Coatue East Meets West and other decks"
 url = "https://www.coatue.com/east-meets-west"
 tier = 1
-mode = "auto"
+mode = "manual"
 cadence = "irregular"
-access_restricted = false
+access_restricted = true
 storage_allowed = false
 use_allowed = true
-permission_basis = "Agent reading 2026-10-08: one personal copy; no republication; nothing on automated access. Cleared for internal use only (W-043)"
+permission_basis = "Checked 2026-10-13: landing pages list automatically, but the decks sit on Google Drive, whose robots.txt disallows the download path, so a person collects. One personal copy; no public or commercial use; nothing on AI. Cleared for internal use only (W-043)"
 terms_url = "https://www.coatue.com/terms-of-use"
 
 # --- Owner-named sources ------------------------------------------------------------------------------
@@ -233,6 +239,7 @@ permission_basis = "Agent reading 2026-10-08: PDFs openly linked; no terms page,
 approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
 approved_at = 2026-10-13
 active = true
+web = { method = "links", index = ["https://pracap.com/investor-letters/"], match = '^https://(?:go\.pracap\.com|6004402\.fs1\.hubspotusercontent-na1\.net)/hubfs/(?:6004402/)?Quarterly%20Letters/\d{4}/[^/]+\.pdf$', hosts = ["go.pracap.com", "6004402.fs1.hubspotusercontent-na1.net"] }
 
 [[source]]
 slug = "laughing-water-letters"
@@ -268,6 +275,7 @@ terms_url = "https://regalpartners.com/terms-of-use/"
 approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
 approved_at = 2026-10-13
 active = true
+web = { method = "sitemap", index = ["https://www.pmcapital.com.au/sitemap.xml"], match = '^https://www\.pmcapital\.com\.au/insight/[^/?#]+$', exclude = 'podcast|webinar|video' }
 
 [[source]]
 slug = "psus-ncsrs"
@@ -490,6 +498,7 @@ permission_basis = "Agent reading 2026-10-08: no terms page, only a copyright no
 approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
 approved_at = 2026-10-13
 active = true
+web = { method = "sitemap", index = ["https://www.hussmanfunds.com/post-sitemap.xml"], match = '^https://www\.hussmanfunds\.com/comment/(?:[a-z]+/)?[a-z0-9_]+/$' }
 
 [[source]]
 slug = "hoisington-review"
@@ -506,6 +515,7 @@ permission_basis = "Agent reading 2026-10-08: no terms found, no robots.txt; onl
 approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
 approved_at = 2026-10-13
 active = true
+web = { method = "links", index = ["https://hoisington.com/economic_overview.html"], match = '^https://hoisington\.com/pdf/HIM\d{4}Q[1-4][A-Za-z]*\.pdf$' }
 
 [[source]]
 slug = "gmo-research"
@@ -523,12 +533,13 @@ terms_url = "https://www.gmo.com/americas/terms-and-conditions/"
 approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
 approved_at = 2026-10-13
 active = true
+web = { method = "sitemap", index = ["https://www.gmo.com/sitemap.xml"], match = '^https://www\.gmo\.com/americas/research-library/[^/?#]+_(?:gmoquarterlyletter|insights|whitepaper|viewpoints|marketcommentary)/?$', rewrite = ['^(https://www\.gmo\.com/americas/research-library/[^/?#]+?)/?$', '\1/'] }
 
 [[source]]
 slug = "smead-missives"
 manager = "smead"
 name = "Smead missives"
-url = "https://www.smeadcap.com/missives/"
+url = "https://smeadcap.com/missives/"
 tier = 1
 mode = "auto"
 cadence = "monthly"
@@ -540,6 +551,7 @@ terms_url = "https://www.smeadcap.com/terms-use"
 approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
 approved_at = 2026-10-13
 active = true
+web = { method = "sitemap", index = ["https://smeadcap.com/sitemap_index.xml"], match = '^https://smeadcap\.com/missives/[a-z0-9-]+/$' }
 
 [[source]]
 slug = "kopernik-insights"
@@ -557,6 +569,7 @@ terms_url = "https://www.kopernikglobal.com/terms-of-use/"
 approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
 approved_at = 2026-10-13
 active = true
+web = { method = "links", index = ["https://www.kopernikglobal.com/news-views/"], match = '^https://www\.kopernikglobal\.com/(?!news-views/|people/)', exclude = '\.(?:jpe?g|png|gif|webp|svg)$', text = '\((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.? \d{4}(?: Update)?\)|^Q[1-4] \d{4} Conference Call$' }
 
 [[source]]
 slug = "lyn-alden-newsletter"
@@ -564,12 +577,12 @@ manager = "lyn-alden"
 name = "Lyn Alden newsletter"
 url = "https://www.lynalden.com/newsletter-archives/"
 tier = 1
-mode = "auto"
+mode = "manual"
 cadence = "irregular"
-access_restricted = false
+access_restricted = true
 storage_allowed = false
 use_allowed = true
-permission_basis = "Agent reading 2026-10-08: copying needs permission; short credited excerpts allowed; nothing on bots. Cleared for internal use only (W-043)"
+permission_basis = "Checked 2026-10-13: every path, robots.txt and terms included, answers 403 to our declared User-Agent, so a person collects (or her email newsletter is routed to the inbox, W-044). Earlier reading: copying needs permission; short credited excerpts allowed. Cleared for internal use only (W-043)"
 terms_url = "https://www.lynalden.com/legal"
 approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
 approved_at = 2026-10-13
@@ -591,6 +604,7 @@ terms_url = "https://www.fairfax.ca/legal-notice/"
 approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
 approved_at = 2026-10-13
 active = true
+web = { method = "links", index = ["https://www.fairfax.ca/investors/"], match = '(?i)^https://www\.fairfax\.ca/wp-content/uploads/(?:\d{4}/\d{2}/)?(?:[^/]*letter[^/]*|\d{6}ceo)\.pdf$' }
 
 [[source]]
 slug = "fpa-commentary"
@@ -598,12 +612,12 @@ manager = "fpa"
 name = "FPA quarterly commentary"
 url = "https://fpa.com/insights/"
 tier = 1
-mode = "auto"
+mode = "manual"
 cadence = "quarterly"
-access_restricted = false
+access_restricted = true
 storage_allowed = false
 use_allowed = true
-permission_basis = "Agent reading 2026-10-08: browser viewing for personal use only; robots crawl-delay 10. Cleared for internal use only (W-043)"
+permission_basis = "Checked 2026-10-13: terms permit viewing using HTML browser software solely for personal, non-commercial use, which reads as no automated clients, so a person collects. Robots crawl-delay 10. Cleared for internal use only (W-043)"
 terms_url = "https://fpa.com/terms-of-use/"
 approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
 approved_at = 2026-10-13
@@ -625,12 +639,13 @@ terms_url = "https://www.usfunds.com/terms-of-use/"
 approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
 approved_at = 2026-10-13
 active = true
+web = { method = "feed", index = ["https://www.usfunds.com/resource-type/investor-alert/feed/"], pages = "https://www.usfunds.com/resource-type/investor-alert/feed/?paged={n}", first = 2, max_pages = 60, match = '^https://www\.usfunds\.com/resource/[a-z0-9-]+/$' }
 
 [[source]]
 slug = "in-gold-we-trust"
 manager = "incrementum"
 name = "In Gold We Trust annual report"
-url = "https://ingoldwetrust.report/archiv/"
+url = "https://ingoldwetrust.report/archive/?lang=en"
 tier = 1
 mode = "auto"
 cadence = "annual"
@@ -642,6 +657,7 @@ terms_url = "https://ingoldwetrust.report/impressum/"
 approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
 approved_at = 2026-10-13
 active = true
+web = { method = "links", index = ["https://ingoldwetrust.report/in-gold-we-trust-report/?lang=en", "https://ingoldwetrust.report/archive/?lang=en"], match = '^https://ingoldwetrust\.report/download/\d+/\?lang=en$', text = '(?i)^(?!.*compact)(?!download latest chartbook).+', rewrite = ['^(https://ingoldwetrust\.report/download/\d+)(?:/.*)?$', '\1/?lang=en'] }
 
 [[source]]
 slug = "apollo-daily-spark"
@@ -765,17 +781,18 @@ active = true
 slug = "alluvial-writings"
 manager = "alluvial"
 name = "Alluvial letters to partners"
-url = "https://alluvialcapital.com/writings/"
+url = "https://alluvialcapital.com/partnership-info/"
 tier = 1
 mode = "auto"
 cadence = "quarterly"
 access_restricted = false
 storage_allowed = false
 use_allowed = true
-permission_basis = "Agent reading 2026-10-13: robots allows all but /wp-admin/; no terms page, only an 'as is' disclaimer. Cleared for internal use only (W-043)"
+permission_basis = "Agent reading 2026-10-13: robots allows all but /wp-admin/; no terms page, only an as-is disclaimer. Letters are on /partnership-info/ (not /writings/). Its Substack blog is excluded: Substack terms forbid crawling. Cleared for internal use only (W-043)"
 approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
 approved_at = 2026-10-13
 active = true
+web = { method = "links", index = ["https://alluvialcapital.com/partnership-info/"], match = '^https://alluvialcapital\.com/wp-content/uploads/\d{4}/\d{2}/[^/]*(?:Letter[-_]to[-_]Partners|Client[-_]Letter)[^/]*\.pdf$' }
 
 [[source]]
 slug = "bonsai-letters"
@@ -783,12 +800,12 @@ manager = "bonsai"
 name = "Bonsai Partners letters and materials"
 url = "https://bonsaipartners.com/letters-and-materials"
 tier = 1
-mode = "auto"
+mode = "manual"
 cadence = "semiannual"
-access_restricted = false
+access_restricted = true
 storage_allowed = false
-use_allowed = true
-permission_basis = "Agent reading 2026-10-13: licence 'solely for internal, personal, non-commercial purposes'; no copying or redistribution; nothing on bots, AI or data mining; Squarespace robots defaults. Cleared for internal use only (W-043)"
+use_allowed = false
+permission_basis = "Checked 2026-10-13: letters sit behind a registration and accredited-investor acknowledgement, so a person collects them; robots.txt blocks 26 named AI crawlers outright (Disallow: /), an explicit AI opt-out (W-047). Licence is for internal, personal, non-commercial use. Recorded, not machine-read, until Bonsai consents"
 terms_url = "https://bonsaipartners.com/terms-of-use"
 approved_by = "Peter Ostberg (owner): internal use only; no republication, external quotation or monetization (W-043)"
 approved_at = 2026-10-13

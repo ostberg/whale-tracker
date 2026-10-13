@@ -2,6 +2,39 @@
 
 Dated entries, newest first: what changed, what is verified, what is next.
 
+## 2026-10-13 (evening): website collector; 17 sites automatic, 5 manual
+
+**Owner direction.** "Go ahead with the website collectors."
+
+**What changed.**
+- `src/whales/sources/web.py`, a polite fetcher:
+  - declared User-Agent;
+  - robots.txt per host (4xx means no rules, unreadable means stop) and Crawl-delay;
+  - at least 2 seconds per host;
+  - only the source's hosts, re-checked after redirects;
+  - size cap.
+- Its rules list documents from index pages (with paging that stops when a page is empty or missing), a
+  sitemap or a feed, with options to follow one hop, rewrite links and read `javascript:` links.
+- `src/whales/collect_web.py`: a dry run, offline without a database, and recording as `whales_ingest`.
+  Recording reads PDFs, so it runs only in Azure.
+- Config: `web` rules for 17 sources. Berkshire, Lyn Alden, Coatue and FPA were switched to manual (bot walls,
+  Drive, browser-only terms). Bonsai is manual and not machine-read: robots.txt blocks AI crawlers (W-047).
+  Alluvial's URL was corrected to `/partnership-info/`.
+- `infra/azure.toml` has a new weekly job, `job-whales-collect-web` (Mondays 10:00 UTC).
+- Decisions W-046 and W-047. 126 unit tests.
+
+**Verified.** The live dry run (index pages only, 94 requests, no errors) lists 2,210 documents across the
+17 sites, matching the agents' counts site by site (LETTER_SOURCES.md, "Website collection").
+
+**Process note.** One research agent breached the no-download instruction once: about 300 KB of the 2026
+In Gold We Trust PDF, fetched to test a download URL and deleted unread.
+
+**Next.**
+1. Deploy once IT clears the Azure sign-in, then run `collect web --apply` in Azure. The first run will
+   fetch about 2,200 documents politely, which takes a while.
+2. One-off backfills, if wanted: Hussman 1999 to 2017, Smead quarterly newsletters.
+3. The owner to confirm W-047.
+
 ## 2026-10-13 (later): pypdf and the inbox loader; the owner's 78-PDF library identified
 
 **Owner direction.**
