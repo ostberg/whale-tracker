@@ -90,8 +90,9 @@ Blocking phase 1 or 2:
       - which team and channel;
       - who owns the Teams Workflows flow (ideally a service account rather than a person, so it survives staff
         changes; check that the firm's Power Automate policies allow an HTTP-triggered flow);
-      - the intake location. Proposed: a Blob container `letters-inbox`, uploaded to with Storage Explorer or
-        the portal; never a laptop or OneDrive folder.
+      - [x] the intake: `Whale Tracker Inbox` beside the project folder (W-044, created 2026-10-13), uploaded
+        to the Blob container `letters-inbox` by the loader once Azure is reachable. The owner's starting
+        library of tier-1 PDFs goes there.
 - [ ] **The contact email** to declare in the SEC User-Agent header. Proposed by the owner:
       `research@tocqueville.com`, used for the one-off survey on 2026-10-08. SEC does not verify or register the
       address. It is how SEC reaches someone before or after blocking a client, so it must be a real, monitored

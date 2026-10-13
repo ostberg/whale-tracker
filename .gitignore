@@ -10,3 +10,8 @@ dist/
 *.db
 *.sqlite
 *.log
+
+# Letters and other third-party documents never enter git (W-043); they live in ../Whale Tracker Inbox
+*.pdf
+*.msg
+!tests/fixtures/**/*.pdf

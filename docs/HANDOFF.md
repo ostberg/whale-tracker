@@ -17,6 +17,10 @@ Dated entries, newest first: what changed, what is verified, what is next.
 - AGENTS.md has a new standing rule: everything this project produces stays inside the firm.
 - STATUS, LETTER_SOURCES and DECISIONS updated.
 
+- The owner has a starting library of tier-1 PDFs (from public websites, and shared by managers). It goes in
+  `../Whale Tracker Inbox` (W-044; folder and README created), never in git: `*.pdf` and `*.msg` are now
+  gitignored, except test fixtures.
+
 **Not done.**
 - The database is not synced, because the Azure block also stops database access. The next sync (from the
   admin job once deployed) writes the activations.
