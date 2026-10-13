@@ -39,6 +39,15 @@ Dated entries, newest first: what changed, what is verified, what is next.
 - Nothing has been written to the database yet. On 2026-10-10 the firm's Conditional Access policy
   blocked the Azure CLI token refresh (AADSTS53003), which needs an interactive `az login` by the owner.
 
+**Blocked on the laptop (as of 2026-10-13).**
+- On the owner's main laptop (hybrid-joined, device healthy), Azure CLI sign-in fails with AADSTS53003:
+  Conditional Access refuses token issuance. Trace ID `78a2635f-13fe-44cf-8da6-0eb0c85f3100`, correlation ID
+  `9a1e9739-aff6-4097-843e-7f4e7a5ddc5a`, 2026-10-10 14:25:43 UTC; IT can look it up in Entra sign-in logs.
+- Plan: deploy from the owner's other desktop. It had no Azure CLI on 2026-10-13. Check that
+  portal.azure.com signs in there first; if it does, install the CLI (`winget install -e --id
+  Microsoft.AzureCLI`), confirm Python 3.13 and git, and run the steps below in Claude Code on that desktop.
+- The venv does not travel (AGENTS.md, Environment); `.env` comes with OneDrive.
+
 **Next (needs the owner's `az login` once).**
 1. `python infra/deploy.py --apply`.
 2. Register the identities, from the laptop:
