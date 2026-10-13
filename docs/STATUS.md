@@ -28,6 +28,12 @@ finds the pilot useful.
 
 Blocking phase 1 or 2:
 
+- [ ] **Azure sign-in blocked (IT investigating, 2026-10-13).** Azure CLI sign-in fails with AADSTS53003
+      (Conditional Access refuses token issuance) on the owner's laptop, and the owner's other desktop could
+      not get through either. Until IT clears it, nothing that touches Azure or the database can run: the
+      deploy (W-042), registering the job identities, and the first SEC collection. Trace and correlation IDs:
+      HANDOFF.md, 2026-10-10 entry. Once cleared, the deploy is one short session (HANDOFF "Next").
+
 - [x] **W-004, where the database lives:** the existing `pg-tocqv-context`, under four hardening conditions
       (owner, 2026-10-08). The steps below are phase-1 work and need the owner, as the server's only Entra
       admin, to run them or approve them:
