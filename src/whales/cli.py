@@ -10,6 +10,8 @@
     whales db add-identity <name> --group G <db>     register a managed identity (owner or ingest); --apply
     whales db close-firewall                         remove any temporary firewall rule left behind
     whales status                                    counts and the latest runs (read-only)
+    whales inbox scan                                letters in the inbox and who each is from (no database)
+    whales inbox load                                record new inbox letters as whales_ingest; --apply
 
 Routine runs happen in Azure as Container Apps jobs (W-042). From a laptop, the few admin steps that need the
 Entra admin's own rights run with ``whales --open-firewall ...``, which opens this machine's address for that
@@ -23,7 +25,7 @@ import os
 import sys
 from pathlib import Path
 
-from . import collect, config
+from . import collect, config, inbox, inbox_load
 from .db import admin, firewall, migrate, sync
 from .db.connect import Database, DbSettings
 from .sources.edgar import EdgarClient
@@ -222,6 +224,65 @@ def cmd_status(args: argparse.Namespace) -> int:
     return 0
 
 
+def _print_scan(files: list[inbox.InboxFile], cfg: config.Config, verbose: bool) -> None:
+    for f in files:
+        if verbose or not f.manager or f.error:
+            who = f"{f.manager} ({f.manager_basis})" if f.manager else f"?  {', '.join(f.candidates) or '-'}"
+            flags = " ENCRYPTED" if f.encrypted else ""
+            flags += " NO-EXTRACT" if f.extract_allowed is False else ""
+            flags += f"  ERROR {f.error}" if f.error else ""
+            print(
+                f"   {f.route:<6} {who:<34} {str(f.period_end or '-'):<10} {f.kind:<16} "
+                f"{f.published_on} ({f.published_basis}) {f.pages or '?':>3}p  {f.rel}{flags}"
+            )
+    by_manager: dict[str, int] = {}
+    for f in files:
+        if f.manager:
+            by_manager[f.manager] = by_manager.get(f.manager, 0) + 1
+    unresolved = [f for f in files if not f.manager]
+    print(
+        f"{len(files)} PDFs: {len(files) - len(unresolved)} identified, {len(unresolved)} unresolved, "
+        f"{sum(1 for f in files if f.error)} unreadable, "
+        f"{sum(1 for f in files if f.extract_allowed is False)} forbid text extraction"
+    )
+    print(
+        "   by manager: "
+        + ", ".join(f"{m} {n}" for m, n in sorted(by_manager.items(), key=lambda kv: -kv[1]))
+    )
+    missing = sorted({(f.manager, f.route) for f in files if f.manager and inbox.source_for(cfg, f) is None})
+    if missing:
+        print("   no source in config yet for: " + ", ".join(f"{m} ({r})" for m, r in missing))
+    if unresolved:
+        print(
+            "   unresolved: move each into a subfolder named after its manager's slug "
+            r"(e.g. public-websites\greenwood\), or add an alias in config/managers.toml"
+        )
+
+
+def cmd_inbox_scan(args: argparse.Namespace) -> int:
+    cfg = config.load()
+    root = inbox.inbox_dir()
+    print(f"inbox {root}")
+    _print_scan(inbox.scan(cfg, root), cfg, args.verbose)
+    return 0
+
+
+def cmd_inbox_load(args: argparse.Namespace) -> int:
+    cfg = config.load()
+    files = inbox.scan(cfg)
+    if not args.apply:
+        _print_scan(files, cfg, args.verbose)
+        print("(dry run: nothing recorded; add --apply)")
+        return 0
+    with Database(DbSettings.from_env(), role=collect.INGEST_ROLE) as db:
+        r = inbox_load.load(db, cfg, files)
+    print(
+        f"recorded {len(r.recorded)}, already held {len(r.known)}, unresolved {len(r.unresolved)}, "
+        f"no source {len(r.no_source)}, unreadable {len(r.unreadable)}"
+    )
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(
         prog="whales", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
@@ -283,6 +344,17 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("status", help="counts and the latest runs (read-only)")
     p.set_defaults(func=cmd_status)
+
+    inb = sub.add_parser("inbox", help="letters people collected (W-044)").add_subparsers(
+        dest="command", required=True
+    )
+    p = inb.add_parser("scan", help="list the inbox and identify each letter (no database)")
+    p.add_argument("-v", "--verbose", action="store_true", help="list every file, not only the unclear ones")
+    p.set_defaults(func=cmd_inbox_scan)
+    p = inb.add_parser("load", help="record new inbox letters as whales_ingest")
+    p.add_argument("--apply", action="store_true", help="record them (default: show what would happen)")
+    p.add_argument("-v", "--verbose", action="store_true", help="list every file")
+    p.set_defaults(func=cmd_inbox_load)
     return ap
 
 

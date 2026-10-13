@@ -91,6 +91,7 @@ class Manager:
     tags: tuple[TagProposal, ...]
     filers: tuple[Filer, ...]
     excluded_filings: tuple[ExcludedFiling, ...]
+    aliases: tuple[str, ...] = ()  # other names in letters (people, old names); used to identify inbox files
 
 
 @dataclass(frozen=True)
@@ -262,9 +263,17 @@ def _managers(raw: dict, known_tags: set[tuple[str, str]], problems: list[str]) 
                 tuple(proposals),
                 tuple(filers),
                 tuple(excluded),
+                tuple(_aliases(m.get("aliases", []), where, problems)),
             )
         )
     return tuple(out)
+
+
+def _aliases(raw, where: str, problems: list[str]) -> list[str]:
+    if not isinstance(raw, list) or not all(isinstance(a, str) and len(a.strip()) >= 4 for a in raw):
+        problems.append(f"{where}: aliases must be a list of names of at least 4 characters")
+        return []
+    return [a.strip() for a in raw]
 
 
 def _sources(raw: dict, managers: set[str], problems: list[str]) -> tuple[Source, ...]:
