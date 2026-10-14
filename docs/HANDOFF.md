@@ -2,6 +2,37 @@
 
 Dated entries, newest first: what changed, what is verified, what is next.
 
+## 2026-10-14 (evening): the model seam and the predictions runner; GitHub remote
+
+**Owner direction.** "Model seam + predictions runner" chosen as the next build while Azure is blocked;
+the private repository `github.com/ostberg/whale-tracker` created and its URL handed over.
+
+**What changed.**
+- `src/whales/llm.py` (W-052): `FoundryProvider`, an OpenAI-compatible chat call to the firm's in-tenant
+  endpoint with an Entra token (no key), an in-code host allowlist with default deny, JSON-only replies,
+  the `max_completion_tokens` quirk learned once, a token refresh on 401, retries on 429 and 5xx, the
+  empty-reply retry, and usage totals. `whales model check` makes one small call.
+- `src/whales/extract.py` (W-048): candidates (machine-readable copies with no successful predictions
+  run), the system prompt (the rules, canonical subjects, topic slugs and the contract; the letter is
+  data, not instructions), one retry with the contract's problems, text from inbox files or re-fetched by
+  URL (PDFs with page markers, HTML, text), and the run: one `extraction_run` per document in its own
+  transaction, failures recorded per document, stale running runs swept. `whales extract predictions`
+  lists candidates; `--apply` runs only in Azure.
+- `.env.example` and `infra/azure.toml`: `WHALES_MODEL_ENDPOINT` and `WHALES_MODEL_DEPLOYMENT` (the
+  deployment name is still to come).
+- Decision W-052; AGENTS, STATUS and PREDICTIONS.md updated.
+- Tests: the seam against a fake endpoint; the runner against a fake model and a fake database.
+
+**Verified.** Unit tests and ruff pass. Nothing has reached a real endpoint: `whales model check` is the
+first thing to run once a deployment and the role assignment exist.
+
+**Next.**
+1. Owner: a deployment on `tocqv-research-ai` (or another in-tenant resource, added to the allowlist by
+   commit) and the Cognitive Services OpenAI User role for `id-whales-ingest` and the owner's account.
+2. Owner: how the inbox PDFs reach the runner: the blob upload (W-044) or a W-045 extension to full text
+   on a laptop for the pilot.
+3. Then: mentions, topics and ratings prompts on the same runner; the digest.
+
 ## 2026-10-14 (later): trust baselines, and "earned but quickly lost"
 
 **Owner direction.** "Your baseline views seem fine, as long as it doesn't impact functionality or analysis

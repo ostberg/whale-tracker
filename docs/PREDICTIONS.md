@@ -146,6 +146,14 @@ writes the claims and links in the caller's transaction and returns each `k`'s r
 tools and sees only text (AGENTS.md, security requirements); instructions inside a letter never change the
 contract.
 
+The runner is `src/whales/extract.py` (`whales extract predictions`). It takes the text of each copy that may
+be machine-read (inbox files, or re-fetched by URL; PDFs carry `[page N]` markers so the model can cite
+pages), sends the system prompt in `extract.SYSTEM_TEMPLATE` with the canonical subjects, the topic slugs and
+the contract, and stores a checked reply under one `letters.extraction_run` with the deployment asked for,
+the model that answered, token usage, the text's hash and whether it was truncated (150,000 characters). A
+reply that fails the contract goes back once with the problems. Model calls go through `src/whales/llm.py`
+only (W-052): an in-tenant endpoint on an approved host, an Entra token, JSON replies.
+
 ## 6. Where claims come from
 
 **Letters** (now): every `letters.document` that may be machine-read gets a predictions run alongside
@@ -283,3 +291,5 @@ decision rule (W-039).
 4. Migration 0002 is applied by the admin job once IT clears Azure; `pytest -m live` then exercises the state
    view on the MSFT example.
 5. Baselines accepted on 2026-10-14 and held in `config/trust.toml`; edit that file to change one.
+6. A chat-model deployment on an approved in-tenant resource, and the Cognitive Services OpenAI User role
+   for `id-whales-ingest` and your own account; then `whales model check`.

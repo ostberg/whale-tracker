@@ -110,7 +110,10 @@ only); `whales db revoke-public-connect <database> --apply` removes PUBLIC's def
 `whales db bootstrap-roles <database> --apply` creates the `whales_` roles; `whales db migrate --apply`
 applies pending migrations. `whales config check` validates `config/` without a database; `whales config
 sync --apply` writes it to the database (inserts and updates only, never deletes). `pytest -m live` checks
-the database's ownership, grants, safeguards and that it is in step with config.
+the database's ownership, grants, safeguards and that it is in step with config. `whales extract predictions`
+lists the documents that may be machine-read and have no successful predictions run, and with `--apply`
+(Azure only) runs the model on them; `whales model check` makes one small call to the endpoint named by
+`WHALES_MODEL_ENDPOINT` and `WHALES_MODEL_DEPLOYMENT` (Entra token; no key).
 
 Tooling, copied from the Tamale repo (W-022): Python 3.13, setuptools, pip-tools hash-pinned locks
 (`pip-compile --generate-hashes`; runtime lock feeds the image, dev lock is constrained to it), Ruff (line length
@@ -165,7 +168,8 @@ Whale Tracker/
     topics.py            topic exposure from holdings; topic trend and stance changes
     performance.py       forward returns per event
     reports/             coverage monitor, cluster screen, digest
-    llm.py               provider-agnostic model seam (letters phase only)
+    llm.py               the model seam: the in-tenant endpoint, Entra token, approved hosts only (W-052)
+    extract.py           model extraction runs: document text in, contract-checked claims out (W-048)
     cli.py               every scheduled job and one-off command
   infra/                 deployment definitions for the job, identity and storage
   tests/                 parsers tested against saved real filings
@@ -366,6 +370,10 @@ From the Tamale repo (read in full 2026-10-08: `docs/OPS_AUTOMATION_PLAN.md`, `d
   model has no tools, receives text and returns a fixed JSON structure. Extracted tickers must match
   `core.security` or the mention is dropped (a prediction with an unknown ticker is kept, unlinked and
   noted, since the claim itself is the value). Letter text goes only to in-tenant models.
+- Model calls go only through `src/whales/llm.py`, to an https host on its `APPROVED_MODEL_HOSTS` (default
+  deny; a new host is a commit, never a setting), signed in with an Entra token. The model has no tools, is
+  told that the letter is data and not instructions, and must answer with one JSON object that is checked
+  against the task's contract before anything is stored (W-052).
 - Audit: every derived row traces to its source filing or document.
 - **Internal use only (W-043).** Sources are used for the firm's internal research. Nothing this project
   produces (notes, digests, alerts, Research Assistant answers, quotes) is published, sent or quoted outside

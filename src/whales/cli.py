@@ -13,6 +13,8 @@
     whales status                                    counts and the latest runs (read-only)
     whales inbox scan                                letters in the inbox and who each is from (no database)
     whales inbox load                                record new inbox letters as whales_ingest; --apply
+    whales extract predictions                       claims from machine-readable documents; --apply (Azure)
+    whales model check                               one small call to the configured model endpoint
 
 Routine runs happen in Azure as Container Apps jobs (W-042). From a laptop, the few admin steps that need the
 Entra admin's own rights run with ``whales --open-firewall ...``, which opens this machine's address for that
@@ -24,9 +26,10 @@ from __future__ import annotations
 import argparse
 import os
 import sys
+import time
 from pathlib import Path
 
-from . import collect, collect_web, config, inbox, inbox_load
+from . import collect, collect_web, config, extract, inbox, inbox_load, llm
 from .db import admin, firewall, migrate, sync
 from .db.connect import Database, DbSettings
 from .sources.edgar import EdgarClient
@@ -311,6 +314,43 @@ def cmd_inbox_load(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_extract_predictions(args: argparse.Namespace) -> int:
+    cfg = config.load()
+    with Database(DbSettings.from_env(), role=collect.INGEST_ROLE) as db:
+        cands = extract.candidates(db, document_id=args.document, manager=args.manager, limit=args.limit)
+        fetcher = extract.Fetcher(inbox.inbox_dir(), WebClient(collect_web.user_agent()), EdgarClient())
+        provider = llm.FoundryProvider(llm.ModelSettings.from_env()) if args.apply else None
+        results = extract.run(db, provider, cfg, fetcher, cands, apply=args.apply)
+    print(f"{len(cands)} document(s) without a successful predictions run")
+    for r in results:
+        c = r.candidate
+        line = f"   {r.status:<8} {c.manager:<24} {c.published_on} {c.title[:60]}"
+        if r.status == "ok":
+            line += f"  claims {r.claims} links {r.links} attempts {r.attempts}"
+        if r.reason:
+            line += f"  ({r.reason})"
+        print(line)
+        if args.verbose:
+            for n in r.notes:
+                print(f"        {n}")
+    if provider is not None:
+        print(f"model {provider.host} {provider.model}: {provider.totals}")
+    if not args.apply:
+        print("(dry run: no model called, nothing written; add --apply in Azure)")
+    return 1 if any(r.status == "failed" for r in results) else 0
+
+
+def cmd_model_check(args: argparse.Namespace) -> int:
+    provider = llm.FoundryProvider(llm.ModelSettings.from_env())
+    started = time.monotonic()
+    reply = provider.complete_json("Answer with one JSON object.", 'Reply with {"ok": true}.', max_tokens=50)
+    print(
+        f"{provider.host} deployment {provider.model}: answered as {provider.last_model!r} in "
+        f"{time.monotonic() - started:.1f}s, usage {provider.last_usage}, reply {reply}"
+    )
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(
         prog="whales", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
@@ -378,6 +418,25 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--limit", type=int, help="at most this many new documents per source")
     p.add_argument("-v", "--verbose", action="store_true", help="list each new document")
     p.set_defaults(func=cmd_collect_web)
+
+    ext = sub.add_parser("extract", help="model extraction runs (W-048)").add_subparsers(
+        dest="command", required=True
+    )
+    p = ext.add_parser("predictions", help="claims from documents that may be machine-read, as whales_ingest")
+    p.add_argument(
+        "--apply", action="store_true", help="call the model and record (Azure only; default: list)"
+    )
+    p.add_argument("--limit", type=int, help="at most this many documents")
+    p.add_argument("--document", type=int, help="one document id")
+    p.add_argument("--manager", help="only this manager slug")
+    p.add_argument("-v", "--verbose", action="store_true", help="list each run's notes")
+    p.set_defaults(func=cmd_extract_predictions)
+
+    mdl = sub.add_parser("model", help="the model endpoint (W-052)").add_subparsers(
+        dest="command", required=True
+    )
+    p = mdl.add_parser("check", help="one small call to the configured endpoint; prints what answered")
+    p.set_defaults(func=cmd_model_check)
 
     p = sub.add_parser("status", help="counts and the latest runs (read-only)")
     p.set_defaults(func=cmd_status)

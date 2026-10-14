@@ -19,6 +19,10 @@ admin = "id-whales-admin"     # migrations and config sync; never fetches anythi
 
 [env]
 SEC_USER_AGENT = "Tocqueville Asset Management research@tocqueville.com"
+# The model endpoint (W-052), once a deployment exists and id-whales-ingest holds the Cognitive Services
+# OpenAI User role on the resource. The host must be on whales.llm.APPROVED_MODEL_HOSTS.
+# WHALES_MODEL_ENDPOINT = "https://tocqv-research-ai.cognitiveservices.azure.com/openai/v1"
+# WHALES_MODEL_DEPLOYMENT = ""
 
 [[job]]
 name = "job-whales-collect-sec"
