@@ -155,6 +155,7 @@ Whale Tracker/
     letter_sources.toml  every candidate source with tier, mode, cadence and permission flags; inactive
                          until approved
     rating_rubric.toml   letter-rating dimensions and anchors (W-036), not yet written
+    trust.toml           trust baselines by source type (W-050), read only at query time (W-051)
   src/whales/
     sources/             edgar.py, figi.py, prices.py, letters.py
     parse/               form13f.py, schedule13.py, letter_extract.py
@@ -223,8 +224,10 @@ Key tables:
   wording, basis (W-050), claim, quote, page. `letters.prediction_link` ties the claims of one letter together (premise_of,
   causes); `letters.prediction_check` is the job's proposed outcome with its evidence;
   `letters.prediction_score` is a person's verdict. The view `letters.prediction_state` derives open, due,
-  awaiting premise, proposed, void or scored, and `letters.track_record` counts each writer's calls. Design:
-  `docs/PREDICTIONS.md`.
+  awaiting premise, proposed, void or scored. `letters.author_trust` shows each writer's trust profile per
+  medium (W-050, W-051): the baseline from `core.trust_baseline` (loaded from `config/trust.toml`, read only
+  at query time), basis counts, the earned record and a `trust_flag` for a recent confident miss;
+  `letters.track_record` sums it per writer. Design: `docs/PREDICTIONS.md`.
 - `core.topic`: the controlled topic list (id, name, parent, description, aliases). Loaded from
   `config/topics.toml`.
 - `core.topic_security`: which securities count toward a topic (for example gold miners and gold ETFs for

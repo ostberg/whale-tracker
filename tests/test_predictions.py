@@ -32,6 +32,7 @@ IRAN = {
             "timing": "any_time",
             "horizon_text": "after the midterm elections, by the end of the year",
             "confidence_wording": "will",
+            "confidence": "high",
             "basis": "assertion",
             "basis_note": None,
             "claim": "Iran brokers a peace deal after the November 2026 midterm elections.",
@@ -56,6 +57,7 @@ IRAN = {
             "timing": "any_time",
             "horizon_text": "by the end of the year",
             "confidence_wording": "will",
+            "confidence": "high",
             "basis": "reasoning",
             "basis_note": "rests on the peace-deal call; no supply or demand numbers shown",
             "claim": "Brent crude trades below $100 a barrel before the end of 2026.",
@@ -87,6 +89,7 @@ MSFT = {
             "timing": "at_end",
             "horizon_text": "next year",
             "confidence_wording": None,
+            "confidence": "medium",
             "basis": "assertion",
             "basis_note": None,
             "claim": "Microsoft's capital spending grows more than 30% in 2027.",
@@ -111,6 +114,7 @@ MSFT = {
             "timing": "any_time",
             "horizon_text": "next year",
             "confidence_wording": "will",
+            "confidence": "high",
             "basis": "reasoning",
             "basis_note": "argues that investors punish capex growth; no numbers shown",
             "claim": "Microsoft shares fall.",
@@ -135,6 +139,7 @@ MSFT = {
             "timing": "any_time",
             "horizon_text": "next year",
             "confidence_wording": "will",
+            "confidence": "high",
             "basis": "reasoning",
             "basis_note": None,
             "claim": "Microsoft's earnings multiple compresses to 18 times or less.",
@@ -164,7 +169,7 @@ def test_iran_example_parses_to_two_claims_and_one_causal_link():
         "USD/bbl",
     )
     assert brent.topic == "oil" and brent.window_to == date(2026, 12, 31)
-    assert (deal.basis, deal.basis_note) == ("assertion", None)
+    assert (deal.basis, deal.basis_note, deal.confidence) == ("assertion", None, "high")
     assert brent.basis == "reasoning" and brent.basis_note.startswith("rests on the peace-deal call")
     assert x.links == [predictions.Link(1, 2, "causes")]
     assert x.notes == []
@@ -212,6 +217,7 @@ def _broken(example, which, **changes):
         (_broken(IRAN, 2, metric="oil"), "metric must be one of"),
         (_broken(IRAN, 2, role="guess"), "role must be one of"),
         (_broken(IRAN, 2, basis="vibes"), "basis must be one of"),
+        (_broken(IRAN, 2, confidence="sure"), "confidence must be one of"),
         (_broken(IRAN, 2, basis=None), "basis must be one of"),
         (_broken(IRAN, 2, basis_note="x" * 301), "basis_note is longer than 300"),
         (_broken(IRAN, 2, threshold="a hundred"), "threshold must be a number"),
@@ -272,6 +278,7 @@ def test_vocabularies_match_migration_0002():
         + predictions.TIMINGS
         + predictions.ROLES
         + predictions.BASES
+        + predictions.CONFIDENCES
     )
     for code in vocabularies:
         assert f"'{code}'" in sql, code

@@ -2,6 +2,30 @@
 
 Dated entries, newest first: what changed, what is verified, what is next.
 
+## 2026-10-14 (later): trust baselines, and "earned but quickly lost"
+
+**Owner direction.** "Your baseline views seem fine, as long as it doesn't impact functionality or analysis
+if we have to change them later. Trust is earned but can be quickly lost." Decision W-051.
+
+**What changed.**
+- `config/trust.toml`: the baselines, one rule per source type, expanded by `whales config check` to every
+  (document kind, author kind) pair; a pair covered twice or not at all is refused. `whales config sync`
+  writes them to `core.trust_baseline` (new in migration 0002), which views read at query time, so a change
+  touches nothing stored.
+- Migration 0002: `confidence` (high, medium, low) on `letters.prediction`; the view `letters.author_trust`
+  (one row per writer and medium: baseline, basis counts, the earned record, confident misses, `trust_flag`);
+  `letters.track_record` now sums it per writer.
+- `src/whales/predictions.py`: `confidence` in the contract and the insert.
+- Docs: PREDICTIONS.md section 7, DECISIONS W-050 and W-051, SCHEMA, STATUS, AGENTS.
+- Tests: config coverage and overlap checks, the baselines in the sync plan, the contract field, and the
+  live flag check.
+
+**Verified.** Unit tests and ruff pass. The SQL is still unverified against a server. For the first Azure
+session: run `db migrate --apply` before `config sync --apply`, since the sync now reads
+`core.trust_baseline`.
+
+**Next.** Unchanged: deploy, apply 0002, sync, live tests; then the model seam.
+
 ## 2026-10-14: trust profile, layer 2 (the basis of each claim)
 
 **Owner direction.** "Some sort of trust score (and/or more context/evaluation if something is pure

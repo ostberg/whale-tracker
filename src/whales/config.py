@@ -1,4 +1,4 @@
-"""The configuration files in ``config/``: tags, topics, managers and letter sources (W-040).
+"""The configuration files in ``config/``: tags, topics, managers, letter sources and trust baselines (W-040).
 
 TOML, read with the standard library's ``tomllib``, so configuration adds no dependency. ``load()`` validates
 everything and reports every problem at once; ``whales config sync`` writes the result to the database.
@@ -19,6 +19,22 @@ if TYPE_CHECKING:
     from .sources.web import WebRule
 
 KINDS = ("manager", "listed_vehicle", "independent_writer", "economist_or_strategist")
+DOCUMENT_KINDS = (
+    "annual_letter",
+    "quarterly_letter",
+    "memo",
+    "commentary",
+    "activist_letter",
+    "presentation",
+    "essay",
+    "filing_exhibit",
+    "tweet",
+    "article",
+    "transcript",
+    "note",
+    "other",
+)
+LEVELS = ("high", "medium", "medium_low", "low", "none")  # trust baselines (W-050)
 FACETS = ("style", "strategy", "asset_focus", "geography")
 MODES = ("auto", "manual")
 CADENCES = ("annual", "semiannual", "quarterly", "monthly", "irregular")
@@ -129,6 +145,17 @@ class EdgarRule:
 
 
 @dataclass(frozen=True)
+class Baseline:
+    """The trust a source type starts with (W-050, layer 1): one row per document kind and author kind.
+    Read only at query time (W-051)."""
+
+    document_kind: str
+    manager_kind: str
+    level: str
+    reason: str
+
+
+@dataclass(frozen=True)
 class Config:
     tags: tuple[Tag, ...]
     topics: tuple[Topic, ...]
@@ -137,6 +164,7 @@ class Config:
     tags_proposed_by: str
     tags_valid_from: date
     edgar_since: date | None = None
+    baselines: tuple[Baseline, ...] = ()
 
 
 def _read(directory: Path, name: str) -> dict:
@@ -145,7 +173,7 @@ def _read(directory: Path, name: str) -> dict:
 
 
 def load(directory: Path | None = None) -> Config:
-    """Read and validate all four files. Raises ConfigError listing every problem."""
+    """Read and validate all five files. Raises ConfigError listing every problem."""
     d = directory or config_dir()
     problems: list[str] = []
     tags = _tags(_read(d, "tags.toml"), problems)
@@ -154,6 +182,7 @@ def load(directory: Path | None = None) -> Config:
     managers = _managers(raw_managers, {(t.facet, t.tag) for t in tags}, problems)
     raw_sources = _read(d, "letter_sources.toml")
     sources = _sources(raw_sources, {m.slug for m in managers}, problems)
+    baselines = _baselines(_read(d, "trust.toml"), problems)
     proposed_by = raw_managers.get("tags_proposed_by", "")
     valid_from = raw_managers.get("tags_valid_from")
     if not proposed_by or not isinstance(valid_from, date):
@@ -165,7 +194,45 @@ def load(directory: Path | None = None) -> Config:
         )
     if problems:
         raise ConfigError(problems)
-    return Config(tags, topics, managers, sources, proposed_by, valid_from, edgar_since)
+    return Config(tags, topics, managers, sources, proposed_by, valid_from, edgar_since, baselines)
+
+
+def _baselines(raw: dict, problems: list[str]) -> tuple[Baseline, ...]:
+    """The rules in trust.toml, expanded to one row per (document kind, author kind). Every pair must be
+    covered exactly once, so a new document kind cannot slip through without a level."""
+    rows: dict[tuple[str, str], Baseline] = {}
+    rules = raw.get("baseline", [])
+    if not rules:
+        problems.append("trust.toml: at least one [[baseline]] is required")
+    for i, b in enumerate(rules):
+        where = f"trust.toml: baseline {i + 1}"
+        kinds = b.get("document_kinds")
+        if not isinstance(kinds, list) or not kinds or any(k not in DOCUMENT_KINDS for k in kinds):
+            problems.append(f"{where}: document_kinds must be a non-empty list from {DOCUMENT_KINDS}")
+            kinds = []
+        manager_kinds = b.get("manager_kinds", list(KINDS))
+        if (
+            not isinstance(manager_kinds, list)
+            or not manager_kinds
+            or any(k not in KINDS for k in manager_kinds)
+        ):
+            problems.append(f"{where}: manager_kinds must be a non-empty list from {KINDS}")
+            manager_kinds = []
+        if b.get("level") not in LEVELS:
+            problems.append(f"{where}: level must be one of {LEVELS}")
+        if not b.get("reason"):
+            problems.append(f"{where}: reason is required")
+        for dk in kinds:
+            for mk in manager_kinds:
+                if (dk, mk) in rows:
+                    problems.append(f"{where}: {dk} for {mk} is covered twice")
+                rows[(dk, mk)] = Baseline(dk, mk, str(b.get("level", "")), str(b.get("reason", "")))
+    if rules:
+        missing = [f"{dk} for {mk}" for dk in DOCUMENT_KINDS for mk in KINDS if (dk, mk) not in rows]
+        if missing:
+            shown = ", ".join(missing[:6]) + (" ..." if len(missing) > 6 else "")
+            problems.append(f"trust.toml: no baseline for {shown}")
+    return tuple(rows[k] for k in sorted(rows))
 
 
 def _tags(raw: dict, problems: list[str]) -> tuple[Tag, ...]:

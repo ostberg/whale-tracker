@@ -124,7 +124,7 @@ def cmd_config_check(args: argparse.Namespace) -> int:
         f"config ok: {len(cfg.tags)} tags, {len(cfg.topics)} topics, {len(cfg.managers)} managers "
         f"({sum(len(m.filers) for m in cfg.managers)} filers, "
         f"{sum(len(m.tags) for m in cfg.managers)} tag proposals), {len(cfg.sources)} letter sources "
-        f"({sum(s.active for s in cfg.sources)} active)"
+        f"({sum(s.active for s in cfg.sources)} active), {len(cfg.baselines)} trust baselines"
     )
     return 0
 

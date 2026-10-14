@@ -1,6 +1,7 @@
 """Write ``config/`` to the database: ``whales config sync`` (W-040).
 
-Config is the source of truth for tags, topics, managers, filers, tag proposals and letter sources. The sync
+Config is the source of truth for tags, topics, managers, filers, tag proposals, letter sources and trust
+baselines. The sync
 inserts what is new and updates what changed, as whales_owner, in one transaction. It never deletes: a
 manager or source missing from config is deactivated, and anything else the database holds that config does
 not is reported, not removed. People's decisions (tag ratification and the rest) are never touched here.
@@ -34,11 +35,18 @@ class Current:
     filers: dict[int, tuple] = field(default_factory=dict)
     proposals: set[tuple[str, str, str, date]] = field(default_factory=set)
     sources: dict[str, tuple] = field(default_factory=dict)
+    baselines: dict[tuple[str, str], tuple[str, str]] = field(default_factory=dict)
 
 
 def read_current(db: Database) -> Current:
     c = Current()
     c.tags = {(f, t): d for f, t, d in db.run("SELECT facet, tag, description FROM core.tag")}
+    c.baselines = {
+        (dk, mk): (level, reason)
+        for dk, mk, level, reason in db.run(
+            "SELECT document_kind, manager_kind, level, reason FROM core.trust_baseline"
+        )
+    }
     c.topics = {
         r[0]: tuple(r[1:])
         for r in db.run(
@@ -81,6 +89,7 @@ def plan(config: Config, current: Current) -> list[Change]:
     """Every change needed to make the database match config, in an order that satisfies foreign keys."""
     changes: list[Change] = []
     changes += _plan_tags(config, current)
+    changes += _plan_baselines(config, current)
     changes += _plan_topics(config, current)
     changes += _plan_managers(config, current)
     changes += _plan_filers(config, current)
@@ -121,6 +130,42 @@ def _plan_tags(config: Config, current: Current) -> list[Change]:
         Change("note", f"tag {f}.{t} is in the database but not in config")
         for f, t in current.tags
         if (f, t) not in known
+    ]
+    return out
+
+
+def _plan_baselines(config: Config, current: Current) -> list[Change]:
+    """Trust baselines (W-050) are read only at query time (W-051), so an update here changes nothing
+    stored."""
+    out = []
+    for b in config.baselines:
+        key = (b.document_kind, b.manager_kind)
+        what = f"trust baseline {b.document_kind} for {b.manager_kind}"
+        if key not in current.baselines:
+            out.append(
+                Change(
+                    "insert",
+                    what,
+                    "INSERT INTO core.trust_baseline (document_kind, manager_kind, level, reason) "
+                    "VALUES (%s, %s, %s, %s)",
+                    (b.document_kind, b.manager_kind, b.level, b.reason),
+                )
+            )
+        elif current.baselines[key] != (b.level, b.reason):
+            out.append(
+                Change(
+                    "update",
+                    what,
+                    "UPDATE core.trust_baseline SET level = %s, reason = %s "
+                    "WHERE document_kind = %s AND manager_kind = %s",
+                    (b.level, b.reason, b.document_kind, b.manager_kind),
+                )
+            )
+    known = {(b.document_kind, b.manager_kind) for b in config.baselines}
+    out += [
+        Change("note", f"trust baseline {dk} for {mk} is in the database but not in config")
+        for dk, mk in sorted(current.baselines)
+        if (dk, mk) not in known
     ]
     return out
 

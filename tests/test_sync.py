@@ -35,6 +35,7 @@ def _mirror(cfg: config.Config) -> sync.Current:
         )
         for s in cfg.sources
     }
+    c.baselines = {(b.document_kind, b.manager_kind): (b.level, b.reason) for b in cfg.baselines}
     return c
 
 
@@ -77,3 +78,14 @@ def test_extra_rows_are_reported_not_removed():
     current.filers[999] = ("someone", "X", None, None, None)
     notes = [c.what for c in sync.plan(cfg, current) if c.action == "note"]
     assert any("style.momentum" in n for n in notes) and any("filer 999" in n for n in notes)
+
+
+def test_changed_baseline_is_one_update_and_nothing_else():
+    """W-051: a baseline change touches the baseline table only; nothing stored elsewhere depends on it."""
+    cfg = config.load()
+    current = _mirror(cfg)
+    b = cfg.baselines[0]
+    current.baselines[(b.document_kind, b.manager_kind)] = ("none", b.reason)
+    changes = [c for c in sync.plan(cfg, current) if c.sql]
+    assert len(changes) == 1 and changes[0].action == "update"
+    assert "core.trust_baseline" in changes[0].sql and "DELETE" not in changes[0].sql.upper()

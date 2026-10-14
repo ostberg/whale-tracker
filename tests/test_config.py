@@ -1,3 +1,4 @@
+import re
 from datetime import date
 
 import pytest
@@ -31,14 +32,20 @@ storage_allowed = false
 use_allowed = true
 permission_basis = "test"
 """
+TRUST = (
+    "[[baseline]]\ndocument_kinds = ["
+    + ", ".join(f'"{k}"' for k in config.DOCUMENT_KINDS)
+    + ']\nlevel = "medium"\nreason = "test"\n'
+)
 
 
-def _write(tmp_path, tags=TAGS, topics=TOPICS, managers=MANAGERS, sources=SOURCE):
+def _write(tmp_path, tags=TAGS, topics=TOPICS, managers=MANAGERS, sources=SOURCE, trust=TRUST):
     for name, text in (
         ("tags.toml", tags),
         ("topics.toml", topics),
         ("managers.toml", managers),
         ("letter_sources.toml", sources),
+        ("trust.toml", trust),
     ):
         (tmp_path / name).write_text(text, encoding="utf-8")
     return tmp_path
@@ -106,6 +113,46 @@ def test_all_problems_reported_together(tmp_path):
     with pytest.raises(config.ConfigError) as e:
         config.load(_write(tmp_path, sources=bad))
     assert len(e.value.problems) >= 2
+
+
+@pytest.mark.parametrize(
+    ("trust", "expected"),
+    [
+        ('[[baseline]]\ndocument_kinds = ["tweet"]\nlevel = "low"\nreason = "r"\n', "no baseline for"),
+        (TRUST + '[[baseline]]\ndocument_kinds = ["tweet"]\nlevel = "low"\nreason = "r"\n', "covered twice"),
+        (TRUST.replace('"medium"', '"maybe"'), "level must be one of"),
+        (TRUST.replace('"note"', '"podcast"'), "document_kinds must be"),
+        (
+            TRUST.replace("[[baseline]]\n", '[[baseline]]\nmanager_kinds = ["robot"]\n'),
+            "manager_kinds must be",
+        ),
+        ("", "at least one"),
+    ],
+)
+def test_trust_baselines_must_cover_every_pair_once(tmp_path, trust, expected):
+    with pytest.raises(config.ConfigError) as info:
+        config.load(_write(tmp_path, trust=trust))
+    assert any(expected in p for p in info.value.problems), info.value.problems
+
+
+def test_trust_baselines_expand_to_every_pair():
+    cfg = config.load()
+    by_pair = {(b.document_kind, b.manager_kind): b.level for b in cfg.baselines}
+    assert len(by_pair) == len(config.DOCUMENT_KINDS) * len(config.KINDS) == len(cfg.baselines)
+    assert by_pair[("quarterly_letter", "manager")] == "high"
+    assert by_pair[("quarterly_letter", "independent_writer")] == "medium"
+    assert by_pair[("tweet", "manager")] == "low"
+    assert by_pair[("note", "independent_writer")] == "none"
+
+
+def test_document_kinds_and_levels_match_migration_0002():
+    from whales.db import migrate
+
+    sql = next(m.sql for m in migrate.discover() if m.version == 2)
+    kinds = re.search(r"document_kind_check CHECK \(kind IN \((.*?)\)\)", sql, re.S).group(1)
+    assert set(re.findall(r"'([a-z_]+)'", kinds)) == set(config.DOCUMENT_KINDS)
+    for level in config.LEVELS:
+        assert f"'{level}'" in sql
 
 
 def test_is_quarter_end():

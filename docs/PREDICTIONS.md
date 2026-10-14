@@ -48,6 +48,7 @@ A claim is one testable thing. A sentence with two tests becomes two rows. Each 
 | `relative_to` | the benchmark of a relative call ("will outperform the S&P 500") | free text, optional |
 | `window_from`, `window_to`, `timing` | when the test applies. `any_time`: met if true at any point in the window ("below $100 by year-end"). `at_end`: judged at `window_to` ("capex growth for 2027") | dates; `window_to` null means the writer gave no deadline |
 | `horizon_text`, `confidence_wording` | the writer's own words ("by the end of the year"; "will", "we expect", "could") | free text |
+| `confidence` | how firmly the writer puts it, judged from the wording: `high` (will, we expect), `medium` (likely, should), `low` (could, might). Used for calibration and for confident misses (W-051, section 7) | high, medium, low |
 | `basis`, `basis_note` | what the writer shows for the claim (W-050, section 7): `data` cites specific numbers or observable facts; `reasoning` argues a mechanism without hard numbers; `assertion` states a view with nothing shown. The note says what was shown ("cites Q2 capex of $24bn and the FY guide") | counted per writer in the track record, never turned into a judged score |
 | `claim`, `quote`, `page` | one plain sentence; the exact words, at most 400 characters (W-015, W-019); the page | |
 
@@ -131,7 +132,7 @@ JSON in this shape (`predictions.CONTRACT`; `PROMPT_VERSION = predictions-v1`):
    "subject": "...", "metric": "...", "ticker": "MSFT or null", "topic": "slug or null",
    "comparator": "...", "threshold": 100 or null, "unit": "USD/bbl or null", "relative_to": null,
    "window_from": "YYYY-MM-DD or null", "window_to": "YYYY-MM-DD or null", "timing": "any_time | at_end",
-   "horizon_text": "...", "confidence_wording": "...",
+   "horizon_text": "...", "confidence_wording": "...", "confidence": "high | medium | low",
    "basis": "data | reasoning | assertion", "basis_note": "what the writer shows, or null",
    "claim": "one plain sentence", "quote": "the writer's words, at most 400 characters", "page": 3,
    "premises": [2], "caused_by": [3]}
@@ -203,12 +204,13 @@ the source-type baseline in disguise until resolved calls accumulate.
 
 | Layer | What | Who decides | Standing |
 |---|---|---|---|
-| 1. Baseline, by source type | the trust a source type starts with before any of its claims has been checked: a rough level from `document.kind` and `manager.kind` (table below), which layers 2 and 3 then move | the owner, in `config/trust.toml` | next |
+| 1. Baseline, by source type | the trust a source type starts with before any of its claims has been checked: a rough level from `document.kind` and `manager.kind` (table below), which layers 2 and 3 then move | the owner, in `config/trust.toml` | built: `core.trust_baseline`, joined at read time by `letters.author_trust` |
 | 2. Basis of each claim | `data`, `reasoning` or `assertion` with a one-line note, on every prediction, company mention and topic mention; counted per writer ("60% of calls data-backed") | the model, beside the quote it must already give | built: columns in 0002, a contract field, counts in `letters.track_record` |
 | 3. Earned | the track record (hit rate by subject and horizon); calibration (do "will" calls land more often than "could" calls, from `confidence_wording`); skin in the game (`says_owned` on mentions, and the said-versus-owned join of W-017 in phase 3) | computed | the track record is built; the rest once calls resolve |
 | 4. The owner's view (optional) | a dated tag facet `trust` (trusted, watch, skeptical) with evidence, ratified like any tag (W-038) | the owner | proposed |
 
-The layer-1 baselines, for the owner to correct before they go into config:
+The layer-1 baselines, accepted by the owner on 2026-10-14 and held in `config/trust.toml` (one rule per row
+here, plus `other` at medium-low until someone sets the document's kind):
 
 | Source type (document kind, author kind) | Baseline | Why |
 |---|---|---|
@@ -217,14 +219,29 @@ The layer-1 baselines, for the owner to correct before they go into config:
 | Strategist or economist commentary (Apollo, GMO, Hoisington) | medium | researched, but sells a view and holds no position |
 | Independent writer (Lyn Alden) | medium | researched, no fiduciary stake |
 | Transcript (interview, podcast) | medium-low | spoken, unedited, led by the host |
-| Third-party article | low-medium | second-hand; the reporter's framing |
+| Third-party article | medium-low | second-hand; the reporter's framing |
 | Tweet or thread | low | fast and unedited, unless it links data |
 | The owner's own note | not scored | |
 
-Next: `config/trust.toml` with these baselines, synced like the other config, and a view
-`letters.author_trust` joining baseline, basis counts and the track record per writer, for the digest and
-the Research Assistant. A
-judged "Evidence" score per letter stays out (the owner dropped it in W-036); the basis counts carry the same
+Two rules the owner set on 2026-10-14 (W-051):
+
+- **Baselines never touch stored data.** They live in `core.trust_baseline`, loaded from `config/trust.toml`
+  by `whales config sync`, and are joined only at query time by `letters.author_trust`. Changing a level
+  changes the next query and nothing else: no row is re-extracted, re-scored or rewritten, and the history of
+  claims and verdicts is untouched. `whales config check` refuses a (document kind, author kind) pair that is
+  covered twice or not at all, so a new document kind cannot slip through without a level.
+- **Trust is earned but quickly lost.** Each claim carries the writer's `confidence` (high, medium, low,
+  judged from the wording). `letters.author_trust` counts confident misses (confidence high, scored wrong)
+  separately and raises `trust_flag = recent_confident_miss` for any writer with one in the last year,
+  whatever the long-run hit rate. Building a record takes many dated, scored calls; losing it takes one
+  confident miss. No decay formula is applied until there is data to fit one; the counts are shown as they
+  are.
+
+`letters.author_trust` has one row per writer and medium (a manager's letters and the same manager's tweets
+are separate rows with separate baselines): the baseline and its reason; calls and dated calls; data-backed,
+reasoned and asserted counts; right, partly right, wrong, unresolvable, void and open; confident misses,
+recent confident misses, the last miss date and the flag. `letters.track_record` sums it per writer. A judged
+"Evidence" score per letter stays out (the owner dropped it in W-036); the basis counts carry the same
 information without a scoring sheet.
 
 ## 8. What was taken from the owner's financial-graph project
@@ -265,4 +282,4 @@ decision rule (W-039).
 3. Decide whether `data` and `price` checks may auto-score after a grace period (section 4).
 4. Migration 0002 is applied by the admin job once IT clears Azure; `pytest -m live` then exercises the state
    view on the MSFT example.
-5. Correct the source-type baselines in section 7 before they go into `config/trust.toml`.
+5. Baselines accepted on 2026-10-14 and held in `config/trust.toml`; edit that file to change one.

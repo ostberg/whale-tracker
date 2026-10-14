@@ -165,6 +165,7 @@ MSFT_LETTER = {
             "window_from": "2026-01-01",
             "window_to": "2026-06-30",
             "timing": "at_end",
+            "confidence": "medium",
             "basis": "data",
             "claim": "Capex grows over 30%.",
             "quote": "If capex rises by over 30%",
@@ -178,6 +179,7 @@ MSFT_LETTER = {
             "comparator": "down",
             "window_to": "2026-06-30",
             "timing": "any_time",
+            "confidence": "high",
             "basis": "reasoning",
             "claim": "Shares fall.",
             "quote": "investors will punish the shares",
@@ -193,6 +195,7 @@ MSFT_LETTER = {
             "unit": "x",
             "window_to": "2030-12-31",
             "timing": "any_time",
+            "confidence": "high",
             "basis": "reasoning",
             "claim": "The multiple compresses to 18x.",
             "quote": "compress to 18x",
@@ -210,6 +213,7 @@ MSFT_LETTER = {
             "unit": "USD/bbl",
             "window_to": "2030-12-31",
             "timing": "any_time",
+            "confidence": "high",
             "basis": "assertion",
             "claim": "Brent trades below $100.",
             "quote": "below $100 by the end of the year",
@@ -286,9 +290,20 @@ def test_prediction_states_follow_premises_and_verdicts(db):
         assert states()[4] == "scored"
         record = cur.execute(
             "SELECT right_calls, wrong_calls, void_calls, open_calls, dated_calls, data_backed_calls, "
-            "reasoned_calls, asserted_calls FROM letters.track_record WHERE manager = 'zz-test'"
+            "reasoned_calls, asserted_calls, confident_misses, trust_flag FROM letters.track_record "
+            "WHERE manager = 'zz-test'"
         ).fetchone()
-        assert record == (1, 0, 2, 0, 3, 0, 2, 1)
+        assert record == (1, 0, 2, 0, 3, 0, 2, 1, 0, None)
+        # Trust is earned but quickly lost (W-051): one confident miss raises the flag at once.
+        cur.execute(
+            "INSERT INTO letters.prediction_score (prediction_id, outcome) VALUES (%s, 'wrong')", (ids[2],)
+        )
+        wrong, void, flag, baseline = cur.execute(
+            "SELECT t.wrong_calls, t.void_calls, t.trust_flag, a.baseline FROM letters.track_record t "
+            "JOIN letters.author_trust a ON a.manager = t.manager WHERE t.manager = 'zz-test'"
+        ).fetchone()
+        assert (wrong, void, flag) == (1, 1, "recent_confident_miss")
+        assert baseline == "high"  # a quarterly letter by a manager, from config/trust.toml
 
 
 class _rollback:

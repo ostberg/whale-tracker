@@ -1,0 +1,51 @@
+# Trust baselines (W-050, layer 1): the trust a source type starts with before any of its claims has been
+# checked. Accepted by the owner on 2026-10-14. Loaded into core.trust_baseline by `whales config sync` and
+# read only by views at query time (W-051), so changing a level here changes the next query and nothing
+# stored: no re-extraction, no re-scoring, no rewritten history.
+#
+# Each rule names document kinds and, optionally, author kinds (omit manager_kinds for all four: manager,
+# listed_vehicle, independent_writer, economist_or_strategist). Every pair must be covered exactly once;
+# `whales config check` refuses a pair covered twice or not at all. Levels: high, medium, medium_low, low,
+# none.
+
+[[baseline]]
+document_kinds = ["annual_letter", "quarterly_letter", "memo", "commentary", "presentation", "essay"]
+manager_kinds = ["manager", "listed_vehicle"]
+level = "high"
+reason = "The manager's own words with money and reputation at stake; signed and dated; checkable against the 13F"
+
+[[baseline]]
+document_kinds = ["annual_letter", "quarterly_letter", "memo", "commentary", "presentation", "essay"]
+manager_kinds = ["economist_or_strategist", "independent_writer"]
+level = "medium"
+reason = "Researched, but sells a view and holds no position, or has no fiduciary stake"
+
+[[baseline]]
+document_kinds = ["activist_letter", "filing_exhibit"]
+level = "medium"
+reason = "Facts usually checkable; framing partisan by design"
+
+[[baseline]]
+document_kinds = ["transcript"]
+level = "medium_low"
+reason = "Spoken, unedited, led by the host"
+
+[[baseline]]
+document_kinds = ["article"]
+level = "medium_low"
+reason = "Second-hand; the reporter's framing"
+
+[[baseline]]
+document_kinds = ["tweet"]
+level = "low"
+reason = "Fast and unedited, unless it links data"
+
+[[baseline]]
+document_kinds = ["note"]
+level = "none"
+reason = "The owner's own notes are not scored"
+
+[[baseline]]
+document_kinds = ["other"]
+level = "medium_low"
+reason = "Unclassified documents start low until someone sets the document's kind"

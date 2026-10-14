@@ -39,6 +39,24 @@ ALTER TABLE letters.topic_mention
     ADD CONSTRAINT topic_mention_basis_note_check
         CHECK (basis_note IS NULL OR length(basis_note) BETWEEN 1 AND 300);
 
+-- Trust profile, layer 1 (W-050): the trust a source type starts with, by document kind and author kind.
+-- Loaded from config/trust.toml by `whales config sync`; read only by views at query time (W-051), so a
+-- change here touches nothing stored.
+CREATE TABLE core.trust_baseline (
+    id             bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    document_kind  text NOT NULL,
+    manager_kind   text NOT NULL,
+    level          text NOT NULL,
+    reason         text NOT NULL,
+    CONSTRAINT trust_baseline_key UNIQUE (document_kind, manager_kind),
+    CONSTRAINT trust_baseline_document_kind_check CHECK (document_kind IN ('annual_letter', 'quarterly_letter',
+        'memo', 'commentary', 'activist_letter', 'presentation', 'essay', 'filing_exhibit', 'tweet', 'article',
+        'transcript', 'note', 'other')),
+    CONSTRAINT trust_baseline_manager_kind_check
+        CHECK (manager_kind IN ('manager', 'listed_vehicle', 'independent_writer', 'economist_or_strategist')),
+    CONSTRAINT trust_baseline_level_check CHECK (level IN ('high', 'medium', 'medium_low', 'low', 'none'))
+);
+
 -- One testable claim. `role` separates what the writer asserts from a premise the writer only supposes
 -- ("if capex rises 30%..."); premises never count in a track record. `ordinal` is the model's own numbering
 -- within the run, which the links use before ids exist. What each column may hold: docs/PREDICTIONS.md.
@@ -61,6 +79,7 @@ CREATE TABLE letters.prediction (
     timing              text NOT NULL DEFAULT 'any_time',
     horizon_text        text,
     confidence_wording  text,
+    confidence          text NOT NULL,
     basis               text NOT NULL,
     basis_note          text,
     claim               text NOT NULL,
@@ -86,6 +105,7 @@ CREATE TABLE letters.prediction (
         CHECK (window_from IS NULL OR window_to IS NULL OR window_to >= window_from),
     CONSTRAINT prediction_timing_check CHECK (timing IN ('any_time', 'at_end')),
     CONSTRAINT prediction_at_end_check CHECK (timing = 'any_time' OR window_to IS NOT NULL),
+    CONSTRAINT prediction_confidence_check CHECK (confidence IN ('high', 'medium', 'low')),
     CONSTRAINT prediction_basis_check CHECK (basis IN ('data', 'reasoning', 'assertion')),
     CONSTRAINT prediction_basis_note_check
         CHECK (basis_note IS NULL OR length(basis_note) BETWEEN 1 AND 300),
@@ -183,7 +203,7 @@ WITH latest_score AS (
     GROUP BY l.to_id
 )
 SELECT p.id, p.extraction_run_id, p.ordinal, p.role, p.subject, p.metric, p.comparator, p.threshold, p.unit,
-       p.window_from, p.window_to, p.timing, p.basis, p.claim,
+       p.window_from, p.window_to, p.timing, p.confidence, p.basis, p.claim,
        s.outcome, s.reviewed_by, s.reviewed_at,
        c.proposed_outcome, c.method AS check_method, c.observed AS check_observed, c.as_of AS check_as_of,
        CASE
@@ -199,30 +219,74 @@ LEFT JOIN latest_score s ON s.prediction_id = p.id
 LEFT JOIN latest_check c ON c.prediction_id = p.id
 LEFT JOIN premises pr ON pr.prediction_id = p.id;
 
--- Each writer's record on asserted claims, from the latest successful predictions run per document.
-CREATE VIEW letters.track_record AS
+-- The trust profile per writer and medium (W-050): the baseline (layer 1), basis counts (layer 2) and the
+-- earned record (layer 3) side by side, never combined into one number. Asserted claims only, from the
+-- latest successful predictions run per document. Trust is earned but quickly lost (W-051): a confident miss
+-- (confidence high, scored wrong) within the last year raises trust_flag whatever the long-run hit rate.
+CREATE VIEW letters.author_trust AS
 WITH latest_run AS (
     SELECT DISTINCT ON (document_id) id, document_id
     FROM letters.extraction_run WHERE task = 'predictions' AND status = 'ok'
     ORDER BY document_id, id DESC
+), claims AS (
+    SELECT m.slug AS manager, m.name AS manager_name, m.kind AS manager_kind, d.kind AS document_kind,
+           st.state, st.outcome, st.reviewed_at, st.confidence, st.basis, st.window_to
+    FROM letters.prediction_state st
+    JOIN latest_run r ON r.id = st.extraction_run_id
+    JOIN letters.document d ON d.id = r.document_id
+    JOIN core.manager m ON m.id = d.manager_id
+    WHERE st.role = 'asserted'
+), counted AS (
+    SELECT c.manager, c.manager_name, c.manager_kind, c.document_kind,
+           count(*) AS calls,
+           count(*) FILTER (WHERE c.window_to IS NOT NULL) AS dated_calls,
+           count(*) FILTER (WHERE c.basis = 'data') AS data_backed_calls,
+           count(*) FILTER (WHERE c.basis = 'reasoning') AS reasoned_calls,
+           count(*) FILTER (WHERE c.basis = 'assertion') AS asserted_calls,
+           count(*) FILTER (WHERE c.state = 'scored' AND c.outcome = 'right') AS right_calls,
+           count(*) FILTER (WHERE c.state = 'scored' AND c.outcome = 'partly_right') AS partly_right_calls,
+           count(*) FILTER (WHERE c.state = 'scored' AND c.outcome = 'wrong') AS wrong_calls,
+           count(*) FILTER (WHERE c.state = 'scored' AND c.outcome = 'unresolvable') AS unresolvable_calls,
+           count(*) FILTER (WHERE c.state = 'void') AS void_calls,
+           count(*) FILTER (WHERE c.state IN ('open', 'due', 'proposed', 'awaiting_premise')) AS open_calls,
+           count(*) FILTER (WHERE c.state = 'scored' AND c.outcome = 'wrong' AND c.confidence = 'high')
+               AS confident_misses,
+           count(*) FILTER (WHERE c.state = 'scored' AND c.outcome = 'wrong' AND c.confidence = 'high'
+                            AND c.reviewed_at >= now() - interval '1 year') AS recent_confident_misses,
+           max(c.reviewed_at) FILTER (WHERE c.state = 'scored' AND c.outcome = 'wrong') AS last_miss_at
+    FROM claims c
+    GROUP BY c.manager, c.manager_name, c.manager_kind, c.document_kind
 )
-SELECT m.slug AS manager, m.name AS manager_name,
-       count(*) FILTER (WHERE st.state = 'scored' AND st.outcome = 'right') AS right_calls,
-       count(*) FILTER (WHERE st.state = 'scored' AND st.outcome = 'partly_right') AS partly_right_calls,
-       count(*) FILTER (WHERE st.state = 'scored' AND st.outcome = 'wrong') AS wrong_calls,
-       count(*) FILTER (WHERE st.state = 'scored' AND st.outcome = 'unresolvable') AS unresolvable_calls,
-       count(*) FILTER (WHERE st.state = 'void') AS void_calls,
-       count(*) FILTER (WHERE st.state IN ('open', 'due', 'proposed', 'awaiting_premise')) AS open_calls,
-       count(*) FILTER (WHERE st.window_to IS NOT NULL) AS dated_calls,
-       count(*) FILTER (WHERE st.basis = 'data') AS data_backed_calls,
-       count(*) FILTER (WHERE st.basis = 'reasoning') AS reasoned_calls,
-       count(*) FILTER (WHERE st.basis = 'assertion') AS asserted_calls
-FROM letters.prediction_state st
-JOIN latest_run r ON r.id = st.extraction_run_id
-JOIN letters.document d ON d.id = r.document_id
-JOIN core.manager m ON m.id = d.manager_id
-WHERE st.role = 'asserted'
-GROUP BY m.slug, m.name;
+SELECT n.manager, n.manager_name, n.manager_kind, n.document_kind,
+       b.level AS baseline, b.reason AS baseline_reason,
+       n.calls, n.dated_calls, n.data_backed_calls, n.reasoned_calls, n.asserted_calls,
+       n.right_calls, n.partly_right_calls, n.wrong_calls, n.unresolvable_calls, n.void_calls, n.open_calls,
+       n.confident_misses, n.recent_confident_misses, n.last_miss_at,
+       CASE WHEN n.recent_confident_misses > 0 THEN 'recent_confident_miss' END AS trust_flag
+FROM counted n
+LEFT JOIN core.trust_baseline b ON b.document_kind = n.document_kind AND b.manager_kind = n.manager_kind;
+
+-- Each writer's record across media: author_trust summed. The baseline is per medium, so it is not here;
+-- the flag carries over.
+CREATE VIEW letters.track_record AS
+SELECT manager, manager_name,
+       sum(calls)::bigint AS calls,
+       sum(dated_calls)::bigint AS dated_calls,
+       sum(data_backed_calls)::bigint AS data_backed_calls,
+       sum(reasoned_calls)::bigint AS reasoned_calls,
+       sum(asserted_calls)::bigint AS asserted_calls,
+       sum(right_calls)::bigint AS right_calls,
+       sum(partly_right_calls)::bigint AS partly_right_calls,
+       sum(wrong_calls)::bigint AS wrong_calls,
+       sum(unresolvable_calls)::bigint AS unresolvable_calls,
+       sum(void_calls)::bigint AS void_calls,
+       sum(open_calls)::bigint AS open_calls,
+       sum(confident_misses)::bigint AS confident_misses,
+       sum(recent_confident_misses)::bigint AS recent_confident_misses,
+       max(last_miss_at) AS last_miss_at,
+       CASE WHEN sum(recent_confident_misses) > 0 THEN 'recent_confident_miss' END AS trust_flag
+FROM letters.author_trust
+GROUP BY manager, manager_name;
 
 -- Grants (W-039): the job writes claims, links and proposals; a person writes verdicts. No DELETE, no UPDATE.
 GRANT INSERT ON letters.prediction, letters.prediction_link, letters.prediction_check TO whales_ingest;
