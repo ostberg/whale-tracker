@@ -6,7 +6,8 @@ Dated entries, newest first: what changed, what is verified, what is next.
 
 **Owner direction.** "Some sort of trust score (and/or more context/evaluation if something is pure
 opinion, well researched thesis, observable facts, etc) even roughly by source type." From the three-layer
-proposal the owner chose "basis now, priors next" (W-050).
+proposal the owner chose "basis now, baselines next" (W-050). The owner asked whether "prior" meant
+priority; it is the statistics word for a starting assumption, so the docs now say "baseline".
 
 **What changed.**
 - Migration 0002 (still unapplied, so edited in place): `basis` (data, reasoning, assertion) and
@@ -14,14 +15,14 @@ proposal the owner chose "basis now, priors next" (W-050).
   to run if the mention tables hold rows (they are empty). `prediction_state` shows the basis;
   `track_record` counts data-backed, reasoned and asserted calls.
 - `src/whales/predictions.py`: `basis` required and `basis_note` optional in the contract and the insert.
-- `docs/PREDICTIONS.md`, section 7: the trust profile (prior by source type, basis, earned trust, the
-  owner's optional tag) with the priors table for the owner to correct. Decision W-050. SCHEMA, STATUS,
+- `docs/PREDICTIONS.md`, section 7: the trust profile (baseline by source type, basis, earned trust, the
+  owner's optional tag) with the baselines table for the owner to correct. Decision W-050. SCHEMA, STATUS,
   AGENTS and RATINGS_AND_TAGS updated.
 - Tests: fixtures carry a basis; three new refusals; the live track-record check covers the basis counts.
 
 **Verified.** Unit tests and ruff pass. The SQL is still unverified against a server (Azure blocked).
 
-**Next.** Once the owner corrects the priors: `config/trust.toml` with its sync, and the
+**Next.** Once the owner corrects the baselines: `config/trust.toml` with its sync, and the
 `letters.author_trust` view. Then as before: deploy, apply 0002, the model seam.
 
 ## 2026-10-13 (night): predictions as linked claims (migration 0002, not applied)

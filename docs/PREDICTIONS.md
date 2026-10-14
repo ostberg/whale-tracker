@@ -199,18 +199,18 @@ track record.
 The owner asked (2026-10-14) for "some sort of trust score (and/or more context/evaluation if something is
 pure opinion, well researched thesis, observable facts, etc), even roughly by source type". Trust is three
 things here, shown side by side like the rating (W-036: no overall score), because a single number would be
-the prior in disguise until resolved calls accumulate.
+the source-type baseline in disguise until resolved calls accumulate.
 
 | Layer | What | Who decides | Standing |
 |---|---|---|---|
-| 1. Prior, by source type | a rough starting level from `document.kind` and `manager.kind` (table below) | the owner, in `config/trust.toml` | next |
+| 1. Baseline, by source type | the trust a source type starts with before any of its claims has been checked: a rough level from `document.kind` and `manager.kind` (table below), which layers 2 and 3 then move | the owner, in `config/trust.toml` | next |
 | 2. Basis of each claim | `data`, `reasoning` or `assertion` with a one-line note, on every prediction, company mention and topic mention; counted per writer ("60% of calls data-backed") | the model, beside the quote it must already give | built: columns in 0002, a contract field, counts in `letters.track_record` |
 | 3. Earned | the track record (hit rate by subject and horizon); calibration (do "will" calls land more often than "could" calls, from `confidence_wording`); skin in the game (`says_owned` on mentions, and the said-versus-owned join of W-017 in phase 3) | computed | the track record is built; the rest once calls resolve |
 | 4. The owner's view (optional) | a dated tag facet `trust` (trusted, watch, skeptical) with evidence, ratified like any tag (W-038) | the owner | proposed |
 
-The layer-1 priors, for the owner to correct before they go into config:
+The layer-1 baselines, for the owner to correct before they go into config:
 
-| Source type (document kind, author kind) | Prior | Why |
+| Source type (document kind, author kind) | Baseline | Why |
 |---|---|---|
 | A manager's own letter, memo or presentation | high | money and reputation at stake; signed and dated; checkable against the 13F |
 | Activist letter, 13D exhibit | medium | facts usually checkable, framing partisan by design |
@@ -221,8 +221,9 @@ The layer-1 priors, for the owner to correct before they go into config:
 | Tweet or thread | low | fast and unedited, unless it links data |
 | The owner's own note | not scored | |
 
-Next: `config/trust.toml` with these priors, synced like the other config, and a view `letters.author_trust`
-joining prior, basis counts and the track record per writer, for the digest and the Research Assistant. A
+Next: `config/trust.toml` with these baselines, synced like the other config, and a view
+`letters.author_trust` joining baseline, basis counts and the track record per writer, for the digest and
+the Research Assistant. A
 judged "Evidence" score per letter stays out (the owner dropped it in W-036); the basis counts carry the same
 information without a scoring sheet.
 
@@ -264,4 +265,4 @@ decision rule (W-039).
 3. Decide whether `data` and `price` checks may auto-score after a grace period (section 4).
 4. Migration 0002 is applied by the admin job once IT clears Azure; `pytest -m live` then exercises the state
    view on the MSFT example.
-5. Correct the source-type priors in section 7 before they go into `config/trust.toml`.
+5. Correct the source-type baselines in section 7 before they go into `config/trust.toml`.

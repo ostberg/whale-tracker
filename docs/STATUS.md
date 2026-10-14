@@ -123,7 +123,7 @@ Later:
       stance (benefits, at risk, linked). Here that becomes a `stance` column on `core.topic_security` in
       phase 3, so "topic or technology → eventual beneficiary" chains can be followed. Not yet designed.
 - [ ] **Trust profile (W-050).** Layer 2 (the basis of each claim) is in migration 0002. Next: the owner
-      corrects the source-type priors in `docs/PREDICTIONS.md`, section 7; then `config/trust.toml`, its sync
+      corrects the source-type baselines in `docs/PREDICTIONS.md`, section 7; then `config/trust.toml`, its sync
       and the `letters.author_trust` view. Optional: a `trust` tag facet for the owner's own view.
 - [ ] **Alert delivery.** Reminders and the digest go to Teams (W-034). Still open: whether event alerts (new
       letter from a watched manager, a 13D on a held name) use the same channel. Holdings-based alerts stay
