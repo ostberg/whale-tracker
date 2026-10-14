@@ -53,9 +53,9 @@ Blocking phase 1 or 2:
 - [x] **How the ingest job runs in Azure:** W-042 (2026-10-10). `rg-whale-tracker`, Central US, the Tamale
       subscription, own registry, environment and identities. Still open: whether to report to the Tamale
       fleet ledger (W-021).
-- [ ] **Git remote.** The owner confirmed a private `whale-tracker` repository beside `tamale-tocqueville`. The
-      local repository and first commit exist. `gh` is not installed, so the owner creates the empty private
-      repository on github.com (no README, licence or .gitignore); the agent then adds `origin` and pushes.
+- [x] **Git remote.** `github.com/ostberg/whale-tracker` created by the owner on 2026-10-14 and added as
+      `origin`. The owner runs the pushes from a normal terminal (`git push -u origin main` the first time);
+      the sandboxed agent session is not allowed to push.
 - [ ] **The watchlist.** All 29 candidates plus the owner's additions (Oaktree, Southeastern/Longleaf,
       Whitebox) were verified on EDGAR on 2026-10-08: see `docs/MANAGER_SURVEY.md`. Each is a current 13F
       filer. Greenlight now files as DME Capital Management, and Pershing Square and Jana changed CIKs.
