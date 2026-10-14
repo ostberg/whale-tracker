@@ -54,8 +54,9 @@ Blocking phase 1 or 2:
       subscription, own registry, environment and identities. Still open: whether to report to the Tamale
       fleet ledger (W-021).
 - [x] **Git remote.** `github.com/ostberg/whale-tracker` created by the owner on 2026-10-14 and added as
-      `origin`. The owner runs the pushes from a normal terminal (`git push -u origin main` the first time);
-      the sandboxed agent session is not allowed to push.
+      `origin`. The first push (`git push -u origin main`) is the owner's: the agent session's permission mode
+      screened `git push` as a possible data exfiltration and blocked it, which is a setting of that tool, not
+      a project rule. The owner may allow `git push` for agent sessions or keep pushing by hand.
 - [ ] **The watchlist.** All 29 candidates plus the owner's additions (Oaktree, Southeastern/Longleaf,
       Whitebox) were verified on EDGAR on 2026-10-08: see `docs/MANAGER_SURVEY.md`. Each is a current 13F
       filer. Greenlight now files as DME Capital Management, and Pershing Square and Jana changed CIKs.
