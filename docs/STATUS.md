@@ -2,9 +2,10 @@
 
 What is done, in progress, outstanding or blocked, and on whom. Read this first, then DECISIONS.md.
 
-*Last updated 2026-10-13 (night): predictions redesigned as linked claims (W-048; migration 0002 written,
-not applied); collectors built for SEC, websites and the inbox; compliance position recorded (W-043). Azure
-sign-in is blocked, so nothing has run in Azure yet and the database is behind the config.*
+*Last updated 2026-10-14: predictions redesigned as linked claims (W-048; migration 0002 written, not
+applied) with the basis of each claim for the trust profile (W-050); clippings route confirmed (W-049);
+collectors built for SEC, websites and the inbox; compliance position recorded (W-043). Azure sign-in is
+blocked, so nothing has run in Azure yet and the database is behind the config.*
 
 ## Phases
 
@@ -121,6 +122,9 @@ Later:
 - [ ] **Topic-to-beneficiary edges.** The owner's financial-graph project links companies to topics with a
       stance (benefits, at risk, linked). Here that becomes a `stance` column on `core.topic_security` in
       phase 3, so "topic or technology → eventual beneficiary" chains can be followed. Not yet designed.
+- [ ] **Trust profile (W-050).** Layer 2 (the basis of each claim) is in migration 0002. Next: the owner
+      corrects the source-type priors in `docs/PREDICTIONS.md`, section 7; then `config/trust.toml`, its sync
+      and the `letters.author_trust` view. Optional: a `trust` tag facet for the owner's own view.
 - [ ] **Alert delivery.** Reminders and the digest go to Teams (W-034). Still open: whether event alerts (new
       letter from a watched manager, a 13D on a held name) use the same channel. Holdings-based alerts stay
       firm-side (W-012).

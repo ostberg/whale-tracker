@@ -34,7 +34,9 @@ Every rating records the model, the prompt version and the date, so it can be re
 - **After that:** a thumbs up or down on any rating in the digest or the Research Assistant. Disagreements feed
   the next prompt revision, and the 10 are re-run before any change of model.
 
-**Not scored:** Evidence and Candor (dropped for simplicity). "Relevant to us" is computed on the firm side,
+**Not scored:** Evidence and Candor (dropped for simplicity). Evidence returns as a count, not a score: every
+extracted claim and stance carries a `basis` (data, reasoning or assertion) judged by the model, and the
+track record counts them per writer (W-050, `docs/PREDICTIONS.md` section 7). "Relevant to us" is computed on the firm side,
 because it needs APX and Tamale data this project never holds (W-012).
 
 **No overall score.** Insight, Clarity, Predictions and Uniqueness are shown side by side, and any one can be

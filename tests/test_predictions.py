@@ -32,6 +32,8 @@ IRAN = {
             "timing": "any_time",
             "horizon_text": "after the midterm elections, by the end of the year",
             "confidence_wording": "will",
+            "basis": "assertion",
+            "basis_note": None,
             "claim": "Iran brokers a peace deal after the November 2026 midterm elections.",
             "quote": "Iran will hold out until after the midterm elections and then broker a peace deal",
             "page": 2,
@@ -54,6 +56,8 @@ IRAN = {
             "timing": "any_time",
             "horizon_text": "by the end of the year",
             "confidence_wording": "will",
+            "basis": "reasoning",
+            "basis_note": "rests on the peace-deal call; no supply or demand numbers shown",
             "claim": "Brent crude trades below $100 a barrel before the end of 2026.",
             "quote": "cause brent oil prices to drop to below $100 by the end of the year",
             "page": 2,
@@ -83,6 +87,8 @@ MSFT = {
             "timing": "at_end",
             "horizon_text": "next year",
             "confidence_wording": None,
+            "basis": "assertion",
+            "basis_note": None,
             "claim": "Microsoft's capital spending grows more than 30% in 2027.",
             "quote": "If MSFT capex rises by over 30% next year",
             "page": None,
@@ -105,6 +111,8 @@ MSFT = {
             "timing": "any_time",
             "horizon_text": "next year",
             "confidence_wording": "will",
+            "basis": "reasoning",
+            "basis_note": "argues that investors punish capex growth; no numbers shown",
             "claim": "Microsoft shares fall.",
             "quote": "investors will punish the shares",
             "page": None,
@@ -127,6 +135,8 @@ MSFT = {
             "timing": "any_time",
             "horizon_text": "next year",
             "confidence_wording": "will",
+            "basis": "reasoning",
+            "basis_note": None,
             "claim": "Microsoft's earnings multiple compresses to 18 times or less.",
             "quote": "cause the multiple to compress to 18x",
             "page": None,
@@ -154,6 +164,8 @@ def test_iran_example_parses_to_two_claims_and_one_causal_link():
         "USD/bbl",
     )
     assert brent.topic == "oil" and brent.window_to == date(2026, 12, 31)
+    assert (deal.basis, deal.basis_note) == ("assertion", None)
+    assert brent.basis == "reasoning" and brent.basis_note.startswith("rests on the peace-deal call")
     assert x.links == [predictions.Link(1, 2, "causes")]
     assert x.notes == []
 
@@ -199,6 +211,9 @@ def _broken(example, which, **changes):
         (_broken(IRAN, 2, comparator="crashes"), "comparator must be one of"),
         (_broken(IRAN, 2, metric="oil"), "metric must be one of"),
         (_broken(IRAN, 2, role="guess"), "role must be one of"),
+        (_broken(IRAN, 2, basis="vibes"), "basis must be one of"),
+        (_broken(IRAN, 2, basis=None), "basis must be one of"),
+        (_broken(IRAN, 2, basis_note="x" * 301), "basis_note is longer than 300"),
         (_broken(IRAN, 2, threshold="a hundred"), "threshold must be a number"),
         (_broken(IRAN, 2, window_to="2026-09-30"), "before the letter's date"),
         (_broken(IRAN, 1, window_from="2027-01-01"), "window_to is before window_from"),
@@ -251,7 +266,14 @@ def test_payload_shape_is_checked(payload):
 
 def test_vocabularies_match_migration_0002():
     sql = next(m.sql for m in migrate.discover() if m.version == 2)
-    for code in predictions.METRICS + predictions.COMPARATORS + predictions.TIMINGS + predictions.ROLES:
+    vocabularies = (
+        predictions.METRICS
+        + predictions.COMPARATORS
+        + predictions.TIMINGS
+        + predictions.ROLES
+        + predictions.BASES
+    )
+    for code in vocabularies:
         assert f"'{code}'" in sql, code
     assert set(predictions.CHECK_METHOD) == set(predictions.METRICS)
     assert set(predictions.CHECK_METHOD.values()) <= {"data", "price", "filing", "model"}

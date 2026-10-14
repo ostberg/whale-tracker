@@ -214,12 +214,13 @@ Key tables:
   publication lag), reminder history, assignee and status (awaiting, loaded, not yet published, skipped).
 - `letters.document`: source URL, publish date, content hash, tier, how it was collected, permitted use,
   whether the raw file is kept (W-032), and the PDF permission flags (W-030).
-- `letters.mention`: company named in a letter; stance, short summary, page reference.
+- `letters.mention`: company named in a letter; stance, basis (data, reasoning or assertion, W-050), short
+  summary, quote, page reference.
 - `letters.rating`: one row per letter and rubric dimension: score, reason, quote, model, prompt version,
   human override (W-036).
 - `letters.prediction`: one row per testable claim (W-048): role (asserted, or a premise the writer only
   supposes), subject, metric, security or topic, comparator and threshold, window and timing, confidence
-  wording, claim, quote, page. `letters.prediction_link` ties the claims of one letter together (premise_of,
+  wording, basis (W-050), claim, quote, page. `letters.prediction_link` ties the claims of one letter together (premise_of,
   causes); `letters.prediction_check` is the job's proposed outcome with its evidence;
   `letters.prediction_score` is a person's verdict. The view `letters.prediction_state` derives open, due,
   awaiting premise, proposed, void or scored, and `letters.track_record` counts each writer's calls. Design:
@@ -228,8 +229,8 @@ Key tables:
   `config/topics.toml`.
 - `core.topic_security`: which securities count toward a topic (for example gold miners and gold ETFs for
   gold; homebuilders, building products and timber for housing), with the reason for each.
-- `letters.topic_mention`: topic discussed in a letter; stance (positive, negative, mixed, neutral), short
-  summary, short quote, page reference.
+- `letters.topic_mention`: topic discussed in a letter; stance (positive, negative, mixed, neutral), basis
+  (W-050), short summary, short quote, page reference.
 - `letters.topic_candidate`: a topic the model saw that is not in the list; a person approves it before it
   joins `core.topic`.
 

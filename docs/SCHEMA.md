@@ -82,12 +82,13 @@ if `letters.prediction` holds rows.
 
 | Object | Holds |
 |---|---|
-| `letters.prediction` | one testable claim: role (asserted or premise), subject, metric, security or topic, comparator, threshold and unit, window and timing, confidence wording, claim, quote, page. `ordinal` is the model's own numbering within the run |
+| `letters.prediction` | one testable claim: role (asserted or premise), subject, metric, security or topic, comparator, threshold and unit, window and timing, confidence wording, basis and basis note (W-050), claim, quote, page. `ordinal` is the model's own numbering within the run |
+| `letters.mention`, `letters.topic_mention` | gain `basis` (data, reasoning, assertion) and `basis_note` (W-050); the migration refuses to run if either table holds rows |
 | `letters.prediction_link` | `premise_of` and `causes` links between claims of one run. Composite keys keep both ends in the run and make the from-claim's role match the kind |
 | `letters.prediction_check` | the job's proposed outcome, with method (data, price, filing, model), source, what was observed and when |
 | `letters.prediction_score` | a person's verdict, optionally confirming or overriding one check of the same prediction |
 | `letters.prediction_state` (view) | each claim's derived state |
-| `letters.track_record` (view) | each writer's counts over asserted claims, from the latest successful predictions run per document |
+| `letters.track_record` (view) | each writer's counts over asserted claims, from the latest successful predictions run per document, including counts by basis |
 
 It also adds the clipping media `tweet`, `article`, `transcript` and `note` to `letters.document.kind` (W-049). Grants: the job inserts claims, links and checks;
 the reviewer inserts verdicts without choosing `reviewed_by`. The SQL is unit-checked (named constraints, no

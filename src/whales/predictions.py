@@ -40,8 +40,10 @@ COMPARATORS = ("up", "down", "above", "below", "at_least", "at_most", "happens",
 NEEDS_THRESHOLD = ("above", "below", "at_least", "at_most")
 TIMINGS = ("any_time", "at_end")
 LINK_KINDS = ("premise_of", "causes")
+BASES = ("data", "reasoning", "assertion")  # W-050: what the writer shows for the claim
 QUOTE_MAX = 400
 SUBJECT_MAX = 200
+BASIS_NOTE_MAX = 300
 
 # How a claim about each metric is checked when its window closes. `data`: a public series (FRED and the
 # like); `price`: the price source (phase 6); `filing`: the company's own reports; `model`: a model reads
@@ -88,6 +90,9 @@ CONTRACT = """{
       "timing": "any_time (met if true at any point in the window) | at_end (judged at window_to)",
       "horizon_text": "the writer's own words for the timing, or null",
       "confidence_wording": "the writer's own words, e.g. 'will', 'we expect', 'could', or null",
+      "basis": "data (cites specific numbers or observable facts) | reasoning (argues a mechanism)
+                | assertion (stated as a view, nothing shown)",
+      "basis_note": "one line on what the writer shows, e.g. 'cites Q2 capex and the FY guide', or null",
       "claim": "one plain sentence restating the call",
       "quote": "the writer's exact words, at most 400 characters",
       "page": "page number or null",
@@ -123,6 +128,8 @@ class Claim:
     timing: str
     horizon_text: str | None
     confidence_wording: str | None
+    basis: str
+    basis_note: str | None
     claim: str
     quote: str
     page: int | None
@@ -222,6 +229,8 @@ def parse(payload: Any, published_on: date, topics: set[str] | frozenset[str] = 
         metric = _code(item, "metric", METRICS, problems, where)
         comparator = _code(item, "comparator", COMPARATORS, problems, where)
         timing = _code(item, "timing", TIMINGS, problems, where)
+        basis = _code(item, "basis", BASES, problems, where)
+        basis_note = _text(item, "basis_note", problems, where, required=False, limit=BASIS_NOTE_MAX)
         subject = _text(item, "subject", problems, where, required=True, limit=SUBJECT_MAX)
         claim = _text(item, "claim", problems, where, required=True, limit=1000)
         quote = _text(item, "quote", problems, where, required=True, limit=QUOTE_MAX)
@@ -278,6 +287,8 @@ def parse(payload: Any, published_on: date, topics: set[str] | frozenset[str] = 
                 timing=timing,
                 horizon_text=horizon_text,
                 confidence_wording=confidence,
+                basis=basis,
+                basis_note=basis_note,
                 claim=claim,
                 quote=quote,
                 page=page,
@@ -333,9 +344,9 @@ def _cycles(links: list[Link]) -> list[str]:
 INSERT_CLAIM = (
     "INSERT INTO letters.prediction (extraction_run_id, ordinal, role, subject, metric, security_id, "
     "topic_id, comparator, threshold, unit, relative_to, window_from, window_to, timing, horizon_text, "
-    "confidence_wording, claim, quote, page) VALUES (%s, %s, %s, %s, %s, "
+    "confidence_wording, basis, basis_note, claim, quote, page) VALUES (%s, %s, %s, %s, %s, "
     "(SELECT id FROM core.security WHERE ticker = %s ORDER BY id LIMIT 1), "
-    "(SELECT id FROM core.topic WHERE slug = %s), %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+    "(SELECT id FROM core.topic WHERE slug = %s), %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
     "RETURNING id, security_id"
 )
 INSERT_LINK = (
@@ -367,6 +378,8 @@ def claim_params(run_id: int, c: Claim) -> tuple:
         c.timing,
         c.horizon_text,
         c.confidence_wording,
+        c.basis,
+        c.basis_note,
         c.claim,
         c.quote,
         c.page,

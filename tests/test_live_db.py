@@ -165,6 +165,7 @@ MSFT_LETTER = {
             "window_from": "2026-01-01",
             "window_to": "2026-06-30",
             "timing": "at_end",
+            "basis": "data",
             "claim": "Capex grows over 30%.",
             "quote": "If capex rises by over 30%",
         },
@@ -177,6 +178,7 @@ MSFT_LETTER = {
             "comparator": "down",
             "window_to": "2026-06-30",
             "timing": "any_time",
+            "basis": "reasoning",
             "claim": "Shares fall.",
             "quote": "investors will punish the shares",
             "premises": [1],
@@ -191,6 +193,7 @@ MSFT_LETTER = {
             "unit": "x",
             "window_to": "2030-12-31",
             "timing": "any_time",
+            "basis": "reasoning",
             "claim": "The multiple compresses to 18x.",
             "quote": "compress to 18x",
             "premises": [1],
@@ -207,6 +210,7 @@ MSFT_LETTER = {
             "unit": "USD/bbl",
             "window_to": "2030-12-31",
             "timing": "any_time",
+            "basis": "assertion",
             "claim": "Brent trades below $100.",
             "quote": "below $100 by the end of the year",
         },
@@ -281,10 +285,10 @@ def test_prediction_states_follow_premises_and_verdicts(db):
         )
         assert states()[4] == "scored"
         record = cur.execute(
-            "SELECT right_calls, wrong_calls, void_calls, open_calls, dated_calls FROM letters.track_record "
-            "WHERE manager = 'zz-test'"
+            "SELECT right_calls, wrong_calls, void_calls, open_calls, dated_calls, data_backed_calls, "
+            "reasoned_calls, asserted_calls FROM letters.track_record WHERE manager = 'zz-test'"
         ).fetchone()
-        assert record == (1, 0, 2, 0, 3)
+        assert record == (1, 0, 2, 0, 3, 0, 2, 1)
 
 
 class _rollback:

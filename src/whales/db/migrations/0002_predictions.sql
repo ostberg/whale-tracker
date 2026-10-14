@@ -8,6 +8,9 @@ BEGIN
     IF EXISTS (SELECT 1 FROM letters.prediction) THEN
         RAISE EXCEPTION 'letters.prediction holds rows; migration 0002 expects the W-037 tables to be empty';
     END IF;
+    IF EXISTS (SELECT 1 FROM letters.mention) OR EXISTS (SELECT 1 FROM letters.topic_mention) THEN
+        RAISE EXCEPTION 'letters.mention or letters.topic_mention holds rows; 0002 adds NOT NULL basis columns';
+    END IF;
 END
 $$;
 
@@ -20,6 +23,21 @@ ALTER TABLE letters.document DROP CONSTRAINT document_kind_check;
 ALTER TABLE letters.document ADD CONSTRAINT document_kind_check CHECK (kind IN ('annual_letter',
     'quarterly_letter', 'memo', 'commentary', 'activist_letter', 'presentation', 'essay', 'filing_exhibit',
     'tweet', 'article', 'transcript', 'note', 'other'));
+
+-- Trust profile, layer 2 (W-050): the basis of every model-extracted claim or stance, judged by the model
+-- with a one-line note. data: cites specific numbers or observable facts; reasoning: argues a mechanism;
+-- assertion: stated as a view with nothing shown. Counted per writer, never judged into a score.
+ALTER TABLE letters.mention
+    ADD COLUMN basis text NOT NULL,
+    ADD COLUMN basis_note text,
+    ADD CONSTRAINT mention_basis_check CHECK (basis IN ('data', 'reasoning', 'assertion')),
+    ADD CONSTRAINT mention_basis_note_check CHECK (basis_note IS NULL OR length(basis_note) BETWEEN 1 AND 300);
+ALTER TABLE letters.topic_mention
+    ADD COLUMN basis text NOT NULL,
+    ADD COLUMN basis_note text,
+    ADD CONSTRAINT topic_mention_basis_check CHECK (basis IN ('data', 'reasoning', 'assertion')),
+    ADD CONSTRAINT topic_mention_basis_note_check
+        CHECK (basis_note IS NULL OR length(basis_note) BETWEEN 1 AND 300);
 
 -- One testable claim. `role` separates what the writer asserts from a premise the writer only supposes
 -- ("if capex rises 30%..."); premises never count in a track record. `ordinal` is the model's own numbering
@@ -43,6 +61,8 @@ CREATE TABLE letters.prediction (
     timing              text NOT NULL DEFAULT 'any_time',
     horizon_text        text,
     confidence_wording  text,
+    basis               text NOT NULL,
+    basis_note          text,
     claim               text NOT NULL,
     quote               text NOT NULL,
     page                integer,
@@ -66,6 +86,9 @@ CREATE TABLE letters.prediction (
         CHECK (window_from IS NULL OR window_to IS NULL OR window_to >= window_from),
     CONSTRAINT prediction_timing_check CHECK (timing IN ('any_time', 'at_end')),
     CONSTRAINT prediction_at_end_check CHECK (timing = 'any_time' OR window_to IS NOT NULL),
+    CONSTRAINT prediction_basis_check CHECK (basis IN ('data', 'reasoning', 'assertion')),
+    CONSTRAINT prediction_basis_note_check
+        CHECK (basis_note IS NULL OR length(basis_note) BETWEEN 1 AND 300),
     CONSTRAINT prediction_quote_check CHECK (length(quote) BETWEEN 1 AND 400),
     CONSTRAINT prediction_page_check CHECK (page IS NULL OR page > 0)
 );
@@ -160,7 +183,7 @@ WITH latest_score AS (
     GROUP BY l.to_id
 )
 SELECT p.id, p.extraction_run_id, p.ordinal, p.role, p.subject, p.metric, p.comparator, p.threshold, p.unit,
-       p.window_from, p.window_to, p.timing, p.claim,
+       p.window_from, p.window_to, p.timing, p.basis, p.claim,
        s.outcome, s.reviewed_by, s.reviewed_at,
        c.proposed_outcome, c.method AS check_method, c.observed AS check_observed, c.as_of AS check_as_of,
        CASE
@@ -190,7 +213,10 @@ SELECT m.slug AS manager, m.name AS manager_name,
        count(*) FILTER (WHERE st.state = 'scored' AND st.outcome = 'unresolvable') AS unresolvable_calls,
        count(*) FILTER (WHERE st.state = 'void') AS void_calls,
        count(*) FILTER (WHERE st.state IN ('open', 'due', 'proposed', 'awaiting_premise')) AS open_calls,
-       count(*) FILTER (WHERE st.window_to IS NOT NULL) AS dated_calls
+       count(*) FILTER (WHERE st.window_to IS NOT NULL) AS dated_calls,
+       count(*) FILTER (WHERE st.basis = 'data') AS data_backed_calls,
+       count(*) FILTER (WHERE st.basis = 'reasoning') AS reasoned_calls,
+       count(*) FILTER (WHERE st.basis = 'assertion') AS asserted_calls
 FROM letters.prediction_state st
 JOIN latest_run r ON r.id = st.extraction_run_id
 JOIN letters.document d ON d.id = r.document_id

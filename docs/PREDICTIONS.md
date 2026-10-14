@@ -48,6 +48,7 @@ A claim is one testable thing. A sentence with two tests becomes two rows. Each 
 | `relative_to` | the benchmark of a relative call ("will outperform the S&P 500") | free text, optional |
 | `window_from`, `window_to`, `timing` | when the test applies. `any_time`: met if true at any point in the window ("below $100 by year-end"). `at_end`: judged at `window_to` ("capex growth for 2027") | dates; `window_to` null means the writer gave no deadline |
 | `horizon_text`, `confidence_wording` | the writer's own words ("by the end of the year"; "will", "we expect", "could") | free text |
+| `basis`, `basis_note` | what the writer shows for the claim (W-050, section 7): `data` cites specific numbers or observable facts; `reasoning` argues a mechanism without hard numbers; `assertion` states a view with nothing shown. The note says what was shown ("cites Q2 capex of $24bn and the FY guide") | counted per writer in the track record, never turned into a judged score |
 | `claim`, `quote`, `page` | one plain sentence; the exact words, at most 400 characters (W-015, W-019); the page | |
 
 Rules for the model, which the prompt will carry:
@@ -131,6 +132,7 @@ JSON in this shape (`predictions.CONTRACT`; `PROMPT_VERSION = predictions-v1`):
    "comparator": "...", "threshold": 100 or null, "unit": "USD/bbl or null", "relative_to": null,
    "window_from": "YYYY-MM-DD or null", "window_to": "YYYY-MM-DD or null", "timing": "any_time | at_end",
    "horizon_text": "...", "confidence_wording": "...",
+   "basis": "data | reasoning | assertion", "basis_note": "what the writer shows, or null",
    "claim": "one plain sentence", "quote": "the writer's words, at most 400 characters", "page": 3,
    "premises": [2], "caused_by": [3]}
 ]}
@@ -192,7 +194,39 @@ finishing"): a browser extension, automated collection from X or any feed, podca
 ingestion, chart extraction, and a graph user interface. Each is a project of its own; none is needed for the
 track record.
 
-## 7. What was taken from the owner's financial-graph project
+## 7. Trust profile (W-050)
+
+The owner asked (2026-10-14) for "some sort of trust score (and/or more context/evaluation if something is
+pure opinion, well researched thesis, observable facts, etc), even roughly by source type". Trust is three
+things here, shown side by side like the rating (W-036: no overall score), because a single number would be
+the prior in disguise until resolved calls accumulate.
+
+| Layer | What | Who decides | Standing |
+|---|---|---|---|
+| 1. Prior, by source type | a rough starting level from `document.kind` and `manager.kind` (table below) | the owner, in `config/trust.toml` | next |
+| 2. Basis of each claim | `data`, `reasoning` or `assertion` with a one-line note, on every prediction, company mention and topic mention; counted per writer ("60% of calls data-backed") | the model, beside the quote it must already give | built: columns in 0002, a contract field, counts in `letters.track_record` |
+| 3. Earned | the track record (hit rate by subject and horizon); calibration (do "will" calls land more often than "could" calls, from `confidence_wording`); skin in the game (`says_owned` on mentions, and the said-versus-owned join of W-017 in phase 3) | computed | the track record is built; the rest once calls resolve |
+| 4. The owner's view (optional) | a dated tag facet `trust` (trusted, watch, skeptical) with evidence, ratified like any tag (W-038) | the owner | proposed |
+
+The layer-1 priors, for the owner to correct before they go into config:
+
+| Source type (document kind, author kind) | Prior | Why |
+|---|---|---|
+| A manager's own letter, memo or presentation | high | money and reputation at stake; signed and dated; checkable against the 13F |
+| Activist letter, 13D exhibit | medium | facts usually checkable, framing partisan by design |
+| Strategist or economist commentary (Apollo, GMO, Hoisington) | medium | researched, but sells a view and holds no position |
+| Independent writer (Lyn Alden) | medium | researched, no fiduciary stake |
+| Transcript (interview, podcast) | medium-low | spoken, unedited, led by the host |
+| Third-party article | low-medium | second-hand; the reporter's framing |
+| Tweet or thread | low | fast and unedited, unless it links data |
+| The owner's own note | not scored | |
+
+Next: `config/trust.toml` with these priors, synced like the other config, and a view `letters.author_trust`
+joining prior, basis counts and the track record per writer, for the digest and the Research Assistant. A
+judged "Evidence" score per letter stays out (the owner dropped it in W-036); the basis counts carry the same
+information without a scoring sheet.
+
+## 8. What was taken from the owner's financial-graph project
 
 The archive `AI Projects/financial-graph.zip` (a personal FastAPI, SQLAlchemy and React project run on Cloud
 Run, with a Chrome clipper extension) was read for ideas on 2026-10-13. Nothing from it was copied into this
@@ -222,7 +256,7 @@ SQLite development mode) conflicts with the in-tenant model rule, the small hash
 Azure-only runtime (W-002, W-022, W-042); its delete endpoints and in-place edits conflict with the insert-only
 decision rule (W-039).
 
-## 8. For the owner
+## 9. For the owner
 
 1. W-049 (clippings) confirmed on 2026-10-13 as direction, build later. Still open: X's terms for model
    use on hand-clipped posts.
@@ -230,3 +264,4 @@ decision rule (W-039).
 3. Decide whether `data` and `price` checks may auto-score after a grace period (section 4).
 4. Migration 0002 is applied by the admin job once IT clears Azure; `pytest -m live` then exercises the state
    view on the MSFT example.
+5. Correct the source-type priors in section 7 before they go into `config/trust.toml`.

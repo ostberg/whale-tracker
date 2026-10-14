@@ -2,6 +2,28 @@
 
 Dated entries, newest first: what changed, what is verified, what is next.
 
+## 2026-10-14: trust profile, layer 2 (the basis of each claim)
+
+**Owner direction.** "Some sort of trust score (and/or more context/evaluation if something is pure
+opinion, well researched thesis, observable facts, etc) even roughly by source type." From the three-layer
+proposal the owner chose "basis now, priors next" (W-050).
+
+**What changed.**
+- Migration 0002 (still unapplied, so edited in place): `basis` (data, reasoning, assertion) and
+  `basis_note` on `letters.prediction`, `letters.mention` and `letters.topic_mention`; the migration refuses
+  to run if the mention tables hold rows (they are empty). `prediction_state` shows the basis;
+  `track_record` counts data-backed, reasoned and asserted calls.
+- `src/whales/predictions.py`: `basis` required and `basis_note` optional in the contract and the insert.
+- `docs/PREDICTIONS.md`, section 7: the trust profile (prior by source type, basis, earned trust, the
+  owner's optional tag) with the priors table for the owner to correct. Decision W-050. SCHEMA, STATUS,
+  AGENTS and RATINGS_AND_TAGS updated.
+- Tests: fixtures carry a basis; three new refusals; the live track-record check covers the basis counts.
+
+**Verified.** Unit tests and ruff pass. The SQL is still unverified against a server (Azure blocked).
+
+**Next.** Once the owner corrects the priors: `config/trust.toml` with its sync, and the
+`letters.author_trust` view. Then as before: deploy, apply 0002, the model seam.
+
 ## 2026-10-13 (night): predictions as linked claims (migration 0002, not applied)
 
 **Owner direction.** The owner's earlier document/idea/tweet parser produced a predictions table with
@@ -10,7 +32,7 @@ migration, was first undecided on clippings ("don't want to get caught going dow
 confirmed the route (W-049: "seems like a good approach, another input, not built quite yet, but plan for
 flexibility"), and noted that "not everything will be deterministic; this is where LLMs will really help". The earlier parser lives on the
 owner's personal desktop. The financial-graph archive (`../financial-graph.zip`) was read for ideas only
-(`docs/PREDICTIONS.md`, section 7); it holds a `.env` with API keys and third-party research PDFs, and
+(`docs/PREDICTIONS.md`, section 8); it holds a `.env` with API keys and third-party research PDFs, and
 nothing from it was copied into this repo.
 
 **What changed.**
