@@ -64,6 +64,16 @@ def test_collect_job_runs_as_ingest_with_no_admin_rights():
     assert not any("admin" in part for part in cmd)
 
 
+def test_weekly_job_runs_after_the_website_job_as_ingest():
+    deploy = _deploy()
+    s = deploy.load_settings()
+    jobs = {j["name"]: j for j in s["job"]}
+    weekly, web = jobs["job-whales-weekly"], jobs["job-whales-collect-web"]
+    assert weekly["args"] == ["weekly", "--apply"] and weekly["identity"] == "ingest"
+    assert weekly["cron"].split()[2:] == web["cron"].split()[2:]  # the same day of the week
+    assert int(weekly["cron"].split()[1]) > int(web["cron"].split()[1])  # and later in the day
+
+
 def test_admin_job_is_manual_and_uses_our_registry():
     deploy = _deploy()
     s = deploy.load_settings()

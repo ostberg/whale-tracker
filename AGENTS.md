@@ -98,7 +98,8 @@ copy .env.example .env        # then fill in; no secrets go in it
 Everyday checks: `.venv\Scripts\python.exe -m ruff check src tests`, `-m ruff format --check src tests`,
 `-m pytest`. Regenerate locks only with `scripts\lock_deps.ps1` (versions held unless `-Upgrade`).
 
-Routine runs happen in Azure (W-042): `job-whales-collect-sec` daily and `job-whales-collect-web` weekly
+Routine runs happen in Azure (W-042): `job-whales-collect-sec` daily, `job-whales-collect-web` weekly and
+`job-whales-weekly` (Mondays after it: the reminder calendar refresh and the digest, `whales weekly --apply`),
 (W-046; `whales collect web --offline` dry-runs it from anywhere, reading index pages only), and `job-whales-admin`
 started on demand with arguments such as `config sync --apply`, `db migrate --apply` or `status`
 (`az containerapp job start -n job-whales-admin -g rg-whale-tracker --args "config sync --apply"`: the

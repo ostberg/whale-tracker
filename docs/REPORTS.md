@@ -101,8 +101,9 @@ quarterly or monthly deeper report must not run "right before we add a bunch of 
   line ("nothing to report; collection round 1, 9 letters"); `--apply` counts the ask on each expectation.
   `expected.ready_for_deep_dive` is the gate for the radar. The first refresh (2026-10-20) expected 53
   periods and found 6 already loaded from the inbox library; `whales expected skip --before DATE` writes off
-  older periods, so the owner decides how far back the first round reaches. Still to come: the refresh
-  scheduled in Azure (the weekly website job is the natural host) and the Teams flow for the post.
+  older periods, so the owner decides how far back the first round reaches. The refresh and the digest run
+  in Azure every Monday at 13:00 UTC (`job-whales-weekly`, `whales weekly --apply`), after the website
+  collection; nothing depends on a laptop or an assistant. Still to come: the Teams flow for the post.
 
 ## 7. Example issue
 

@@ -17,6 +17,7 @@
     whales model check                               one small call to the configured model endpoint
     whales digest [--today D] [--weeks N]            the weekly digest, at most four items; --apply records it
     whales expected refresh | list | skip            the reminder calendar for manual sources; --apply
+    whales weekly                                    the Monday job: calendar refresh then digest; --apply
 
 Routine runs happen in Azure as Container Apps jobs (W-042). From a laptop, the few admin steps that need the
 Entra admin's own rights run with ``whales --open-firewall ...``, which opens this machine's address for that
@@ -362,6 +363,34 @@ def cmd_digest(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_weekly(args: argparse.Namespace) -> int:
+    """The Monday job (W-054, W-055): refresh the reminder calendar, then build and record the digest. Safe
+    to run twice in a day: a second digest for the same day is refused by the database and reported."""
+    from datetime import date
+
+    import psycopg
+
+    cfg = config.load()
+    today = date.fromisoformat(args.today) if args.today else date.today()
+    with Database(DbSettings.from_env(), role=collect.INGEST_ROLE) as db:
+        todo, loaded = expected.refresh(db, cfg, today, apply=args.apply)
+        print(f"calendar: {len(todo)} new expectation(s), {loaded} marked loaded")
+        issue = digest.build(db, today)
+        print(issue.subject)
+        print()
+        print(issue.body)
+        if not args.apply:
+            print("\n(dry run: nothing written; add --apply)")
+            return 0
+        try:
+            digest_id = digest.record(db, issue)
+        except psycopg.errors.UniqueViolation:
+            print(f"\ndigest for {today} already recorded; nothing more to do")
+            return 0
+        print(f"\nrecorded as reports.digest #{digest_id} (Teams post: not yet, no flow URL; W-034)")
+    return 0
+
+
 def cmd_expected_refresh(args: argparse.Namespace) -> int:
     from datetime import date
 
@@ -506,6 +535,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p = mdl.add_parser("check", help="one small call to the configured endpoint; prints what answered")
     p.set_defaults(func=cmd_model_check)
+
+    p = sub.add_parser("weekly", help="the Monday job: calendar refresh, then the digest (job-whales-weekly)")
+    p.add_argument("--apply", action="store_true", help="write (default: print only)")
+    p.add_argument("--today", help="as of this date, YYYY-MM-DD (default: today)")
+    p.set_defaults(func=cmd_weekly)
 
     p = sub.add_parser("digest", help="the weekly digest (W-054), as whales_ingest")
     p.add_argument("--apply", action="store_true", help="record the issue (default: print only)")
