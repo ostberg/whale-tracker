@@ -220,6 +220,9 @@ def main(argv: list[str] | None = None) -> int:
     def build() -> None:
         context = build_context(sha)
         print(f"            building {image} from {context} (a few minutes)")
+        # --no-logs: the build log carries non-ASCII characters that the Windows az CLI cannot print to a
+        # pipe (its Python runs isolated, so PYTHONIOENCODING does not reach it). It still waits for the
+        # build to finish; a failed build still fails here. Logs: `az acr task logs -r <registry>`.
         az.run(
             "acr",
             "build",
@@ -229,6 +232,7 @@ def main(argv: list[str] | None = None) -> int:
             f"{s['image']}:{sha}",
             "--build-arg",
             f"GIT_SHA={sha}",
+            "--no-logs",
             str(context),
         )
 
