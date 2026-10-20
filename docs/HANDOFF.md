@@ -58,10 +58,13 @@ memory so a theme returns only once grown), `whales digest`, `docs/REPORTS.md`, 
 rows. The SQL has no extraction output to read yet; the first real issue follows the model deployment, and
 the Teams post follows the flow URL.
 
-**Also decided (W-055).** Manual letters are requested in two collection rounds a quarter inside the digest,
-never one at a time, and quarterly or monthly deep dives run only after a round has closed (or 80% of the
-quarter's expected letters are in), never right before a batch of documents arrives. To build with the
-reminder calendar (`letters.expected`).
+**Also decided and built (W-055).** Manual letters are requested in two collection rounds a quarter inside
+the digest, never one at a time, and quarterly or monthly deep dives run only after a round has closed (or
+80% of the quarter's expected letters are in), never right before a batch of documents arrives. Built:
+`src/whales/expected.py` (periods from cadence, due windows from each source's own lag, the plan, marking
+loaded from any route, rounds at weeks 6 and 10, the deep-dive gate), `whales expected refresh | list`,
+the digest's collection section and subject, unit tests and a live test of the mark-loaded join. Not yet
+scheduled in Azure: run `expected refresh --apply` weekly (add it to the website job or a fourth job).
 
 **Later the same day.** The owner approved `cryptography` (W-053): `pypdf[crypto]` in `pyproject.toml`,
 locks regenerated with `scripts\lock_deps.ps1` (versions held), a test that an AES-256 PDF with an empty

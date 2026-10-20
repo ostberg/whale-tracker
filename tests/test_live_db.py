@@ -306,6 +306,50 @@ def test_prediction_states_follow_premises_and_verdicts(db):
         assert baseline == "high"  # a quarterly letter by a manager, from config/trust.toml
 
 
+def test_an_expectation_is_marked_loaded_by_a_document_from_any_of_the_managers_sources(db):
+    """W-055: a manual source's expectation is satisfied by the automatic route's copy of the same letter."""
+    from whales import expected
+
+    conn = db.connection()
+    with _rollback(conn) as cur:
+        cur.execute("SET LOCAL ROLE whales_owner")
+        manager_id = cur.execute(
+            "INSERT INTO core.manager (slug, name, kind) VALUES ('zz-test', 'Test', 'manager') RETURNING id"
+        ).fetchone()[0]
+        manual, auto = (
+            cur.execute(
+                "INSERT INTO letters.source (slug, manager_id, name, url, tier, mode, cadence, "
+                "access_restricted, storage_allowed, use_allowed, permission_basis) VALUES (%s, %s, 'T', "
+                "'https://x.test', 1, %s, 'quarterly', false, true, true, 'test') RETURNING id",
+                (slug, manager_id, mode),
+            ).fetchone()[0]
+            for slug, mode in (("zz-manual", "manual"), ("zz-auto", "auto"))
+        )
+        cur.execute("SET LOCAL ROLE whales_ingest")
+        cur.execute(
+            "INSERT INTO letters.expected (source_id, period_end, due_from, due_to) "
+            "VALUES (%s, '2026-09-30', '2026-10-21', '2026-12-14')",
+            (manual,),
+        )
+        document_id = cur.execute(
+            "INSERT INTO letters.document (manager_id, title, kind, period_end, published_on, "
+            "published_on_basis) VALUES (%s, 'Q3 letter', 'quarterly_letter', '2026-09-30', '2026-11-02', "
+            "'stated') RETURNING id",
+            (manager_id,),
+        ).fetchone()[0]
+        cur.execute(
+            "INSERT INTO letters.document_file (document_id, source_id, url, sha256, content_type, "
+            "byte_size, collected, raw_kept) VALUES (%s, %s, 'https://x.test/q3.pdf', repeat('c', 64), "
+            "'application/pdf', 10, 'auto', false)",
+            (document_id, auto),
+        )
+        assert cur.execute(expected.MARK_LOADED_SQL).rowcount == 1
+        status, doc = cur.execute(
+            "SELECT status, document_id FROM letters.expected WHERE source_id = %s", (manual,)
+        ).fetchone()
+        assert (status, doc) == ("loaded", document_id)
+
+
 class _rollback:
     """A transaction that always rolls back, yielding a cursor."""
 

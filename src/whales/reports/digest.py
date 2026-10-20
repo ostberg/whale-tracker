@@ -17,6 +17,7 @@ from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from datetime import date, timedelta
 
+from .. import expected
 from ..collect import _git_sha
 from ..db.connect import Database
 
@@ -76,6 +77,7 @@ class Digest:
     body: str
     items: list[Item]
     dropped: int = 0
+    collection: expected.Round | None = None  # the quarter's collection round, when one is open (W-055)
 
 
 # --- reading -------------------------------------------------------------------------------------------
@@ -263,24 +265,29 @@ def choose(items: list[Item], already: dict[tuple[str, str], int], today: date) 
     return fresh[:MAX_ITEMS], max(0, len(fresh) - MAX_ITEMS)
 
 
-def subject(today: date, items: list[Item]) -> str:
+def subject(today: date, items: list[Item], collection: expected.Round | None = None) -> str:
     base = f"Whale Tracker, week of {today.isoformat()}: "
-    if not items:
-        return base + "nothing to report"
-    return base + (f"{len(items)} items" if len(items) > 1 else "1 item")
+    text = "nothing to report" if not items else (f"{len(items)} items" if len(items) > 1 else "1 item")
+    if collection is not None and collection.items:
+        text += f"; collection round {collection.number}, {len(collection.items)} letters"
+    return base + text
 
 
-def render(items: list[Item]) -> str:
+def render(items: list[Item], collection: expected.Round | None = None) -> str:
     if not items:
-        return (
+        body = (
             "Nothing cleared the bar this week: no theme reached three writers, no credible disagreement, "
             "no call due."
         )
-    lines = []
-    for n, item in enumerate(items, start=1):
-        lines.append(f"{n}. {item.headline}")
-        lines.append(f"   {item.detail_line}")
-    return "\n".join(lines)
+    else:
+        lines = []
+        for n, item in enumerate(items, start=1):
+            lines.append(f"{n}. {item.headline}")
+            lines.append(f"   {item.detail_line}")
+        body = "\n".join(lines)
+    if collection is not None:
+        body += "\n\n" + expected.render_round(collection)
+    return body
 
 
 def build(db: Database, today: date, *, weeks: int = WINDOW_WEEKS) -> Digest:
@@ -290,7 +297,10 @@ def build(db: Database, today: date, *, weeks: int = WINDOW_WEEKS) -> Digest:
     items = convergence(rows, already, weeks) + disagreement(rows, already)
     items += calls(call_rows(db, today - timedelta(days=7)), today)
     chosen, dropped = choose(items, already, today)
-    return Digest(today, subject(today, chosen), render(chosen), chosen, dropped)
+    collection = expected.round_for(db, today)
+    return Digest(
+        today, subject(today, chosen, collection), render(chosen, collection), chosen, dropped, collection
+    )
 
 
 def record(db: Database, digest: Digest) -> int:
@@ -313,4 +323,6 @@ def record(db: Database, digest: Digest) -> int:
                 "VALUES (%s, %s, %s, %s, %s, %s)",
                 (digest_id, item.kind, item.key, item.writers, item.score, json.dumps(item.detail)),
             )
+    if digest.collection is not None:
+        expected.mark_reminded(db, digest.collection)
     return digest_id

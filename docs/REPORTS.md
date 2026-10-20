@@ -92,8 +92,17 @@ quarterly or monthly deeper report must not run "right before we add a bunch of 
   only when the quarter's round 2 has closed, or when at least 80% of that quarter's expected letters are
   loaded, whichever comes first, and never before round 1. Letters that arrive later still enter the weekly
   digest's rolling window and the next radar; they do not trigger a rerun.
-- Built with the reminder calendar (`letters.expected` is populated from each source's cadence and past
-  publication lag); the digest then renders the round from it. Not built yet.
+- Built 2026-10-20 (`src/whales/expected.py`): `whales expected refresh` expects every ended period of each
+  active manual source with a calendar cadence (quarterly, semiannual, annual, monthly; irregular sources
+  have none) back 400 days, with a due window from the source's own median publication lag (a fortnight
+  before to three weeks after; a cadence default when it has no history), and marks an expectation loaded
+  when a document for the period exists from the same source, or from any of the manager's sources with the
+  kind the cadence expects. The digest appends the open round below its items and names it in the subject
+  line ("nothing to report; collection round 1, 9 letters"); `--apply` counts the ask on each expectation.
+  `expected.ready_for_deep_dive` is the gate for the radar. The first refresh (2026-10-20) expected 53
+  periods and found 6 already loaded from the inbox library; `whales expected skip --before DATE` writes off
+  older periods, so the owner decides how far back the first round reaches. Still to come: the refresh
+  scheduled in Azure (the weekly website job is the natural host) and the Teams flow for the post.
 
 ## 7. Example issue
 

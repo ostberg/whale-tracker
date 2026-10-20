@@ -136,6 +136,29 @@ def test_subject_says_when_there_is_nothing():
     assert digest.render([]).startswith("Nothing cleared the bar")
 
 
+def test_collection_round_is_appended_below_the_items_and_named_in_the_subject():
+    from whales import expected
+
+    e = expected.Expectation(
+        1,
+        "ps",
+        "Pershing Square letters",
+        "Pershing Square",
+        "quarterly",
+        date(2026, 9, 30),
+        date(2026, 10, 21),
+        date(2026, 12, 14),
+        "awaiting",
+        0,
+    )
+    rnd = expected.Round(1, date(2026, 9, 30), date(2026, 11, 11), [e])
+    assert digest.subject(TODAY, [], rnd).endswith(": nothing to report; collection round 1, 1 letters")
+    body = digest.render([], rnd)
+    assert body.startswith("Nothing cleared the bar") and "Collection round 1 for Q3 2026: 1 letters" in body
+    empty = expected.Round(1, date(2026, 9, 30), date(2026, 11, 11))
+    assert digest.subject(TODAY, [], empty).endswith(": nothing to report")
+
+
 def test_render_is_two_lines_per_item():
     items = [
         digest.Item("convergence", "t", "Convergence: X", "A, B, C.", 1),

@@ -16,6 +16,7 @@
     whales extract predictions                       claims from machine-readable documents; --apply (Azure)
     whales model check                               one small call to the configured model endpoint
     whales digest [--today D] [--weeks N]            the weekly digest, at most four items; --apply records it
+    whales expected refresh | list | skip            the reminder calendar for manual sources; --apply
 
 Routine runs happen in Azure as Container Apps jobs (W-042). From a laptop, the few admin steps that need the
 Entra admin's own rights run with ``whales --open-firewall ...``, which opens this machine's address for that
@@ -30,7 +31,7 @@ import sys
 import time
 from pathlib import Path
 
-from . import collect, collect_web, config, extract, inbox, inbox_load, llm
+from . import collect, collect_web, config, expected, extract, inbox, inbox_load, llm
 from .db import admin, firewall, migrate, sync
 from .db.connect import Database, DbSettings
 from .reports import digest
@@ -361,6 +362,53 @@ def cmd_digest(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_expected_refresh(args: argparse.Namespace) -> int:
+    from datetime import date
+
+    cfg = config.load()
+    today = date.fromisoformat(args.today) if args.today else date.today()
+    with Database(DbSettings.from_env(), role=collect.INGEST_ROLE) as db:
+        todo, loaded = expected.refresh(db, cfg, today, apply=args.apply)
+        for slug, end, due_from, due_to in todo:
+            print(f"   expect   {slug:<34} period to {end}  due {due_from} to {due_to}")
+        if args.apply:
+            print(f"inserted {len(todo)} expectation(s); marked {loaded} loaded")
+        else:
+            print(f"{len(todo)} expectation(s) to insert (dry run: nothing written; add --apply)")
+    return 0
+
+
+def cmd_expected_skip(args: argparse.Namespace) -> int:
+    """Write off awaiting periods that ended before a date: the owner decides how far back to collect."""
+    from datetime import date
+
+    before = date.fromisoformat(args.before)
+    with Database(DbSettings.from_env(), role=collect.INGEST_ROLE) as db:
+        rows = expected.expectations(
+            db, " WHERE e.status = 'awaiting' AND e.period_end < %s ORDER BY e.period_end, s.slug", (before,)
+        )
+        for e in rows:
+            print(f"   skip     {e.source:<34} period to {e.period_end}")
+        if args.apply and rows:
+            db.run(
+                "UPDATE letters.expected SET status = 'skipped' WHERE id = ANY(%s)", ([e.id for e in rows],)
+            )
+        print(f"{len(rows)} expectation(s) {'skipped' if args.apply else 'to skip (dry run; add --apply)'}")
+    return 0
+
+
+def cmd_expected_list(args: argparse.Namespace) -> int:
+    with Database(DbSettings.from_env(), role=collect.INGEST_ROLE) as db:
+        rows = expected.expectations(db, " ORDER BY e.status, e.period_end, s.slug")
+    for e in rows:
+        print(
+            f"   {e.status:<18} {e.source:<34} period to {e.period_end}  due by {e.due_to}  "
+            f"asked {e.reminders}x"
+        )
+    print(f"{len(rows)} expectation(s)")
+    return 0
+
+
 def cmd_model_check(args: argparse.Namespace) -> int:
     provider = llm.FoundryProvider(llm.ModelSettings.from_env())
     started = time.monotonic()
@@ -464,6 +512,20 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--today", help="issue date, YYYY-MM-DD (default: today)")
     p.add_argument("--weeks", type=int, default=digest.WINDOW_WEEKS, help="the look-back window in weeks")
     p.set_defaults(func=cmd_digest)
+
+    exp = sub.add_parser(
+        "expected", help="the reminder calendar for manual sources (W-033, W-055)"
+    ).add_subparsers(dest="command", required=True)
+    p = exp.add_parser("refresh", help="expect ended periods and mark the loaded ones, as whales_ingest")
+    p.add_argument("--apply", action="store_true", help="write (default: list only)")
+    p.add_argument("--today", help="as of this date, YYYY-MM-DD (default: today)")
+    p.set_defaults(func=cmd_expected_refresh)
+    p = exp.add_parser("list", help="every expectation and its status")
+    p.set_defaults(func=cmd_expected_list)
+    p = exp.add_parser("skip", help="write off awaiting periods that ended before a date")
+    p.add_argument("--before", required=True, help="YYYY-MM-DD: periods ending before this are skipped")
+    p.add_argument("--apply", action="store_true", help="write (default: list only)")
+    p.set_defaults(func=cmd_expected_skip)
 
     p = sub.add_parser("status", help="counts and the latest runs (read-only)")
     p.set_defaults(func=cmd_status)

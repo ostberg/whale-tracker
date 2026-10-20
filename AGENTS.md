@@ -117,7 +117,9 @@ lists the documents that may be machine-read and have no successful predictions 
 (Azure only) runs the model on them; `whales model check` makes one small call to the endpoint named by
 `WHALES_MODEL_ENDPOINT` and `WHALES_MODEL_DEPLOYMENT` (Entra token; no key). `whales digest` builds the
 weekly digest (W-054: at most four items, convergence, disagreement, calls due; `docs/REPORTS.md`) and with
-`--apply` records it in `reports.digest`.
+`--apply` records it in `reports.digest`. `whales expected refresh` keeps the reminder calendar
+(`letters.expected`) for manual sources and marks loaded what any route caught; the digest carries the
+quarter's collection round from it (W-055).
 
 Tooling, copied from the Tamale repo (W-022): Python 3.13, setuptools, pip-tools hash-pinned locks
 (`pip-compile --generate-hashes`; runtime lock feeds the image, dev lock is constrained to it), Ruff (line length
