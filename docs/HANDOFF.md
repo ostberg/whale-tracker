@@ -48,13 +48,16 @@ removed; `whales db close-firewall` sweeps any leftover.
   gets HTTP 404 for its sitemap from Azure although the laptop dry run listed 430 items: both to check,
   and a candidate for manual collection if they persist.
 
+**Later the same day.** The owner approved `cryptography` (W-053): `pypdf[crypto]` in `pyproject.toml`,
+locks regenerated with `scripts\lock_deps.ps1` (versions held), a test that an AES-256 PDF with an empty
+password is read, image rebuilt. The next website run picks the Oaktree memos up.
+
 **Next.**
-1. Owner: whether to add `cryptography` (pypdf's AES support) to the runtime lock for the Oaktree memos.
-2. Check Praetorian's certificate chain and PM Capital's sitemap from the container; switch either to
+1. Check Praetorian's certificate chain and PM Capital's sitemap from the container; switch either to
    manual if a site change is the cause.
-3. A model deployment and the Cognitive Services OpenAI User role (W-052); then `whales model check` and
+2. A model deployment and the Cognitive Services OpenAI User role (W-052); then `whales model check` and
    the first `extract predictions --apply` in Azure.
-4. How the inbox PDFs reach the runner in Azure (the blob upload, W-044) or on a laptop (a W-045
+3. How the inbox PDFs reach the runner in Azure (the blob upload, W-044) or on a laptop (a W-045
    extension).
 
 ## 2026-10-14 (evening): the model seam and the predictions runner; GitHub remote

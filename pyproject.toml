@@ -10,9 +10,10 @@ requires-python = ">=3.13"
 dependencies = [
     # Postgres with its bundled libpq; signs in with Entra tokens (W-004). Same choice as the Tamale repo.
     "psycopg[binary]>=3.2",
-    # PDF text for the letter loader: pure Python, BSD, no dependencies on 3.13. Locked at 6.19.0 (2026-09-16)
-    # rather than the days-old 6.20.x. No [crypto] extra: AES-encrypted PDFs are reported, not read.
-    "pypdf>=6.19.0",
+    # PDF text for the letter loader: pure Python, BSD. Locked at 6.19.0 (2026-09-16) rather than the
+    # days-old 6.20.x. The [crypto] extra brings `cryptography` (PyCA) so that AES-encrypted PDFs with an
+    # empty password open: about 30 older Oaktree memos are such files (W-053, owner 2026-10-20).
+    "pypdf[crypto]>=6.19.0",
 ]
 
 [project.scripts]

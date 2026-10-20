@@ -96,6 +96,22 @@ def test_document_text_marks_pdf_pages_and_strips_html():
     assert extract.document_text(b"plain words", "text/plain") == ("plain words", None)
 
 
+def test_aes_encrypted_pdf_with_empty_password_is_read():
+    """W-053: Oaktree's older memos are AES-encrypted with no user password; pypdf needs cryptography."""
+    from io import BytesIO
+
+    from pypdf import PdfReader, PdfWriter
+
+    writer = PdfWriter(clone_from=PdfReader(BytesIO(make_pdf(["Dare to be great"]))))
+    writer.encrypt(user_password="", owner_password="owner", algorithm="AES-256")
+    out = BytesIO()
+    writer.write(out)
+    body = out.getvalue()
+    assert b"/Standard" in body
+    text, pages = extract.document_text(body, "application/pdf")
+    assert "Dare to be great" in text and pages == 1
+
+
 def test_document_text_refuses_a_pdf_that_forbids_extraction():
     with pytest.raises(ValueError, match="forbid text extraction"):
         # a standard security handler whose permissions clear bit 5 (copy and extract), checked before parsing
