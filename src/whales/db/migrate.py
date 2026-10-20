@@ -73,7 +73,7 @@ def pending(available: list[Migration], applied: dict[int, str]) -> list[Migrati
     return [m for m in available if m.version not in applied]
 
 
-SCHEMAS = ["meta", "raw", "core", "letters", "api"]
+SCHEMAS = ["meta", "raw", "core", "letters", "api", "reports"]
 
 # Anything in our schemas not owned by whales_owner: the schemas themselves, relations (tables, views,
 # indexes, sequences), functions and types (domains included).

@@ -115,7 +115,9 @@ sync --apply` writes it to the database (inserts and updates only, never deletes
 the database's ownership, grants, safeguards and that it is in step with config. `whales extract predictions`
 lists the documents that may be machine-read and have no successful predictions run, and with `--apply`
 (Azure only) runs the model on them; `whales model check` makes one small call to the endpoint named by
-`WHALES_MODEL_ENDPOINT` and `WHALES_MODEL_DEPLOYMENT` (Entra token; no key).
+`WHALES_MODEL_ENDPOINT` and `WHALES_MODEL_DEPLOYMENT` (Entra token; no key). `whales digest` builds the
+weekly digest (W-054: at most four items, convergence, disagreement, calls due; `docs/REPORTS.md`) and with
+`--apply` records it in `reports.digest`.
 
 Tooling, copied from the Tamale repo (W-022): Python 3.13, setuptools, pip-tools hash-pinned locks
 (`pip-compile --generate-hashes`; runtime lock feeds the image, dev lock is constrained to it), Ruff (line length
@@ -196,6 +198,7 @@ migration files.
 | `raw` | Filing index, document registry, run log | Ingest job |
 | `core` | Managers, securities, holdings, quarterly positions, events, prices, event returns | Ingest job |
 | `letters` | Letter documents, per-company mentions, search embeddings | Ingest job |
+| `reports` | Digest issues and the items they carried (the digest's memory, W-054); the theme view | Ingest job |
 | `api` | Stable read-only views for consumers | Migrations only |
 | `restricted` | LP-received letters, only if compliance clears them | Manual load only |
 

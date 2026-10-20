@@ -15,6 +15,7 @@
     whales inbox load                                record new inbox letters as whales_ingest; --apply
     whales extract predictions                       claims from machine-readable documents; --apply (Azure)
     whales model check                               one small call to the configured model endpoint
+    whales digest [--today D] [--weeks N]            the weekly digest, at most four items; --apply records it
 
 Routine runs happen in Azure as Container Apps jobs (W-042). From a laptop, the few admin steps that need the
 Entra admin's own rights run with ``whales --open-firewall ...``, which opens this machine's address for that
@@ -32,6 +33,7 @@ from pathlib import Path
 from . import collect, collect_web, config, extract, inbox, inbox_load, llm
 from .db import admin, firewall, migrate, sync
 from .db.connect import Database, DbSettings
+from .reports import digest
 from .sources.edgar import EdgarClient
 from .sources.web import WebClient
 
@@ -340,6 +342,25 @@ def cmd_extract_predictions(args: argparse.Namespace) -> int:
     return 1 if any(r.status == "failed" for r in results) else 0
 
 
+def cmd_digest(args: argparse.Namespace) -> int:
+    from datetime import date
+
+    today = date.fromisoformat(args.today) if args.today else date.today()
+    with Database(DbSettings.from_env(), role=collect.INGEST_ROLE) as db:
+        issue = digest.build(db, today, weeks=args.weeks)
+        print(issue.subject)
+        print()
+        print(issue.body)
+        if issue.dropped:
+            print(f"\n({issue.dropped} more item(s) below the cut)")
+        if args.apply:
+            digest_id = digest.record(db, issue)
+            print(f"\nrecorded as reports.digest #{digest_id}")
+        else:
+            print("\n(dry run: not recorded; add --apply)")
+    return 0
+
+
 def cmd_model_check(args: argparse.Namespace) -> int:
     provider = llm.FoundryProvider(llm.ModelSettings.from_env())
     started = time.monotonic()
@@ -437,6 +458,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p = mdl.add_parser("check", help="one small call to the configured endpoint; prints what answered")
     p.set_defaults(func=cmd_model_check)
+
+    p = sub.add_parser("digest", help="the weekly digest (W-054), as whales_ingest")
+    p.add_argument("--apply", action="store_true", help="record the issue (default: print only)")
+    p.add_argument("--today", help="issue date, YYYY-MM-DD (default: today)")
+    p.add_argument("--weeks", type=int, default=digest.WINDOW_WEEKS, help="the look-back window in weeks")
+    p.set_defaults(func=cmd_digest)
 
     p = sub.add_parser("status", help="counts and the latest runs (read-only)")
     p.set_defaults(func=cmd_status)

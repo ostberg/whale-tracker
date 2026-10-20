@@ -97,6 +97,15 @@ the reviewer inserts verdicts without choosing `reviewed_by`. The SQL is unit-ch
 DELETE, vocabularies matching `whales.predictions`) but has not run against a server, because Azure sign-in is
 blocked. `pytest -m live` carries a test of the state view for when it has.
 
+## What migration 0003 adds (written 2026-10-20)
+
+The weekly digest's memory (W-054; `docs/REPORTS.md`): schema `reports` with `digest` (one issue per day:
+subject, body, item count, sent flag, run) and `digest_item` (kind, key, writers, score, detail), so a theme
+is reported again only once it has grown; and the view `reports.theme_mention`, every theme mention from the
+latest successful topics run per document, controlled topics and candidate themes under one key, with the
+writer, publication date, source-type baseline and whether it is the writer's first mention ever. The job
+inserts issues and items and may flip `sent`; the reviewer reads.
+
 ## Verified on 2026-10-09
 
 Run with `pytest -m live`, against `whales_dev`:

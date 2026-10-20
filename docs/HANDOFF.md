@@ -48,6 +48,16 @@ removed; `whales db close-firewall` sweeps any leftover.
   gets HTTP 404 for its sitemap from Azure although the laptop dry run listed 430 items: both to check,
   and a candidate for manual collection if they persist.
 
+**Evening: the weekly digest (W-054).** The owner set the end use: chatbot for pull, proactive reports that
+are "high value or short enough to warrant a quick read", above all themes several writers raise at the same
+time; weekly, at most four items, the subject line says when there is nothing, and themes must be allowed six
+months to emerge, so later documents are analysed against earlier ones too. Built: migration 0003 (schema
+`reports`: `digest`, `digest_item`, the view `theme_mention`), `src/whales/reports/digest.py` (convergence,
+disagreement, calls due, confident misses; a 26-week window by publication date recomputed every issue; the
+memory so a theme returns only once grown), `whales digest`, `docs/REPORTS.md`, unit tests on constructed
+rows. The SQL has no extraction output to read yet; the first real issue follows the model deployment, and
+the Teams post follows the flow URL.
+
 **Later the same day.** The owner approved `cryptography` (W-053): `pypdf[crypto]` in `pyproject.toml`,
 locks regenerated with `scripts\lock_deps.ps1` (versions held), a test that an AES-256 PDF with an empty
 password is read, image rebuilt. The next website run picks the Oaktree memos up.
