@@ -131,6 +131,46 @@ def test_client_refuses_other_hosts():
         client.get("https://example.com/x")
 
 
+class _Reply:
+    def __init__(self, body):
+        self._body = body
+        self.headers = type("H", (), {"get_content_type": lambda _self: "text/html"})()
+
+    def read(self):
+        return self._body
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *a):
+        return False
+
+
+def test_client_retries_a_dropped_connection_then_gives_up():
+    import urllib.error
+
+    calls = []
+
+    def flaky(request, timeout):
+        calls.append(1)
+        if len(calls) < 3:
+            raise urllib.error.URLError("Cannot assign requested address")  # seen in the Azure job
+        return _Reply(b"ok")
+
+    client = edgar.EdgarClient("Test Org test@example.com", pause=0, opener=flaky, retry_wait=0)
+    assert client.get("https://www.sec.gov/x")[0] == b"ok" and len(calls) == 3
+
+    def down(request, timeout):
+        calls.append(1)
+        raise urllib.error.URLError("down")
+
+    calls.clear()
+    client = edgar.EdgarClient("Test Org test@example.com", pause=0, opener=down, retry_wait=0)
+    with pytest.raises(edgar.EdgarError, match="could not reach"):
+        client.get("https://www.sec.gov/x")
+    assert len(calls) == 3
+
+
 def test_user_agent_must_carry_an_email(monkeypatch):
     monkeypatch.setenv("SEC_USER_AGENT", "Tocqueville")
     with pytest.raises(edgar.EdgarError, match="contact email"):

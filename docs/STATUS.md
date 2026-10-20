@@ -2,10 +2,10 @@
 
 What is done, in progress, outstanding or blocked, and on whom. Read this first, then DECISIONS.md.
 
-*Last updated 2026-10-14: predictions redesigned as linked claims (W-048; migration 0002 written, not
-applied) with the trust profile's baselines, basis and confidence (W-050, W-051); clippings route confirmed (W-049);
-collectors built for SEC, websites and the inbox; compliance position recorded (W-043). Azure sign-in is
-blocked, so nothing has run in Azure yet and the database is behind the config.*
+*Last updated 2026-10-20: Azure sign-in cleared; deployed (W-042), migration 0002 applied, config synced,
+78 inbox PDFs recorded, live tests green, first collection jobs running. Predictions are linked claims
+(W-048) with the trust profile (W-050, W-051); the model seam waits for a deployment (W-052); Tamale topic
+twins recorded (W-018).*
 
 ## Phases
 
@@ -14,10 +14,10 @@ proposals, not commitments.
 
 | # | Phase | Target | Gate | Status |
 |---|---|---|---|---|
-| 1 | Setup: git repo and private remote, `whales_dev` database, blocking decisions, letter-source inventory, compliance ruling on source tiers (W-029, W-030) | 2026-10-23 | Migrations run against the Azure server; compliance has ruled on tiers 1 to 3 | Gate met 2026-10-09: migration 0001 applied to `whales_dev` and verified live. Compliance position recorded 2026-10-13 (W-043). Still open: the GitHub remote |
-| 2 | Letters pilot, run by hand: fetch and store tier-1 and tier-2 letters for about ten managers, two years back, including activist letters filed as 13D exhibits (W-031); extract company mentions, topic stances and predictions, each with its quote, and rate each letter, through the in-tenant model seam | November 2026 | The owner finds the extraction useful on 20 letters; every stance carries its quote and link (W-019); ratings checked with quick verdicts on 10 letters (W-036) | In progress: collectors built (SEC, websites, inbox); 2,210 website documents and 78 inbox PDFs listed or identified. `config/` synced to `whales_dev` (57 managers, 54 filers, 261 tag proposals, 44 sources, all inactive). Predictions redesigned as linked claims (W-048): migration 0002 written and unit-tested, applied by the next admin job. The compliance ruling is in (W-043); still needs Azure (IT) and a Foundry model endpoint |
+| 1 | Setup: git repo and private remote, `whales_dev` database, blocking decisions, letter-source inventory, compliance ruling on source tiers (W-029, W-030) | 2026-10-23 | Migrations run against the Azure server; compliance has ruled on tiers 1 to 3 | Gate met 2026-10-09: migration 0001 applied to `whales_dev` and verified live. Compliance position recorded 2026-10-13 (W-043). GitHub remote `ostberg/whale-tracker` pushed 2026-10-15 |
+| 2 | Letters pilot, run by hand: fetch and store tier-1 and tier-2 letters for about ten managers, two years back, including activist letters filed as 13D exhibits (W-031); extract company mentions, topic stances and predictions, each with its quote, and rate each letter, through the in-tenant model seam | November 2026 | The owner finds the extraction useful on 20 letters; every stance carries its quote and link (W-019); ratings checked with quick verdicts on 10 letters (W-036) | In progress: collectors built (SEC, websites, inbox); 2,210 website documents and 78 inbox PDFs listed or identified. `config/` synced to `whales_dev` (57 managers, 54 filers, 261 tag proposals, 44 sources, all inactive). Predictions redesigned as linked claims (W-048). 2026-10-20: deployed to Azure, migration 0002 applied and verified live, config synced (45 sources active), 78 inbox PDFs recorded, first collection jobs running. Needs a model deployment (W-052) before any extraction |
 | 3 | Thin 13F layer (W-028): SEC bulk-data backfill, current quarters from the filing XML, filer map (W-024), unit detection (W-025), check against WhaleWisdom; 13G stakes (W-031); topic exposure and the said-versus-owned view | Nov to Dec 2026 (Q3 13Fs due Monday 2026-11-16) | Every filing reconciles; sampled positions match WhaleWisdom | Not started |
-| 4 | Azure job and weekly digest: letters weekly, 13F after each deadline | December 2026 | A week of clean unattended runs | Pulled forward (W-042, 2026-10-10): jobs and identities defined in `infra/`; the digest is still to build |
+| 4 | Azure job and weekly digest: letters weekly, 13F after each deadline | December 2026 | A week of clean unattended runs | Deployed 2026-10-20 (W-042): three jobs live in `cae-whale-tracker`, the SEC job daily and the website job weekly; the digest is still to build |
 | 5 | Firm-side consumers, in the Tamale repo: Research Assistant source and "Why Now" prompts, Tamale publisher, alerts | January 2027 | Owner approves the Tamale note format on five companies | Not started |
 | 6 | Broaden: tier-3 sources if licensed, forward performance from first mentions and initiations (W-007; needs a price source) | Q1 2027 | Ten events checked by hand | Not started |
 | 7 | Letter search in the Research Assistant; restricted tier only if cleared | After phase 5 | | Not started |
@@ -29,11 +29,9 @@ finds the pilot useful.
 
 Blocking phase 1 or 2:
 
-- [ ] **Azure sign-in blocked (IT investigating, 2026-10-13).** Azure CLI sign-in fails with AADSTS53003
-      (Conditional Access refuses token issuance) on the owner's laptop, and the owner's other desktop could
-      not get through either. Until IT clears it, nothing that touches Azure or the database can run: the
-      deploy (W-042), registering the job identities, and the first SEC collection. Trace and correlation IDs:
-      HANDOFF.md, 2026-10-10 entry. Once cleared, the deploy is one short session (HANDOFF "Next").
+- [x] **Azure sign-in blocked (IT, 2026-10-13 to 2026-10-20).** Cleared by IT. On 2026-10-20 the deploy ran
+      (W-042), both identities were registered, migration 0002 applied, config synced, the inbox loaded and
+      the live tests passed (HANDOFF, 2026-10-20).
 
 - [x] **W-004, where the database lives:** the existing `pg-tocqv-context`, under four hardening conditions
       (owner, 2026-10-08). The steps below are phase-1 work and need the owner, as the server's only Entra

@@ -59,30 +59,50 @@ class WebCandidate:
     text: str
 
 
+def quote_url(url: str) -> str:
+    """Percent-encode what urllib cannot send (non-ASCII and spaces in a path or query), keeping the escapes
+    already there. Oaktree links a memo as ".../2012-03-19-déjà-vu-all-over-again.pdf"."""
+    return urllib.parse.quote(url, safe="%:/?&=#+@!$,;'()*[]~")
+
+
 class WebClient:
     def __init__(
-        self, user_agent: str, *, opener: Callable = urllib.request.urlopen, min_gap: float = MIN_GAP
+        self,
+        user_agent: str,
+        *,
+        opener: Callable = urllib.request.urlopen,
+        min_gap: float = MIN_GAP,
+        retry_wait: float = 5.0,
     ):
         self.ua = user_agent
         self._opener = opener
         self._min_gap = min_gap
+        self._retry_wait = retry_wait
         self._last: dict[str, float] = {}
         self._robots: dict[str, urllib.robotparser.RobotFileParser | None] = {}
         self.requests = 0
 
     def _raw(self, url: str) -> tuple[int, bytes, str, str]:
-        request = urllib.request.Request(url, headers={"User-Agent": self.ua, "Accept-Encoding": "identity"})
-        try:
-            with self._opener(request, timeout=60) as r:
-                body = r.read(MAX_BYTES + 1)
-                if len(body) > MAX_BYTES:
-                    raise WebError(f"larger than {MAX_BYTES} bytes: {url}")
-                ctype = r.headers.get_content_type() if r.headers else ""
-                return getattr(r, "status", 200), body, ctype, r.geturl() if hasattr(r, "geturl") else url
-        except urllib.error.HTTPError as e:
-            return e.code, b"", "", url
-        except (urllib.error.URLError, TimeoutError, OSError) as e:
-            raise WebError(f"could not reach {url}: {e}") from e
+        request = urllib.request.Request(
+            quote_url(url), headers={"User-Agent": self.ua, "Accept-Encoding": "identity"}
+        )
+        for attempt in (1, 2):
+            try:
+                with self._opener(request, timeout=60) as r:
+                    body = r.read(MAX_BYTES + 1)
+                    if len(body) > MAX_BYTES:
+                        raise WebError(f"larger than {MAX_BYTES} bytes: {url}")
+                    ctype = r.headers.get_content_type() if r.headers else ""
+                    return getattr(r, "status", 200), body, ctype, r.geturl() if hasattr(r, "geturl") else url
+            except urllib.error.HTTPError as e:
+                return e.code, b"", "", url
+            except (urllib.error.URLError, TimeoutError, OSError) as e:
+                # one retry: dropped connections and transient address errors happen in the Azure job
+                if attempt == 1:
+                    time.sleep(self._retry_wait)
+                    continue
+                raise WebError(f"could not reach {url}: {e}") from e
+        raise WebError(f"could not reach {url}")
 
     def robots(self, scheme: str, host: str) -> urllib.robotparser.RobotFileParser | None:
         """The host's robots rules; None means 'no rules' (robots.txt answered 4xx)."""

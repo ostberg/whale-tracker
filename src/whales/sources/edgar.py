@@ -70,10 +70,16 @@ def _date(s: str) -> date | None:
 
 class EdgarClient:
     def __init__(
-        self, ua: str | None = None, *, pause: float = 0.25, opener: Callable = urllib.request.urlopen
+        self,
+        ua: str | None = None,
+        *,
+        pause: float = 0.25,
+        opener: Callable = urllib.request.urlopen,
+        retry_wait: float = 5.0,
     ):
         self.ua = ua or user_agent()
         self.pause = pause
+        self.retry_wait = retry_wait
         self._opener = opener
         self._last = 0.0
         self.requests = 0
@@ -101,6 +107,13 @@ class EdgarClient:
                     time.sleep(5 * (attempt + 1))
                     continue
                 raise EdgarError(f"HTTP {e.code} for {url}") from e
+            except (urllib.error.URLError, TimeoutError, OSError) as e:
+                # a dropped connection or a transient address error: seen once in the Azure job (2026-10-20)
+                self._last = time.monotonic()
+                if attempt < 2:
+                    time.sleep(self.retry_wait * (attempt + 1))
+                    continue
+                raise EdgarError(f"could not reach {url}: {e}") from e
         raise EdgarError(f"gave up on {url}")
 
     def get_json(self, url: str) -> dict:

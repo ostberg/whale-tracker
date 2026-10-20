@@ -86,6 +86,40 @@ def test_other_hosts_and_redirects_are_refused():
         c.get("ftp://m.test/x", {"m.test"})
 
 
+def test_dropped_connection_is_retried_once():
+    import urllib.error
+
+    calls = []
+
+    def flaky(request, timeout):
+        calls.append(request.full_url)
+        if len(calls) == 1:
+            raise urllib.error.URLError("Cannot assign requested address")  # seen in the Azure job
+        return _Response(200, b"ok", "text/plain", request.full_url)
+
+    c = web.WebClient(UA, opener=flaky, min_gap=0, retry_wait=0)
+    assert c._raw("https://m.test/a")[1] == b"ok" and len(calls) == 2
+
+    def down(request, timeout):
+        calls.append(request.full_url)
+        raise urllib.error.URLError("down")
+
+    calls.clear()
+    c = web.WebClient(UA, opener=down, min_gap=0, retry_wait=0)
+    with pytest.raises(web.WebError, match="could not reach"):
+        c._raw("https://m.test/a")
+    assert len(calls) == 2
+
+
+def test_non_ascii_urls_are_percent_encoded_once():
+    opener, seen = fake_web({"https://m.test/memos/d%C3%A9j%C3%A0-vu%20all.pdf": b"%PDF-"})
+    c = web.WebClient(UA, opener=opener, min_gap=0)
+    assert c._raw("https://m.test/memos/déjà-vu all.pdf")[0] == 200
+    assert c._raw("https://m.test/memos/d%C3%A9j%C3%A0-vu%20all.pdf")[0] == 200  # already encoded: unchanged
+    assert seen == ["https://m.test/memos/d%C3%A9j%C3%A0-vu%20all.pdf"] * 2
+    assert web.quote_url("https://m.test/a?x=1&y=2#f") == "https://m.test/a?x=1&y=2#f"
+
+
 def test_links_rule_with_paging_stops_when_nothing_new():
     page = '<a href="/l/{0}.pdf">Q{0} letter</a> <a href="/about">About</a> <a href="https://x.test/l/9.pdf">x</a>'
     pages = {

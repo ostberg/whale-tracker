@@ -2,6 +2,61 @@
 
 Dated entries, newest first: what changed, what is verified, what is next.
 
+## 2026-10-20: Azure cleared; deployed, migrated, synced, loaded; first jobs started
+
+**Owner direction.** "Azure sign in looks ok." And: "Tamale tie in? Request list of topics from Tamale to
+see if any matches."
+
+**What changed.**
+- Deployed (W-042): `rg-whale-tracker`, `log-whale-tracker`, registry `tocqvwhalesacr`, identities
+  `id-whales-ingest` and `id-whales-admin` (AcrPull), environment `cae-whale-tracker`, image
+  `whale-tracker:26d2c4d`, jobs `job-whales-collect-sec` (daily 11:00 UTC), `job-whales-collect-web`
+  (Mondays 10:00 UTC) and `job-whales-admin` (manual). Two deploy fixes on the way: the az CLI refuses a
+  job argument list containing `--apply`, so a job's arguments travel as one string and
+  `infra/entrypoint.sh` splits them; and the Windows az CLI cannot print the image build log (console
+  encoding; its Python runs isolated, so UTF-8 settings do not reach it), so the build runs with
+  `--no-logs`.
+- Both identities registered as Postgres logins (`db add-identity`, from the laptop with the temporary
+  firewall rule).
+- Migration 0002 applied to `whales_dev`; `config sync --apply` wrote 79 inserts and 46 updates (the
+  W-043 activations, new managers and sources, 52 trust baselines, five Tamale topic ids); `inbox load
+  --apply` recorded all 78 PDFs; `pytest -m live`: 26 passed, which verifies 0002's views, grants and the
+  trust flag against the server.
+- Tamale topic twins (W-018): the live Tamale list (259 Topic entities) was read through the Tamale repo's
+  own client, from that repo, nothing copied here but five ids: housing, lumber, AI (umbrella), edge
+  compute, gold. No Tamale topic for interest rates in general (only Rising Rates), US Treasuries,
+  inflation, European macro or oil.
+- First executions of both collection jobs started by hand at 16:32 UTC.
+
+**Process note.** The agent's sandboxed shells died mid-session (every command returned exit 107 at once,
+nothing ran); the rest went through the app's terminal tool in the owner's own PowerShell, from scripts in
+the scratchpad. One `--open-firewall` call hit an Azure gateway timeout while another rule was being
+removed; `whales db close-firewall` sweeps any leftover.
+
+**Verified.** Deploy exit 0; migration, sync, inbox load and live tests as above. First executions:
+- `collect sec` ran as `id-whales-ingest`, 329 SEC requests, 131 documents collected (Elliott 99,
+  Starboard 12, Greenlight Re 7, Trian 5, Third Point 5, JANA 2, PSUS 1) and one source failed on a
+  transient network error (`pershing-square-edgar`: "Cannot assign requested address"), which marked the
+  run failed. Fixed in code: both clients now retry a dropped connection (EDGAR twice, websites once).
+- `collect web` was still running an hour in, with 180 documents recorded (Oaktree 110, Southeastern 59,
+  Elliott 9, Starboard 1, Laughing Water 20 ...). Its `fetch_attempt` rows show three problems:
+  (1) about 30 older Oaktree memos (2002 to 2015) are AES-encrypted with an empty password and pypdf
+  needs the `cryptography` package to open them: a dependency decision for the owner (`pypdf[crypto]`);
+  (2) one Oaktree URL contains "déjà", which urllib cannot send unencoded: fixed, URLs are now
+  percent-encoded; (3) `praetorian-letters` fails in the container on the site's certificate chain
+  ("unable to get local issuer certificate", fine from a Windows laptop) and `pm-capital-insights`
+  gets HTTP 404 for its sitemap from Azure although the laptop dry run listed 430 items: both to check,
+  and a candidate for manual collection if they persist.
+
+**Next.**
+1. Owner: whether to add `cryptography` (pypdf's AES support) to the runtime lock for the Oaktree memos.
+2. Check Praetorian's certificate chain and PM Capital's sitemap from the container; switch either to
+   manual if a site change is the cause.
+3. A model deployment and the Cognitive Services OpenAI User role (W-052); then `whales model check` and
+   the first `extract predictions --apply` in Azure.
+4. How the inbox PDFs reach the runner in Azure (the blob upload, W-044) or on a laptop (a W-045
+   extension).
+
 ## 2026-10-14 (evening): the model seam and the predictions runner; GitHub remote
 
 **Owner direction.** "Model seam + predictions runner" chosen as the next build while Azure is blocked;
