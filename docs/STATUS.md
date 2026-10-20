@@ -94,8 +94,9 @@ Blocking phase 1 or 2:
 - [ ] **Manual collection (W-033, W-034, W-055).** The owner chose a Teams digest and acts on reminders for
       now; a junior analyst or intern takes over later through the `letters_reviewer` role. Requests come as
       two collection rounds a quarter inside the digest, and deeper reports wait for the round to close
-      (W-055, `docs/REPORTS.md` section 6); the reminder calendar that drives them is the next build on this
-      route. Still open:
+      (W-055, `docs/REPORTS.md` section 6); the reminder calendar is built (`whales expected`), automation
+      asks only for periods ending after 2026-06-30, and the back-collection is an intern task from
+      `docs/SEEDING_LIST.md` (67 items, 2026-10-20). Still open:
       - which team and channel;
       - who owns the Teams Workflows flow (ideally a service account rather than a person, so it survives staff
         changes; check that the firm's Power Automate policies allow an HTTP-triggered flow);
