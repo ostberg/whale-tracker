@@ -58,6 +58,11 @@ memory so a theme returns only once grown), `whales digest`, `docs/REPORTS.md`, 
 rows. The SQL has no extraction output to read yet; the first real issue follows the model deployment, and
 the Teams post follows the flow URL.
 
+**Also decided (W-055).** Manual letters are requested in two collection rounds a quarter inside the digest,
+never one at a time, and quarterly or monthly deep dives run only after a round has closed (or 80% of the
+quarter's expected letters are in), never right before a batch of documents arrives. To build with the
+reminder calendar (`letters.expected`).
+
 **Later the same day.** The owner approved `cryptography` (W-053): `pypdf[crypto]` in `pyproject.toml`,
 locks regenerated with `scripts\lock_deps.ps1` (versions held), a test that an AES-256 PDF with an empty
 password is read, image rebuilt. The next website run picks the Oaktree memos up.

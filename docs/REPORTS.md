@@ -77,7 +77,25 @@ reading the `api` views (W-005):
 - The holdings list never travels the other way: not into this database, and not into any model call made
   from here (D-127 for OpenFIGI applies in spirit to everything).
 
-## 6. Example issue
+## 6. Manual letters: collection rounds, and when deep dives run (W-055)
+
+The owner (2026-10-20): manual requests must be optimised "to minimise the task occurrence", and a
+quarterly or monthly deeper report must not run "right before we add a bunch of documents".
+
+- **Collection rounds, not reminders.** Manual sources (W-033) are never asked for one at a time. Twice a
+  quarter the weekly digest carries one checklist below its items: round 1 at about week 6 after quarter-end
+  (when most quarterly letters are out) lists every expected letter not yet loaded, in one line each; round 2
+  at about week 10 lists the leftovers. Monthly and irregular sources fold into whichever round is next.
+  A letter the automatic route caught drops off the list; one marked "not published" or "skipped" stops
+  asking (`letters.expected.status`). The checklist does not count against the four-item cap.
+- **Deep dives wait for the round to close.** The quarterly theme radar, and any monthly deeper report, runs
+  only when the quarter's round 2 has closed, or when at least 80% of that quarter's expected letters are
+  loaded, whichever comes first, and never before round 1. Letters that arrive later still enter the weekly
+  digest's rolling window and the next radar; they do not trigger a rerun.
+- Built with the reminder calendar (`letters.expected` is populated from each source's cadence and past
+  publication lag); the digest then renders the round from it. Not built yet.
+
+## 7. Example issue
 
 ```
 Whale Tracker, week of 2026-11-09: 3 items

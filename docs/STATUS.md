@@ -91,8 +91,11 @@ Blocking phase 1 or 2:
       in `infra/azure.toml` and `.env`. `whales model check` proves the connection. Also open: the pilot on
       the owner's 78 inbox PDFs needs either the inbox-to-blob upload (W-044) or an extension of W-045 to
       full text on a laptop, since `--apply` runs only in Azure.
-- [ ] **Manual collection (W-033, W-034).** The owner chose a Teams digest and acts on reminders for now; a
-      junior analyst or intern takes over later through the `letters_reviewer` role. Still open:
+- [ ] **Manual collection (W-033, W-034, W-055).** The owner chose a Teams digest and acts on reminders for
+      now; a junior analyst or intern takes over later through the `letters_reviewer` role. Requests come as
+      two collection rounds a quarter inside the digest, and deeper reports wait for the round to close
+      (W-055, `docs/REPORTS.md` section 6); the reminder calendar that drives them is the next build on this
+      route. Still open:
       - which team and channel;
       - who owns the Teams Workflows flow (ideally a service account rather than a person, so it survives staff
         changes; check that the firm's Power Automate policies allow an HTTP-triggered flow);
