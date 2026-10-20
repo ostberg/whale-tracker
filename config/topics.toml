@@ -2,6 +2,9 @@
 # The model may tag only these; anything else waits in letters.topic_candidate for a person to approve.
 # Source of truth is still an open owner decision (STATUS.md). This follows the recommended option (a):
 # a short list owned here, each topic carrying `tamale_topic_id` once its Tamale twin is identified.
+# Twins matched against the live Tamale list (259 Topic entities, read through the Tamale repo's client) on
+# 2026-10-20: five found. Interest rates (Tamale has only "Rising Rates"), US Treasuries, inflation, European
+# macro and oil have no Tamale topic; see STATUS.md, W-018.
 # A parent must be defined above its children.
 
 [[topic]]
@@ -33,12 +36,14 @@ slug = "housing"
 name = "Housing"
 description = "Home prices, building, mortgage rates and the businesses that depend on them"
 aliases = ["homebuilders", "mortgage rates", "residential construction", "home prices"]
+tamale_topic_id = "8b633a8f706a4a3f87b2127d7be3e8b3"  # Tamale: Housing US
 
 [[topic]]
 slug = "lumber"
 name = "Lumber"
 description = "Lumber and timber prices, sawmills and timberland"
 aliases = ["timber", "wood products", "timberland"]
+tamale_topic_id = "8fa192864b504703bc608bab4ecfb88e"  # Tamale: Lumber (Wood Products is a separate Tamale topic)
 parent = "housing"
 
 [[topic]]
@@ -46,12 +51,16 @@ slug = "ai"
 name = "Artificial intelligence"
 description = "AI models, adoption, spending, and its effect on companies and markets"
 aliases = ["artificial intelligence", "llm", "large language models", "genai", "ai capex", "ai bubble"]
+# Tamale: Artificial Intelligence & Machine Learning, the umbrella. Tamale also has AI Capex, Generative AI,
+# Large Language Models, AI Agents, AI-Networking and Industrial AI as separate topics.
+tamale_topic_id = "cf85bb86fe9046afac0b660ea894db76"
 
 [[topic]]
 slug = "edge-compute"
 name = "Edge compute"
 description = "Computing near the user or device rather than in central data centres: devices, networks, chips"
 aliases = ["edge computing", "on-device ai", "edge ai"]
+tamale_topic_id = "77bfda8289404361b02e3d381be6258b"  # Tamale: Edge Computing
 parent = "ai"
 
 [[topic]]
@@ -59,6 +68,7 @@ slug = "gold"
 name = "Gold"
 description = "Gold and precious metals, miners and central-bank buying"
 aliases = ["precious metals", "gold miners", "bullion", "silver"]
+tamale_topic_id = "9725921b58144bccb19f0898df08820a"  # Tamale: Gold and Gold Equities (silver is its own topic)
 
 [[topic]]
 slug = "oil"

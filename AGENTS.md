@@ -101,7 +101,9 @@ Everyday checks: `.venv\Scripts\python.exe -m ruff check src tests`, `-m ruff fo
 Routine runs happen in Azure (W-042): `job-whales-collect-sec` daily and `job-whales-collect-web` weekly
 (W-046; `whales collect web --offline` dry-runs it from anywhere, reading index pages only), and `job-whales-admin`
 started on demand with arguments such as `config sync --apply`, `db migrate --apply` or `status`
-(`az containerapp job start -n job-whales-admin -g rg-whale-tracker --args ...`). Deploy with
+(`az containerapp job start -n job-whales-admin -g rg-whale-tracker --args "config sync --apply"`: the
+arguments as one quoted string, because the az CLI refuses a list element starting with `--`; the image's
+entrypoint splits it). Deploy with
 `python infra/deploy.py --apply` after committing (settings: `infra/azure.toml`). From a laptop, only the
 one-off steps that need the Entra admin's own rights: run them with `whales --open-firewall ...`, which
 opens the machine's address for that command and always closes it; `whales db close-firewall` removes

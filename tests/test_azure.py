@@ -59,7 +59,8 @@ def test_collect_job_runs_as_ingest_with_no_admin_rights():
     assert cmd[cmd.index("--mi-user-assigned") + 1] == "/ids/ingest"
     assert "WHALES_DB_USER=id-whales-ingest" in cmd and "AZURE_CLIENT_ID=c-ingest" in cmd
     assert cmd[cmd.index("--trigger-type") + 1] == "Schedule"
-    assert cmd[-3:] == ["collect", "sec", "--apply"]
+    # one string, not a list: the az CLI refuses a list element starting with "--"; the entrypoint splits it
+    assert cmd[-2:] == ["--args", "collect sec --apply"]
     assert not any("admin" in part for part in cmd)
 
 

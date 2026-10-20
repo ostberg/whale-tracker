@@ -27,10 +27,14 @@ RUN pip install --no-cache-dir --require-hashes -r requirements-runtime.lock
 # The code runs from source (PYTHONPATH), so no package build pulls an unpinned setuptools.
 COPY src ./src
 COPY config ./config
+# The job's arguments arrive as one string (the az CLI cannot pass "--apply" in a list); the entrypoint
+# splits it. Line endings normalised in case the file was checked out on Windows.
+COPY infra/entrypoint.sh ./entrypoint.sh
+RUN sed -i 's/\r$//' /app/entrypoint.sh && chmod 755 /app/entrypoint.sh
 
 RUN useradd --create-home --uid 10001 appuser
 USER appuser
 
 # No credentials inside: the database token comes from the job's managed identity at run time.
-ENTRYPOINT ["python", "-m", "whales"]
+ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["--help"]

@@ -118,7 +118,12 @@ Later:
       of its matching Tamale Topic, kept in step by a firm-side check; (b) a firm-side job exports the
       ratified Tamale topics into a file this project reads; (c) separate lists. Recommended: (a), since the
       macro topics here are a small curated set and the Tamale list has not been cleaned up. Needed before
-      phase 3.
+      phase 3. Checked against the live Tamale list on 2026-10-20 (259 Topic entities, read through the
+      Tamale repo's client, nothing copied here but the five ids): twins recorded in `config/topics.toml`
+      for housing (Housing US), lumber, AI (the umbrella; Tamale also has AI Capex, Generative AI, LLMs,
+      AI Agents), edge compute and gold (Gold and Gold Equities). No Tamale topic exists for interest rates
+      in general (only Rising Rates), US Treasuries, inflation, European macro or oil. Open for the owner:
+      whether those five become Tamale Topic entities (firm-side) or stay here only.
 - [x] **Pull a letters pilot forward?** Yes, and further: letters are now the product (W-027, 2026-10-08).
 - [ ] **Price source** for forward returns. APX closes are not split-adjusted (D-118) and the FactSet feed has
       stopped, so neither works as-is.

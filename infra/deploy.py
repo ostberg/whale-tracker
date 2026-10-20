@@ -72,7 +72,7 @@ def job_command(settings: dict, job: dict, image: str, ids: dict, update: bool) 
             "--set-env-vars",
             *pairs,
             "--args",
-            *job["args"],
+            " ".join(job["args"]),  # one string: az refuses a list element starting with "--"
         ]
         if job.get("cron"):
             cmd += ["--cron-expression", job["cron"]]
@@ -106,7 +106,7 @@ def job_command(settings: dict, job: dict, image: str, ids: dict, update: bool) 
         "--env-vars",
         *pairs,
         "--args",
-        *job["args"],
+        " ".join(job["args"]),  # one string, split by infra/entrypoint.sh inside the container
     ]
     return cmd
 
