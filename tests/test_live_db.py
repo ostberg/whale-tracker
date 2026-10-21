@@ -306,6 +306,16 @@ def test_prediction_states_follow_premises_and_verdicts(db):
         assert baseline == "high"  # a quarterly letter by a manager, from config/trust.toml
 
 
+def test_extraction_candidates_query_runs(db):
+    """The candidates SQL against the real schema (its first Azure run failed on an ambiguous column)."""
+    from whales import extract
+
+    found = extract.candidates(db, limit=3)
+    assert isinstance(found, list) and len(found) <= 3
+    for c in found:
+        assert isinstance(c.file_id, int) and isinstance(c.document_id, int) and c.published_on
+
+
 def test_an_expectation_is_marked_loaded_by_a_document_from_any_of_the_managers_sources(db):
     """W-055: a manual source's expectation is satisfied by the automatic route's copy of the same letter."""
     from whales import expected

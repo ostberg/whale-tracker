@@ -170,8 +170,8 @@ class Candidate:
 
 CANDIDATES_SQL = """
 SELECT * FROM (
-    SELECT DISTINCT ON (d.id) f.id, d.id, m.slug, m.name, d.title, d.published_on, f.url, f.content_type,
-           f.sha256, d.kind
+    SELECT DISTINCT ON (d.id) f.id AS file_id, d.id AS document_id, m.slug, m.name, d.title, d.published_on,
+           f.url, f.content_type, f.sha256, d.kind
     FROM letters.document_file f
     JOIN letters.document d ON d.id = f.document_id
     JOIN core.manager m ON m.id = d.manager_id
@@ -181,7 +181,7 @@ SELECT * FROM (
       AND (%s::bigint IS NULL OR d.id = %s)
       AND (%s::text IS NULL OR m.slug = %s)
     ORDER BY d.id, f.id DESC
-) c ORDER BY published_on DESC, id LIMIT %s
+) c ORDER BY published_on DESC, document_id LIMIT %s
 """
 STALE_RUNS_SQL = (
     "UPDATE letters.extraction_run SET status = 'failed', finished_at = now(), "
