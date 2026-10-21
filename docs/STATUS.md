@@ -83,14 +83,12 @@ Blocking phase 1 or 2:
       Oakmark). The owner decides whom to ask; the agent can draft the letter.
 - [ ] **WhaleWisdom for the 13F check (W-028):** does the firm have, or want, a subscription? Without one, the
       API covers the last 8 quarters, excluding the current one.
-- [ ] **A model deployment for this project (W-052).** The seam and the predictions runner are built and
-      wait for: a chat-model deployment on `tocqv-research-ai` (the firm's in-tenant Azure AI resource,
-      already approved for research content in the Tamale repo) or another in-tenant resource added to
-      `whales.llm.APPROVED_MODEL_HOSTS` by commit; the role Cognitive Services OpenAI User on that resource
-      for `id-whales-ingest` and for the owner's own account (laptop checks); then `WHALES_MODEL_DEPLOYMENT`
-      in `infra/azure.toml` and `.env`. `whales model check` proves the connection. Also open: the pilot on
-      the owner's 78 inbox PDFs needs either the inbox-to-blob upload (W-044) or an extension of W-045 to
-      full text on a laptop, since `--apply` runs only in Azure.
+- [x] **A model deployment for this project (W-052).** Done 2026-10-21: `whales-extract` (gpt-5.5,
+      DataZone, 100K tokens/min) on `tocqv-research-ai`; Cognitive Services OpenAI User for
+      `id-whales-ingest` and the owner; `WHALES_MODEL_DEPLOYMENT` in `infra/azure.toml` and `.env`. Still
+      open: the pilot on the owner's 78 inbox PDFs needs either the inbox-to-blob upload (W-044) or an
+      extension of W-045 to full text on a laptop, since `extract --apply` runs only in Azure; SEC and
+      website documents are extracted there by URL.
 - [ ] **Manual collection (W-033, W-034, W-055).** The owner chose a Teams digest and acts on reminders for
       now; a junior analyst or intern takes over later through the `letters_reviewer` role. Requests come as
       two collection rounds a quarter inside the digest, and deeper reports wait for the round to close

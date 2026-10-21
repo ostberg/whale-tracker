@@ -19,10 +19,12 @@ admin = "id-whales-admin"     # migrations and config sync; never fetches anythi
 
 [env]
 SEC_USER_AGENT = "Tocqueville Asset Management research@tocqueville.com"
-# The model endpoint (W-052), once a deployment exists and id-whales-ingest holds the Cognitive Services
-# OpenAI User role on the resource. The host must be on whales.llm.APPROVED_MODEL_HOSTS.
-# WHALES_MODEL_ENDPOINT = "https://tocqv-research-ai.cognitiveservices.azure.com/openai/v1"
-# WHALES_MODEL_DEPLOYMENT = ""
+# The model endpoint (W-052): the firm's in-tenant AI resource (host on whales.llm.APPROVED_MODEL_HOSTS) and
+# Whale Tracker's own deployment of gpt-5.5 (DataZone, 100K tokens/min) on it, chosen by the owner on
+# 2026-10-21 because no DataZone quota was free for gpt-5.6-terra. id-whales-ingest holds the
+# Cognitive Services OpenAI User role on the resource; the token comes from the job identity, no key.
+WHALES_MODEL_ENDPOINT = "https://tocqv-research-ai.cognitiveservices.azure.com/openai/v1"
+WHALES_MODEL_DEPLOYMENT = "whales-extract"
 
 [[job]]
 name = "job-whales-collect-sec"
