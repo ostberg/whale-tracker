@@ -26,16 +26,73 @@ gpt-5.6-terra.
   id both named `id` in the inner select). Fixed; a live test now runs the query against the schema.
 - Live tests: 28 pass.
 
+- **The pilot, three executions.** The first (`qn169f8`, image 461f53f) hung on one Oaktree memo: the
+  reasoning model spent the whole 8,000-token output budget thinking, answered nothing, and the seam
+  retried the identical call six times. Stopped by hand. Fix: `reasoning_effort` low by default
+  (`WHALES_MODEL_REASONING`), a 32,000-token budget, no retry when the budget is exhausted, one progress
+  line per document in the job console (7972a0d). The second (`p8r718w`, 25 documents, 14 minutes, 40
+  model calls, 378K input and 117K output tokens): 17 ok, 8 failed the contract twice. The failures were
+  one or two claims each: a threshold given as a phrase ("above GDP growth", "post-GFC norm", "enough"),
+  a null confidence, `at_end` with no deadline, a `premise_of` link to an asserted claim, and one quote
+  over 400 characters (Trian). Two fixes: an over-long quote is cut and noted (e1004fe); a second reply
+  that still fails loses the offending claims, each noted, instead of the letter (cf25eee, with the prompt
+  bumped to `predictions-v2`, which states those rules).
+- **A date bug the pilot exposed.** Every Oaktree memo was dated 2026-10-20, the day it was collected
+  (`published_on_basis` first_seen): the memo's date sits in a `<time>` tag past the first 400 characters
+  of visible text, so every claim's window started on the collection date. The collector now reads
+  `<time datetime>`, `article:published_time` and `datePublished`, and no longer takes generic link text
+  ("READ MORE", Trian) as a title. Migration 0004 adds the run status `superseded` and lets the ingest role
+  update a document's own derived columns; `whales redate --apply` (the ingest job with overridden arguments: the admin identity cannot set the
+  ingest role, learned the hard way) fetches first-seen documents
+  again, takes the stated date and marks their successful predictions runs superseded so the next extraction
+  redoes them (0b3127d). Applied and run today (45 minutes, about 600 documents fetched again): Oaktree, Hussman and US Global
+  Investors now carry their stated dates (2000 to 2026); GMO's 236 and Fairfax's 5 pages state no date in
+  their markup and stay first-seen. The 17 Oaktree runs are superseded and queue up again behind the GMO
+  pages, because the queue is newest-dated first and a first-seen date is today's.
+- **Rerun results.**
+  Two executions of `job-whales-extract` on image 8f8d876 (prompt v2, salvage on), 50 documents: 49 ok, 1
+  failed on a read timeout to the model endpoint (transient; it is a candidate again). Not one contract
+  failure: 45 of the 49 were accepted on the first reply, four on the second, and the salvage was never
+  needed. The 50 were the queue's newest-dated documents: Trian's SOLV letter (20 claims, 10 links, all
+  tickers unlinked because no 13F has loaded `core.security`) and 49 GMO essays (about 365 claims, 150
+  links; essays such as "Triple Mandate" 29 claims, "The Electricity Tipping Point" 24 with 15 links, "A
+  Catalyst for the AI Bubble Break" 19 with 21 links; four GMO product pages 0). The first execution took
+  9 minutes for 25 documents: 29 model calls, 194K input and 64K output tokens. The comparator mix moved
+  from `happens` to `up`/`down` (v2 claims: `other up` 82, `event happens` 63, `other down` 42, `price up`
+  15, `valuation_multiple down` 12), and thresholds appear only with numbers now.
+
+- **What the claims look like (for the owner's judgment).** Of the 128 claims from the second execution,
+  93 were `event` or `other` with comparator `happens` or `does_not_happen`: "AI | happens", "lenders |
+  happens", "borrowers | happens". Oaktree memos are essays, and the model turns their arguments into
+  claims that no later check can score. The specific ones are good: "US long-term bond yields up, basis
+  data, confidence high", "credit availability down within a year", "MSFT/AMZN/GOOGL valuation does not
+  compress" (tickers unlinked until a 13F loads `core.security`). The prompt's rule 2 ("skip vague hopes
+  with no subject or direction") is not enough; a v3 could require an `event` claim to name an observable
+  occurrence and a date, or carry a `testable` flag that the runner uses to drop the rest. The owner's call
+  after reading a few letters.
+
 **Verified.** The seam against the real endpoint; the extraction job starts and connects as its own
-identity. The pilot's output is recorded below once read.
+identity; three extraction executions and the migrate and redate admin runs, read from the job console
+and the database. Unit tests: 232 pass. Live tests: see the rerun results above.
 
 **Next.**
 1. Judge the pilot's claims (the owner, on a handful of letters): are the subjects, windows, premises,
-   basis and confidence right? Adjust the prompt (`extract.SYSTEM_TEMPLATE`) and bump `PROMPT_VERSION`
-   before the full run.
+   basis and confidence right, and how much of the `event | happens` output is worth keeping? Then a v3
+   prompt (`extract.SYSTEM_TEMPLATE`, bump `PROMPT_VERSION`) before the full run; superseding the v2
+   runs is the same `superseded` status, by hand through the admin job.
 2. Schedule `job-whales-extract` once judged (daily after the SEC job, or weekly after the website job).
+   Each start takes 25 documents; the full backlog of collected website documents needs many starts or a
+   higher limit in `infra/azure.toml`.
 3. The Teams flow URL (W-034) so the digest posts; the inbox-to-blob upload (W-044) so the 78 inbox PDFs
    can be extracted in Azure.
+4. GMO's 236 pages state no date in their markup, so they are still dated the day they were collected and
+   sit at the front of the extraction queue (newest first) ahead of the redone Oaktree memos. Either a
+   GMO-specific date rule (the date is in the visible text past the first 400 characters) or a wider
+   search in `inbox.date_and_kind`, then `redate --apply` again. Fairfax's 5 are the same.
+5. Smaller: the extraction run row left `running` by the stopped first execution (#13) is swept as stale
+   by any extraction run that starts two hours or more after it. Trian's letter is dated 2027-12-31: the
+   last fallback in `inbox.date_and_kind` takes the period end as the date without the plausibility check,
+   so a period in the future (a target year in the file) becomes a publication date; fix and redate.
 
 ## 2026-10-20: Azure cleared; deployed, migrated, synced, loaded; first jobs started
 

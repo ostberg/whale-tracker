@@ -233,7 +233,7 @@ def redate(
     if not apply:
         return results
     if not in_azure():
-        raise NotInAzure("redating reads PDFs; run it in the Azure admin job (W-045 covers the inbox only)")
+        raise NotInAzure("redating reads PDFs; run it in Azure as the ingest job (W-045 covers the inbox)")
     rules = {s.slug: s.web for s in cfg.sources if s.web}
     conn = db.connection()
     today = date.today()

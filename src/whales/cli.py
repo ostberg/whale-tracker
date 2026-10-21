@@ -542,7 +542,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p.add_argument("--manager", help="only this manager slug")
     p.add_argument("--limit", type=int, help="at most this many documents")
-    p.add_argument("--apply", action="store_true", help="fetch and update (Azure only; default: list only)")
+    p.add_argument(
+        "--apply", action="store_true", help="fetch and update (Azure, as the ingest job; default: list only)"
+    )
     p.set_defaults(func=cmd_redate)
 
     ext = sub.add_parser("extract", help="model extraction runs (W-048)").add_subparsers(
