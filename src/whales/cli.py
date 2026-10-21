@@ -324,7 +324,7 @@ def cmd_extract_predictions(args: argparse.Namespace) -> int:
         cands = extract.candidates(db, document_id=args.document, manager=args.manager, limit=args.limit)
         fetcher = extract.Fetcher(inbox.inbox_dir(), WebClient(collect_web.user_agent()), EdgarClient())
         provider = llm.FoundryProvider(llm.ModelSettings.from_env()) if args.apply else None
-        results = extract.run(db, provider, cfg, fetcher, cands, apply=args.apply)
+        results = extract.run(db, provider, cfg, fetcher, cands, apply=args.apply, log=print)
     print(f"{len(cands)} document(s) without a successful predictions run")
     for r in results:
         c = r.candidate

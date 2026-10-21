@@ -15,7 +15,7 @@ import hashlib
 import json
 import platform
 import urllib.parse
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from datetime import date
 from io import BytesIO
@@ -33,6 +33,7 @@ from .sources.sec_letters import pdf_flags
 __all__ = ["INGEST_ROLE"]
 
 MAX_CHARS = 150_000  # about 35,000 tokens; longer documents are truncated and the run says so
+MAX_OUTPUT_TOKENS = 32_000  # the reply plus a reasoning model's thinking, which bills against the same budget
 MAX_PAGES = 300
 SEC_HOSTS = ("https://www.sec.gov/", "https://data.sec.gov/")
 
@@ -136,7 +137,7 @@ def extract_predictions(
     for attempt in (1, 2):
         message = user if not problems else user + RETRY_TEMPLATE.format(problems="\n".join(problems))
         try:
-            payload = provider.complete_json(system, message)
+            payload = provider.complete_json(system, message, max_tokens=MAX_OUTPUT_TOKENS)
         except ModelReplyError as e:
             payload, problems = None, [str(e)]
         attempts.append({"attempt": attempt, "usage": provider.last_usage, "model": provider.last_model})
@@ -283,9 +284,11 @@ def run(
     cands: list[Candidate],
     *,
     apply: bool,
+    log: Callable[[str], None] | None = None,
 ) -> list[RunResult]:
     """Dry run: which candidates have a text source. Apply (Azure only): extract and record each, one
-    extraction run per document, each in its own transaction, with one raw.run_log row for the run."""
+    extraction run per document, each in its own transaction, with one raw.run_log row for the run.
+    ``log`` gets one line per document as it finishes, so a long run shows progress in the job's console."""
     if not apply:
         return [
             RunResult(
@@ -306,8 +309,14 @@ def run(
     ).fetchone()[0]
     conn.execute(STALE_RUNS_SQL)
     results = []
-    for c in cands:
-        results.append(_run_one(conn, provider, cfg, source, c, run_id))
+    for n, c in enumerate(cands, start=1):
+        r = _run_one(conn, provider, cfg, source, c, run_id)
+        results.append(r)
+        if log:
+            log(
+                f"[{n}/{len(cands)}] {r.status:<7} {c.manager} | {c.title[:50]} | claims {r.claims} "
+                f"links {r.links}{' | ' + r.reason if r.reason else ''}"
+            )
     counts = {s: sum(r.status == s for r in results) for s in ("ok", "failed", "skipped")}
     detail = {**counts, "claims": sum(r.claims for r in results), "model": getattr(provider, "totals", None)}
     conn.execute(

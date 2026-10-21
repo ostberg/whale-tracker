@@ -85,6 +85,9 @@ def model_token_source() -> Callable[[], str]:
 class ModelSettings:
     endpoint: str  # the OpenAI-compatible base, e.g. https://<resource>.cognitiveservices.azure.com/openai/v1
     deployment: str  # the deployment name on that resource
+    # Reasoning models think before they answer and bill those tokens against the output budget; extraction
+    # is reading, not puzzle-solving, so "low" by default (WHALES_MODEL_REASONING: low, medium, high, none).
+    reasoning_effort: str | None = "low"
 
     @classmethod
     def from_env(cls) -> ModelSettings:
@@ -94,7 +97,8 @@ class ModelSettings:
             raise ModelError(
                 "WHALES_MODEL_ENDPOINT and WHALES_MODEL_DEPLOYMENT must be set (see .env.example)"
             )
-        return cls(endpoint, deployment)
+        effort = os.environ.get("WHALES_MODEL_REASONING", "low").strip().lower() or "low"
+        return cls(endpoint, deployment, None if effort == "none" else effort)
 
 
 class FoundryProvider:
@@ -126,6 +130,8 @@ class FoundryProvider:
         self._token_at = 0.0
         # Newer deployments want max_completion_tokens; an older one answers 400 and we learn max_tokens once.
         self._token_param = "max_completion_tokens"
+        # Dropped once if the deployment rejects it (a model without reasoning control answers 400).
+        self._reasoning: str | None = settings.reasoning_effort
         self.last_usage: dict | None = None
         self.last_model = ""
         self.totals = {"calls": 0, "input_tokens": 0, "output_tokens": 0}
@@ -167,7 +173,10 @@ class FoundryProvider:
         for attempt in range(1, ATTEMPTS + 1):
             body.pop("max_tokens", None)
             body.pop("max_completion_tokens", None)
+            body.pop("reasoning_effort", None)
             body[self._token_param] = max_tokens
+            if self._reasoning:
+                body["reasoning_effort"] = self._reasoning
             status, payload = self._post(body, fresh_token=fresh_token)
             fresh_token = False
             if (
@@ -176,6 +185,9 @@ class FoundryProvider:
                 and "max_completion_tokens" in str(payload)
             ):
                 self._token_param = "max_tokens"
+                continue
+            if status == 400 and self._reasoning and "reasoning_effort" in str(payload):
+                self._reasoning = None  # this deployment takes no reasoning control; learn it once
                 continue
             if status == 401 and not token_refreshed:
                 fresh_token = token_refreshed = True
@@ -197,10 +209,16 @@ class FoundryProvider:
             choice = (payload.get("choices") or [{}])[0]
             text = (choice.get("message") or {}).get("content") or ""
             if not text.strip():
+                finish = choice.get("finish_reason")
+                if finish == "length":
+                    # the reasoning consumed the whole output budget; another identical call would too
+                    raise ModelReplyError(
+                        f"empty reply from {self.model}: the output budget of {max_tokens} tokens was used "
+                        "up before any visible text (finish_reason 'length'); raise max_tokens or lower "
+                        "the reasoning effort"
+                    )
                 if attempt < ATTEMPTS:
                     continue  # an empty reply happens on some deployments; once more, then fail loudly
-                raise ModelReplyError(
-                    f"empty reply from {self.model} (finish_reason={choice.get('finish_reason')!r})"
-                )
+                raise ModelReplyError(f"empty reply from {self.model} (finish_reason={finish!r})")
             return parse_json_reply(text)
         raise ModelError(f"gave up on {self.host} after {ATTEMPTS} attempts")

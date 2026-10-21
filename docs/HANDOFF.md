@@ -2,6 +2,41 @@
 
 Dated entries, newest first: what changed, what is verified, what is next.
 
+## 2026-10-21: the model is connected; first extraction runs in Azure
+
+**Owner direction.** "Take a look, what else do I need to do?" on the model deployment; chose a separate
+deployment, both role assignments, and gpt-5.5 on the DataZone tier when no DataZone quota was free for
+gpt-5.6-terra.
+
+**What changed.**
+- `tocqv-research-ai` (the firm's in-tenant AI resource, in the owner's own subscription) has a new
+  deployment `whales-extract`: gpt-5.5 (2026-04-24), DataZoneStandard, 100K tokens/min. Quota in East US
+  for gpt-5.6-terra on DataZone was fully used by Tamale's deployment (200 of a 100 limit).
+- Cognitive Services OpenAI User granted on the resource to `id-whales-ingest` and to the owner's account
+  (both at 17:37 UTC; the data plane honoured them about 15 minutes later: 401 "lacks the data action"
+  until then, which is propagation, not a configuration fault).
+- `whales model check` from the laptop: answered as `gpt-5.5-2026-04-24` in 2.5 s on the owner's Entra
+  token, no key. `WHALES_MODEL_ENDPOINT` and `WHALES_MODEL_DEPLOYMENT` are set in `infra/azure.toml` (so
+  every job carries them) and in the laptop's `.env`.
+- A manual job `job-whales-extract` (ingest identity, `extract predictions --apply --limit 25`), because
+  starting an existing job with overridden arguments replaces its whole container template: the first
+  pilot attempt ran without the database settings. The override also works if the environment is repeated
+  (`--image`, `--env-vars`, `--args`), recorded in the scratch scripts, but the job is the clean way.
+- A real bug from the first run: the candidates query's `ORDER BY id` was ambiguous (file id and document
+  id both named `id` in the inner select). Fixed; a live test now runs the query against the schema.
+- Live tests: 28 pass.
+
+**Verified.** The seam against the real endpoint; the extraction job starts and connects as its own
+identity. The pilot's output is recorded below once read.
+
+**Next.**
+1. Judge the pilot's claims (the owner, on a handful of letters): are the subjects, windows, premises,
+   basis and confidence right? Adjust the prompt (`extract.SYSTEM_TEMPLATE`) and bump `PROMPT_VERSION`
+   before the full run.
+2. Schedule `job-whales-extract` once judged (daily after the SEC job, or weekly after the website job).
+3. The Teams flow URL (W-034) so the digest posts; the inbox-to-blob upload (W-044) so the 78 inbox PDFs
+   can be extracted in Azure.
+
 ## 2026-10-20: Azure cleared; deployed, migrated, synced, loaded; first jobs started
 
 **Owner direction.** "Azure sign in looks ok." And: "Tamale tie in? Request list of topics from Tamale to

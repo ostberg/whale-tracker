@@ -27,11 +27,11 @@ class _Response:
         return False
 
 
-def _reply(content, model="gpt-test-2026", usage=(10, 5)):
+def _reply(content, model="gpt-test-2026", usage=(10, 5), finish="stop"):
     return {
         "model": model,
         "usage": {"prompt_tokens": usage[0], "completion_tokens": usage[1]},
-        "choices": [{"message": {"content": content}, "finish_reason": "stop"}],
+        "choices": [{"message": {"content": content}, "finish_reason": finish}],
     }
 
 
@@ -127,6 +127,29 @@ def test_empty_reply_is_retried_then_refused():
     with pytest.raises(llm.ModelReplyError, match="empty reply"):
         p.complete_json("s", "u")
     assert len(seen) == 3
+
+
+def test_reasoning_effort_is_sent_low_and_dropped_if_refused():
+    p, seen = provider([_reply("{}")])
+    p.complete_json("s", "u")
+    assert json.loads(seen[0].data)["reasoning_effort"] == "low"
+    refused = (400, "Unrecognized request argument supplied: reasoning_effort")
+    p, seen = provider([refused, _reply("{}"), _reply("{}")])
+    p.complete_json("s", "u")
+    p.complete_json("s", "u")
+    assert "reasoning_effort" not in json.loads(seen[1].data) and len(seen) == 3
+    opener, seen = fake_endpoint([_reply("{}")])
+    settings = llm.ModelSettings(ENDPOINT, "x", reasoning_effort=None)
+    quiet = llm.FoundryProvider(settings, lambda: "t", opener=opener)
+    quiet.complete_json("s", "u")
+    assert "reasoning_effort" not in json.loads(seen[0].data)
+
+
+def test_budget_exhausted_by_reasoning_fails_at_once_with_advice():
+    p, seen = provider([_reply("", finish="length")])
+    with pytest.raises(llm.ModelReplyError, match="output budget of 8000 tokens"):
+        p.complete_json("s", "u")
+    assert len(seen) == 1  # no retry: the same call would exhaust the budget again
 
 
 def test_code_fences_are_tolerated_but_non_json_is_not():
