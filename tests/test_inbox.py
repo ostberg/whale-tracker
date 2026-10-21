@@ -207,9 +207,20 @@ def test_signature_date_and_no_future_period(tmp_path):
     assert (f.period_end, f.kind) == (date(2018, 12, 31), "annual_letter")
     assert (f.published_on, f.published_basis) == (date(2019, 3, 8), "stated")
     g = inbox.InboxFile(None, "public", "Targets.pdf", "x", 1)
-    g.head = "Our FY2027 targets. Annual letter 2027 preview"  # a period in the future is never a date
+    g.head = "Our FY2027 targets. Annual letter 2027 preview"  # a period in the future is not a period
     inbox.date_and_kind(g, date(2026, 10, 20))
-    assert (g.published_on, g.published_basis) == (date(2026, 10, 20), "first_seen")
+    assert (g.period_end, g.published_on, g.published_basis) == (None, date(2026, 10, 20), "first_seen")
+    # Trian's Solventum release: a target year in the headline, the date in the file name and the dateline
+    h = inbox.InboxFile(None, "public", "2025-01-08-SOLV-Shareholder-Letter-Release.pdf", "x", 1)
+    h.head = (
+        "Trian Issues Open Letter to Solventum Shareholders " + "x" * 420 + " Worth $140 by Year-End 2027"
+    )
+    h.head += " NEW YORK, Jan. 8, 2025 - Trian Fund Management"
+    inbox.date_and_kind(h, date(2026, 10, 20))
+    assert (h.period_end, h.published_on, h.published_basis) == (None, date(2025, 1, 8), "stated")
+    h.rel = "SOLV-Shareholder-Letter-Release.pdf"  # without the file-name date, the dateline is read
+    inbox.date_and_kind(h, date(2026, 10, 20))
+    assert (h.published_on, h.published_basis) == (date(2025, 1, 8), "stated")
 
 
 def test_sources_by_route(cfg):

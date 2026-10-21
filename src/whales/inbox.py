@@ -357,10 +357,13 @@ def date_and_kind(f: InboxFile, first_seen: date, stated: date | None = None) ->
     if period is None:
         # a period range or 'as of' date can sit anywhere on the first page; the end of the range counts
         period, kind = infer_period(f.head[HEADER_CHARS:HEAD_CHARS])
+    if period is not None and period > first_seen:
+        # 'worth $140 by Year-End 2027' is a target, not the period a letter reports on (Trian, 2026-10-21)
+        period, kind = None, "other"
     candidates = [
         stated,
         date_in_name(name),
-        infer_published(f.head[:400]),
+        infer_published(f.head[:HEADER_CHARS]),  # a dateline ('NEW YORK, Jan. 8, 2025') sits below the title
         infer_published(f.tail),
         infer_published(f.head[:400], numeric=True),
     ]
