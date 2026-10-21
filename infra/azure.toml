@@ -47,6 +47,12 @@ args = ["collect", "web", "--apply"]
 timeout_seconds = 7200        # polite per-site gaps (crawl-delays up to 10 s) make a full run slow
 
 [[job]]
+name = "job-whales-extract"
+identity = "ingest"           # manual: the model reads documents (W-048); started by hand until the pilot is judged
+args = ["extract", "predictions", "--apply", "--limit", "25"]
+timeout_seconds = 3600
+
+[[job]]
 name = "job-whales-weekly"
 identity = "ingest"
 cron = "0 13 * * 1"           # 13:00 UTC every Monday, after the website run: the reminder calendar
