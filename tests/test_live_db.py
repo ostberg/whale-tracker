@@ -76,6 +76,8 @@ ING, REV = "whales_ingest", "whales_reviewer"
         (ING, "table", "letters.prediction_check", "INSERT", True),
         (ING, "table", "letters.prediction_score", "INSERT", False),
         (ING, "table", "letters.prediction", "UPDATE", False),
+        (ING, "column", "letters.document.published_on", "UPDATE", True),  # 0004: redate
+        (ING, "column", "letters.document.manager_id", "UPDATE", False),
         (REV, "column", "letters.prediction_score.check_id", "INSERT", True),
         (REV, "column", "letters.prediction_score.reviewed_by", "INSERT", False),
         (REV, "table", "letters.mention", "UPDATE", False),
