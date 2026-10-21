@@ -225,7 +225,6 @@ def _broken(example, which, **changes):
         (_broken(IRAN, 1, window_from="2027-01-01"), "window_to is before window_from"),
         (_broken(IRAN, 2, window_to="year-end"), "must be YYYY-MM-DD"),
         (_broken(IRAN, 2, window_to=None, timing="at_end"), "at_end needs a window_to"),
-        (_broken(IRAN, 2, quote="x" * 401), "longer than 400"),
         (_broken(IRAN, 2, quote=""), "quote is required"),
         (_broken(IRAN, 2, subject=7), "subject must be text"),
         (_broken(IRAN, 2, page=0), "page must be a positive integer"),
@@ -242,6 +241,13 @@ def test_contract_refusals(payload, expected):
     with pytest.raises(predictions.ContractError) as info:
         predictions.parse(payload, PUBLISHED, TOPICS)
     assert any(expected in p for p in info.value.problems), info.value.problems
+
+
+def test_an_over_long_quote_is_cut_not_refused():
+    """The first Azure run lost a whole letter to one 400+ character quote (2026-10-21)."""
+    x = predictions.parse(_broken(IRAN, 2, quote="word " * 120), PUBLISHED, TOPICS)
+    assert len(x.claim(2).quote) == predictions.QUOTE_MAX and x.claim(2).quote.endswith("…")
+    assert x.notes == ["claim 2: quote cut to 400 characters"]
 
 
 def test_an_unused_premise_is_refused():

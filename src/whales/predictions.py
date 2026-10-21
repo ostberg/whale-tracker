@@ -237,6 +237,11 @@ def parse(payload: Any, published_on: date, topics: set[str] | frozenset[str] = 
         basis_note = _text(item, "basis_note", problems, where, required=False, limit=BASIS_NOTE_MAX)
         subject = _text(item, "subject", problems, where, required=True, limit=SUBJECT_MAX)
         claim = _text(item, "claim", problems, where, required=True, limit=1000)
+        raw_quote = item.get("quote")
+        if isinstance(raw_quote, str) and len(" ".join(raw_quote.split())) > QUOTE_MAX:
+            # the model quoted too much; keep the start rather than lose the claim (W-015 still holds)
+            item = {**item, "quote": " ".join(raw_quote.split())[: QUOTE_MAX - 1].rstrip() + "…"}
+            out.notes.append(f"{where}: quote cut to {QUOTE_MAX} characters")
         quote = _text(item, "quote", problems, where, required=True, limit=QUOTE_MAX)
         ticker = _text(item, "ticker", problems, where, required=False, limit=20)
         topic = _text(item, "topic", problems, where, required=False, limit=100)
