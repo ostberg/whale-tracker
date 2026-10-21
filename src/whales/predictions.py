@@ -14,7 +14,7 @@ from datetime import date
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
-PROMPT_VERSION = "predictions-v1"
+PROMPT_VERSION = "predictions-v2"  # v2 (2026-10-21): explicit rules for thresholds, confidence, timing, links
 
 ROLES = ("asserted", "premise")
 METRICS = (
@@ -204,81 +204,102 @@ def _refs(item: dict, key: str, problems: list[str], where: str) -> list[int]:
     return v
 
 
-def parse(payload: Any, published_on: date, topics: set[str] | frozenset[str] = frozenset()) -> Extraction:
+def parse(
+    payload: Any,
+    published_on: date,
+    topics: set[str] | frozenset[str] = frozenset(),
+    *,
+    salvage: bool = False,
+) -> Extraction:
     """Check the model's JSON against the contract. ``topics`` are the slugs the model was allowed to use; an
-    unknown one is dropped to None and noted. Anything else wrong raises ContractError with every problem."""
+    unknown one is dropped to None and noted. Anything else wrong raises ContractError with every problem.
+
+    With ``salvage`` (the runner's second reply), a claim that breaks the contract is dropped and noted, with
+    every link that touches it, instead of refusing the whole letter: the first Azure run (2026-10-21) lost
+    eight letters to one or two claims each. Only a payload with no usable shape is still refused."""
     items = payload.get("predictions") if isinstance(payload, dict) else None
     if not isinstance(items, list):
         raise ContractError(["payload must be an object with a 'predictions' list"])
     problems: list[str] = []
     out = Extraction()
+    dropped: set[int] = set()
+
+    def reject(where: str, found: list[str]) -> None:
+        if salvage:
+            reasons = [p.removeprefix(f"{where}: ") for p in found]
+            out.notes.append(f"{where}: dropped ({'; '.join(reasons)})")
+        else:
+            problems.extend(found)
+
     seen: set[int] = set()
     pending_links: list[tuple[int, int, str, str]] = []
     for i, item in enumerate(items):
         where = f"predictions[{i}]"
         if not isinstance(item, dict):
-            problems.append(f"{where}: must be an object")
+            reject(where, [f"{where}: must be an object"])
             continue
         k = item.get("k")
         if not _is_int(k) or k < 1:
-            problems.append(f"{where}: k must be a positive integer")
+            reject(where, [f"{where}: k must be a positive integer"])
             continue
         if k in seen:
-            problems.append(f"{where}: k {k} is used twice")
+            reject(where, [f"{where}: k {k} is used twice"])
             continue
         seen.add(k)
         where = f"claim {k}"
-        role = _code(item, "role", ROLES, problems, where)
-        metric = _code(item, "metric", METRICS, problems, where)
-        comparator = _code(item, "comparator", COMPARATORS, problems, where)
-        timing = _code(item, "timing", TIMINGS, problems, where)
-        confidence_code = _code(item, "confidence", CONFIDENCES, problems, where)
-        basis = _code(item, "basis", BASES, problems, where)
-        basis_note = _text(item, "basis_note", problems, where, required=False, limit=BASIS_NOTE_MAX)
-        subject = _text(item, "subject", problems, where, required=True, limit=SUBJECT_MAX)
-        claim = _text(item, "claim", problems, where, required=True, limit=1000)
+        mine: list[str] = []  # this claim's own problems, judged below
+        role = _code(item, "role", ROLES, mine, where)
+        metric = _code(item, "metric", METRICS, mine, where)
+        comparator = _code(item, "comparator", COMPARATORS, mine, where)
+        timing = _code(item, "timing", TIMINGS, mine, where)
+        confidence_code = _code(item, "confidence", CONFIDENCES, mine, where)
+        basis = _code(item, "basis", BASES, mine, where)
+        basis_note = _text(item, "basis_note", mine, where, required=False, limit=BASIS_NOTE_MAX)
+        subject = _text(item, "subject", mine, where, required=True, limit=SUBJECT_MAX)
+        claim = _text(item, "claim", mine, where, required=True, limit=1000)
         raw_quote = item.get("quote")
         if isinstance(raw_quote, str) and len(" ".join(raw_quote.split())) > QUOTE_MAX:
             # the model quoted too much; keep the start rather than lose the claim (W-015 still holds)
             item = {**item, "quote": " ".join(raw_quote.split())[: QUOTE_MAX - 1].rstrip() + "…"}
             out.notes.append(f"{where}: quote cut to {QUOTE_MAX} characters")
-        quote = _text(item, "quote", problems, where, required=True, limit=QUOTE_MAX)
-        ticker = _text(item, "ticker", problems, where, required=False, limit=20)
-        topic = _text(item, "topic", problems, where, required=False, limit=100)
-        unit = _text(item, "unit", problems, where, required=False, limit=40)
-        relative_to = _text(item, "relative_to", problems, where, required=False, limit=100)
-        horizon_text = _text(item, "horizon_text", problems, where, required=False, limit=200)
-        confidence = _text(item, "confidence_wording", problems, where, required=False, limit=100)
-        window_from = _date(item, "window_from", problems, where)
-        window_to = _date(item, "window_to", problems, where)
+        quote = _text(item, "quote", mine, where, required=True, limit=QUOTE_MAX)
+        ticker = _text(item, "ticker", mine, where, required=False, limit=20)
+        topic = _text(item, "topic", mine, where, required=False, limit=100)
+        unit = _text(item, "unit", mine, where, required=False, limit=40)
+        relative_to = _text(item, "relative_to", mine, where, required=False, limit=100)
+        horizon_text = _text(item, "horizon_text", mine, where, required=False, limit=200)
+        confidence = _text(item, "confidence_wording", mine, where, required=False, limit=100)
+        window_from = _date(item, "window_from", mine, where)
+        window_to = _date(item, "window_to", mine, where)
         threshold: Decimal | None = None
         raw = item.get("threshold")
         if raw is not None:
             try:
                 threshold = Decimal(str(raw))
             except InvalidOperation:
-                problems.append(f"{where}: threshold must be a number, got {raw!r}")
+                mine.append(f"{where}: threshold must be a number, got {raw!r}")
         if comparator is not None and (comparator in NEEDS_THRESHOLD) != (threshold is not None):
-            problems.append(f"{where}: threshold is required for {NEEDS_THRESHOLD} and not allowed otherwise")
+            mine.append(f"{where}: threshold is required for {NEEDS_THRESHOLD} and not allowed otherwise")
         if window_from and window_to and window_to < window_from:
-            problems.append(f"{where}: window_to is before window_from")
+            mine.append(f"{where}: window_to is before window_from")
         if window_to and window_to < published_on:
-            problems.append(f"{where}: window_to {window_to} is before the letter's date {published_on}")
+            mine.append(f"{where}: window_to {window_to} is before the letter's date {published_on}")
         if timing == "at_end" and window_to is None:
-            problems.append(f"{where}: timing at_end needs a window_to")
+            mine.append(f"{where}: timing at_end needs a window_to")
         page = item.get("page")
         if page is not None and (not _is_int(page) or page < 1):
-            problems.append(f"{where}: page must be a positive integer or null")
+            mine.append(f"{where}: page must be a positive integer or null")
             page = None
         if topic is not None and topic not in topics:
             out.notes.append(f"{where}: topic {topic!r} is not in the list; dropped")
             topic = None
-        for ref in _refs(item, "premises", problems, where):
-            pending_links.append((ref, k, "premise_of", where))
-        for ref in _refs(item, "caused_by", problems, where):
-            pending_links.append((ref, k, "causes", where))
-        if problems:
+        refs = [(ref, k, "premise_of", where) for ref in _refs(item, "premises", mine, where)]
+        refs += [(ref, k, "causes", where) for ref in _refs(item, "caused_by", mine, where)]
+        if mine:
+            reject(where, mine)
+            dropped.add(k)
             continue
+        pending_links.extend(refs)
         out.claims.append(
             Claim(
                 k=k,
@@ -307,46 +328,79 @@ def parse(payload: Any, published_on: date, topics: set[str] | frozenset[str] = 
     if problems:
         raise ContractError(problems)
     by_k = {c.k: c for c in out.claims}
+
+    def reject_link(where: str, from_k: int, kind: str, reason: str) -> None:
+        if salvage:
+            out.notes.append(f"{where}: {kind} link from claim {from_k} dropped ({reason})")
+        else:
+            problems.append(f"{where}: {reason}")
+
     for from_k, to_k, kind, where in pending_links:
         if from_k not in by_k:
-            problems.append(f"{where}: refers to claim {from_k}, which does not exist")
+            what = "was dropped" if from_k in dropped else "does not exist"
+            reject_link(where, from_k, kind, f"refers to claim {from_k}, which {what}")
             continue
         if from_k == to_k:
-            problems.append(f"{where}: refers to itself")
+            reject_link(where, from_k, kind, "refers to itself")
             continue
         want = "premise" if kind == "premise_of" else "asserted"
         if by_k[from_k].role != want:
-            problems.append(f"{where}: claim {from_k} is {by_k[from_k].role}, but a {kind} link needs {want}")
+            reject_link(
+                where, from_k, kind, f"claim {from_k} is {by_k[from_k].role}, but a {kind} link needs {want}"
+            )
             continue
         link = Link(from_k, to_k, kind)
         if link not in out.links:
             out.links.append(link)
-    for c in out.claims:
-        if c.role == "premise" and not any(link.from_k == c.k for link in out.links):
-            problems.append(f"claim {c.k}: a premise must be the premise of some other claim")
-    problems.extend(_cycles(out.links))
+    # A premise must support something and no claim may depend on itself. Strict: report both. Salvage:
+    # drop the unused premise (and links into it) and the links that close a cycle, until nothing is left.
+    while True:
+        unused = [
+            c for c in out.claims if c.role == "premise" and not any(x.from_k == c.k for x in out.links)
+        ]
+        cyclic = _cycles(out.links)
+        if not unused and not cyclic:
+            break
+        if not salvage:
+            problems.extend(f"claim {c.k}: a premise must be the premise of some other claim" for c in unused)
+            problems.extend(f"claim {start}: depends on itself through the links" for start in cyclic)
+            break
+        for c in unused:
+            out.claims.remove(c)
+            dropped.add(c.k)
+            out.notes.append(f"claim {c.k}: dropped (a premise must be the premise of some other claim)")
+            for x in [x for x in out.links if x.to_k == c.k]:
+                out.links.remove(x)
+                out.notes.append(
+                    f"claim {c.k}: {x.kind} link from claim {x.from_k} dropped (claim {c.k} was dropped)"
+                )
+        for start in cyclic:
+            for x in [x for x in out.links if x.from_k == start]:
+                out.links.remove(x)
+                reason = "depends on itself through the links"
+                out.notes.append(f"claim {x.to_k}: {x.kind} link from claim {start} dropped ({reason})")
     if problems:
         raise ContractError(problems)
     return out
 
 
-def _cycles(links: list[Link]) -> list[str]:
-    """A claim cannot depend on itself through any chain of links."""
+def _cycles(links: list[Link]) -> list[int]:
+    """The claims that depend on themselves through some chain of links (the contract forbids it)."""
     following: dict[int, list[int]] = {}
     for link in links:
         following.setdefault(link.from_k, []).append(link.to_k)
-    problems = []
+    starts = []
     for start in sorted(following):
         stack, seen = list(following[start]), set()
         while stack:
             node = stack.pop()
             if node == start:
-                problems.append(f"claim {start}: depends on itself through the links")
+                starts.append(start)
                 break
             if node not in seen:
                 seen.add(node)
                 stack.extend(following.get(node, []))
-    return problems
+    return starts
 
 
 # --- storing ------------------------------------------------------------------------------------------

@@ -124,7 +124,7 @@ period with no verdict. Today a person always confirms.
 ## 5. The extraction contract
 
 The model receives the letter's text, its date, the topic slugs and the canonical subject list, and returns
-JSON in this shape (`predictions.CONTRACT`; `PROMPT_VERSION = predictions-v1`):
+JSON in this shape (`predictions.CONTRACT`; `PROMPT_VERSION = predictions-v2`):
 
 ```
 {"predictions": [
@@ -151,8 +151,13 @@ be machine-read (inbox files, or re-fetched by URL; PDFs carry `[page N]` marker
 pages), sends the system prompt in `extract.SYSTEM_TEMPLATE` with the canonical subjects, the topic slugs and
 the contract, and stores a checked reply under one `letters.extraction_run` with the deployment asked for,
 the model that answered, token usage, the text's hash and whether it was truncated (150,000 characters). A
-reply that fails the contract goes back once with the problems. Model calls go through `src/whales/llm.py`
-only (W-052): an in-tenant endpoint on an approved host, an Entra token, JSON replies.
+reply that fails the contract goes back once with the problems; if the second reply still fails, the claims
+that break the contract are dropped, each with a note saying why, and the rest is stored (`parse(...,
+salvage=True)`). The first Azure run (2026-10-21) lost eight letters to one or two claims each: a threshold
+that was a phrase ("above GDP growth"), a null confidence, "at_end" with no deadline, a link to the wrong
+role. Those are now rules in the prompt (`predictions-v2`), and the salvage keeps the letter when the model
+still slips. Only a reply with no usable shape fails the document. Model calls go through
+`src/whales/llm.py` only (W-052): an in-tenant endpoint on an approved host, an Entra token, JSON replies.
 
 ## 6. Where claims come from
 

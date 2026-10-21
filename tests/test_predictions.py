@@ -250,6 +250,47 @@ def test_an_over_long_quote_is_cut_not_refused():
     assert x.notes == ["claim 2: quote cut to 400 characters"]
 
 
+def test_salvage_drops_the_bad_claim_and_its_links_not_the_letter():
+    """Eight of 25 letters in the first Azure run failed on one or two claims each (2026-10-21)."""
+    payload = _broken(MSFT, 2, comparator="crashes", confidence=None)
+    x = predictions.parse(payload, PUBLISHED, TOPICS, salvage=True)
+    assert [c.k for c in x.claims] == [1, 3]
+    assert x.links == [predictions.Link(1, 3, "premise_of")]
+    assert x.notes == [
+        "claim 2: dropped (comparator must be one of ('up', 'down', 'above', 'below', 'at_least', "
+        "'at_most', 'happens', 'does_not_happen'), got 'crashes'; confidence must be one of "
+        "('high', 'medium', 'low'), got None)",
+        "claim 3: causes link from claim 2 dropped (refers to claim 2, which was dropped)",
+    ]
+
+
+def test_salvage_drops_a_bad_link_and_then_an_unused_premise():
+    payload = _broken(MSFT, 2, premises=[])
+    payload = _broken(payload, 3, premises=[1], caused_by=[1])  # a causes link from a premise
+    x = predictions.parse(payload, PUBLISHED, TOPICS, salvage=True)
+    assert [c.k for c in x.claims] == [1, 2, 3] and len(x.links) == 1  # the premise_of link stays
+    assert x.notes == [
+        "claim 3: causes link from claim 1 dropped (claim 1 is premise, but a causes link needs asserted)"
+    ]
+    payload = _broken(payload, 3, premises=[])
+    x = predictions.parse(payload, PUBLISHED, TOPICS, salvage=True)
+    assert [c.k for c in x.claims] == [2, 3] and x.links == []
+    assert x.notes[-1] == "claim 1: dropped (a premise must be the premise of some other claim)"
+
+
+def test_salvage_breaks_a_cycle_and_still_refuses_an_unusable_payload():
+    x = predictions.parse(_broken(IRAN, 1, caused_by=[2]), PUBLISHED, TOPICS, salvage=True)
+    assert [c.k for c in x.claims] == [1, 2] and x.links == []
+    assert all("depends on itself through the links" in n for n in x.notes) and len(x.notes) == 2
+    x = predictions.parse({"predictions": [7, {"k": 0}]}, PUBLISHED, TOPICS, salvage=True)
+    assert x.claims == [] and x.notes == [
+        "predictions[0]: dropped (must be an object)",
+        "predictions[1]: dropped (k must be a positive integer)",
+    ]
+    with pytest.raises(predictions.ContractError, match="'predictions' list"):
+        predictions.parse({"claims": []}, PUBLISHED, TOPICS, salvage=True)
+
+
 def test_an_unused_premise_is_refused():
     payload = _broken(MSFT, 2, premises=[])
     payload = _broken(payload, 3, premises=[])

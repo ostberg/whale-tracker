@@ -47,6 +47,11 @@ def test_system_prompt_carries_the_rules_the_contract_and_the_lists():
     assert "Brent crude; WTI crude" in s
     assert '"premises": [2]' in s  # the contract itself
     assert "window_to is null; never" in s
+    # the first Azure run's failure modes (2026-10-21) are now rules
+    assert "relative_to naming the reference" in s and "confidence, never null" in s
+    assert (
+        'with no deadline timing is "any_time"' in s and '"caused_by" only claims with role "asserted"' in s
+    )
 
 
 def test_extraction_parses_a_good_reply_first_time():
@@ -69,7 +74,17 @@ def test_a_bad_reply_goes_back_once_with_the_problems():
     assert "comparator must be one of" in second_user
 
 
-def test_two_bad_replies_fail_the_document():
+def test_a_second_bad_reply_keeps_the_good_claims_and_notes_the_rest():
+    bad = copy.deepcopy(MSFT)
+    bad["predictions"][1]["comparator"] = "crashes"
+    p = FakeProvider([bad, bad])
+    x, attempts = extract.extract_predictions(p, "x", PUBLISHED, TOPICS, "T")
+    assert [c.k for c in x.claims] == [1, 3] and len(x.links) == 1
+    assert attempts[1]["salvaged"] is True and "problems" in attempts[1]
+    assert x.notes[0].startswith("claim 2: dropped (comparator must be one of")
+
+
+def test_a_second_reply_with_no_usable_shape_fails_the_document():
     bad = copy.deepcopy(MSFT)
     bad["predictions"][1]["comparator"] = "crashes"
     p = FakeProvider([bad, {"predictions": "none"}])

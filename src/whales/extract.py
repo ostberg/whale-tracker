@@ -3,10 +3,12 @@
 For every document copy that may be machine-read (W-030, W-035) and has no successful predictions run, get
 the document's text, ask the model for the writer's claims in the shape of ``predictions.CONTRACT``, check
 the reply against the contract, and store it under one ``letters.extraction_run``. A reply that fails the
-contract goes back to the model once with the problems; a second failure fails that document's run, never
-the whole run. Text comes from the inbox folder for inbox copies, and is fetched again by URL for the rest
-(raw files are not kept, W-041). Fetched documents are parsed only inside the Azure job (W-045), so
-``--apply`` runs there; the dry run lists what would be processed without calling the model.
+contract goes back to the model once with the problems; if the second reply still fails, the claims that
+break the contract are dropped and noted and the rest is stored (a reply with no usable shape fails that
+document's run, never the whole run). Text comes from the inbox folder for inbox copies, and is fetched
+again by URL for the rest (raw files are not kept, W-041). Fetched documents are parsed only inside the
+Azure job (W-045), so ``--apply`` runs there; the dry run lists what would be processed without calling the
+model.
 """
 
 from __future__ import annotations
@@ -81,22 +83,28 @@ Rules:
    subject or direction.
 3. Dates: read "next year", "by year-end" and "over the next two years" from the letter's date into
    window_from and window_to (YYYY-MM-DD). If the writer gives no deadline, window_to is null; never
-   invent one. timing is "any_time" unless the call is about the value at the end of the window.
+   invent one. timing is "any_time" unless the call is about the value at the end of the window; "at_end"
+   needs a window_to, so with no deadline timing is "any_time".
 4. A condition ("if capex rises 30%") is its own claim with role "premise", listed in the "premises" of
    every claim that depends on it; a premise is never asserted. When the writer says one call brings
-   about another, list the cause's k in the effect's "caused_by".
-5. subject: one of these canonical names when it fits, else the shortest unambiguous name:
+   about another, list the cause's k in the effect's "caused_by". "premises" may list only claims with
+   role "premise"; "caused_by" only claims with role "asserted".
+5. comparator: "up" or "down" for a direction; "above", "below", "at_least" or "at_most" only with a
+   numeric threshold (and its unit); "happens" or "does_not_happen" for an event. A comparison with
+   something that is not a number ("above GDP growth", "back to the post-GFC norm", "enough to matter") is
+   "up" or "down" with relative_to naming the reference and threshold null.
+6. subject: one of these canonical names when it fits, else the shortest unambiguous name:
    {subjects}
-6. topic: one of these slugs, or null: {topics}
-7. ticker: the listed company's ticker when the claim is about one company, else null.
-8. basis: "data" when the writer cites specific numbers or observable facts for this claim; "reasoning"
+7. topic: one of these slugs, or null: {topics}
+8. ticker: the listed company's ticker when the claim is about one company, else null.
+9. basis: "data" when the writer cites specific numbers or observable facts for this claim; "reasoning"
    when the writer argues a mechanism without hard numbers; "assertion" when it is stated as a view with
    nothing shown. basis_note says in one line what was shown, or null.
-9. confidence: "high" for will, we expect, certainly; "medium" for likely, should, probably; "low" for
-   could, might, possible. Put the writer's own words in confidence_wording.
-10. quote: the writer's exact words, at most 400 characters. page: the number from the [page N] marker the
+10. confidence, never null: "high" for will, we expect, certainly; "medium" for likely, should, probably;
+    "low" for could, might, possible. Put the writer's own words in confidence_wording.
+11. quote: the writer's exact words, at most 400 characters. page: the number from the [page N] marker the
     quote falls under, or null.
-11. Number the claims k = 1, 2, 3... in reading order.
+12. Number the claims k = 1, 2, 3... in reading order.
 
 Return exactly this shape, with null where nothing applies, and "predictions": [] if the letter makes no
 calls:
@@ -149,6 +157,11 @@ def extract_predictions(
         except predictions.ContractError as e:
             problems = e.problems
             attempts[-1]["problems"] = problems
+            if attempt == 2:
+                # keep the claims that meet the contract and drop the rest, each noted: a letter is not
+                # lost to one claim (a payload with no usable shape still raises)
+                attempts[-1]["salvaged"] = True
+                return predictions.parse(payload, published_on, slugs, salvage=True), attempts
     raise predictions.ContractError(problems)
 
 
@@ -315,7 +328,8 @@ def run(
         if log:
             log(
                 f"[{n}/{len(cands)}] {r.status:<7} {c.manager} | {c.title[:50]} | claims {r.claims} "
-                f"links {r.links}{' | ' + r.reason if r.reason else ''}"
+                f"links {r.links}{f' notes {len(r.notes)}' if r.notes else ''}"
+                f"{' | ' + r.reason if r.reason else ''}"
             )
     counts = {s: sum(r.status == s for r in results) for s in ("ok", "failed", "skipped")}
     detail = {**counts, "claims": sum(r.claims for r in results), "model": getattr(provider, "totals", None)}
