@@ -201,7 +201,7 @@ FROM letters.document d
 JOIN letters.document_file f ON f.document_id = d.id
 JOIN letters.source s ON s.id = f.source_id
 JOIN core.manager m ON m.id = d.manager_id
-WHERE d.published_on_basis = 'first_seen' AND f.url LIKE 'http%%'
+WHERE (d.published_on_basis = 'first_seen' OR d.published_on > current_date) AND f.url LIKE 'http%%'
   AND (%s::text IS NULL OR m.slug = %s)
 ORDER BY d.id, f.id DESC
 """
@@ -233,9 +233,10 @@ def redate(
     apply: bool = False,
     limit: int | None = None,
 ) -> list[RedateResult]:
-    """Documents dated the day they were first seen: fetch each again and take the date its page markup or
-    file states (migration 0004). A redated document's successful predictions runs are marked superseded,
-    so the next extraction run redoes them with the right window. Dry run: list them, fetch nothing."""
+    """Documents dated the day they were first seen, or dated in the future: fetch each again and take the
+    date its page markup or file states (migration 0004). A redated document's successful predictions runs
+    are marked superseded, so the next extraction run redoes them with the right window. Dry run: list
+    them, fetch nothing."""
     rows = db.run(REDATE_SQL, (manager, manager))
     rows = rows[:limit] if limit else rows
     results = [RedateResult(r[0], r[1], r[2], r[3]) for r in rows]

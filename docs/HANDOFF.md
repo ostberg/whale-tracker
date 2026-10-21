@@ -49,6 +49,17 @@ gpt-5.6-terra.
   Investors now carry their stated dates (2000 to 2026); GMO's 236 and Fairfax's 5 pages state no date in
   their markup and stay first-seen. The 17 Oaktree runs are superseded and queue up again behind the GMO
   pages, because the queue is newest-dated first and a first-seen date is today's.
+- **Dates, round two (owner: "most letters contain some sort of date, for the period or the
+  publication").** GMO's pages hold 20,000 characters of menu before "White Papers | August 31, 2026", so
+  the collector now reads a page's `<main>` element with nav, header, footer and asides stripped
+  (`collect_web.main_text`). Fairfax letters are dated only under the signature on the last page, so
+  `read_pdf` keeps the end of the last page (`tail`, 800 characters) and the date rule reads it.
+  `infer_published` takes ordinals ("October 10th, 2026"), month abbreviations and, as the last resort,
+  US numeric dates; `infer_period` takes "2018 Shareholders Letter" as that year's annual letter and a
+  numeric range ("12/31/25 - 3/31/26") or "as of" date at a quarter end as the period; a PDF's ModDate
+  stands in for a missing CreationDate; a period end in the future is never a publication date (Trian's
+  2027-12-31). Checked on the real GMO page (2026-08-31, stated) and the Fairfax 2018 letter (period
+  2018-12-31, signed 2019-03-08) before deploying. Second `redate --apply`: 235 of GMO's 236 pages (214 stated from the page, 21 inferred from a period) and all 5 Fairfax letters (signature dates) took a real date; 1 GMO page is left first-seen; 47 of today's v2 runs were superseded (their windows had started on the collection date) and the queue now runs newest-dated first across managers (Starboard, US Global, Southeastern, Kopernik, GMO). Trian's 2027-12-31 letter is caught by the next redate, which now also takes documents dated in the future.
 - **Rerun results.**
   Two executions of `job-whales-extract` on image 8f8d876 (prompt v2, salvage on), 50 documents: 49 ok, 1
   failed on a read timeout to the model endpoint (transient; it is a candidate again). Not one contract
@@ -85,14 +96,10 @@ and the database. Unit tests: 232 pass. Live tests: see the rerun results above.
    higher limit in `infra/azure.toml`.
 3. The Teams flow URL (W-034) so the digest posts; the inbox-to-blob upload (W-044) so the 78 inbox PDFs
    can be extracted in Azure.
-4. GMO's 236 pages state no date in their markup, so they are still dated the day they were collected and
-   sit at the front of the extraction queue (newest first) ahead of the redone Oaktree memos. Either a
-   GMO-specific date rule (the date is in the visible text past the first 400 characters) or a wider
-   search in `inbox.date_and_kind`, then `redate --apply` again. Fairfax's 5 are the same.
-5. Smaller: the extraction run row left `running` by the stopped first execution (#13) is swept as stale
-   by any extraction run that starts two hours or more after it. Trian's letter is dated 2027-12-31: the
-   last fallback in `inbox.date_and_kind` takes the period end as the date without the plausibility check,
-   so a period in the future (a target year in the file) becomes a publication date; fix and redate.
+4. The GMO essays extracted today under the collection date carry claims whose windows start on
+   2026-10-20; their runs were superseded by the second redate, so the queue redoes them (and the Oaktree
+   memos) in date order. Smaller: the extraction run row left `running` by the stopped first execution
+   (#13) is swept as stale by any extraction run that starts two hours or more after it.
 
 ## 2026-10-20: Azure cleared; deployed, migrated, synced, loaded; first jobs started
 
