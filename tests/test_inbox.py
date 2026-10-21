@@ -173,6 +173,45 @@ def test_infer_published_both_orders():
     assert inbox.infer_published("no date here") is None
 
 
+def test_infer_published_ordinals_and_numeric_dates():
+    """The owner (2026-10-21): letters nearly always carry a date, written out or numeric."""
+    assert inbox.infer_published("October 10th, 2026") == date(2026, 10, 10)
+    assert inbox.infer_published("the 3rd of March, 2025") == date(2025, 3, 3)
+    assert inbox.infer_published("Sept. 1, 2026") == date(2026, 9, 1)
+    assert inbox.infer_published("as of 10/15/2026") is None  # numeric only when asked
+    assert inbox.infer_published("as of 10/15/2026", numeric=True) == date(2026, 10, 15)
+    assert inbox.infer_published("as of 3/31/26", numeric=True) == date(2026, 3, 31)
+    assert inbox.infer_published("ratio 13/45/26", numeric=True) is None
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("2018-Shareholders-Letter", date(2018, 12, 31)),
+        ("2016-Final-Shareholders-letter", date(2016, 12, 31)),
+        ("Performance 12/31/25 - 3/31/26", date(2026, 3, 31)),
+        ("Performance 12/31/25 through 03/31/2026", date(2026, 3, 31)),
+        ("as of 6/30/26", date(2026, 6, 30)),
+        ("as of 6/15/26", None),  # not a quarter end: not a period
+    ],
+)
+def test_infer_period_from_bare_years_and_numeric_ranges(text, expected):
+    assert inbox.infer_period(text)[0] == expected
+
+
+def test_signature_date_and_no_future_period(tmp_path):
+    f = inbox.InboxFile(None, "public", "2018-Shareholders-Letter.pdf", "x", 1)
+    f.head = "FAIRFAX FINANCIAL HOLDINGS LIMITED To Our Shareholders: an excellent year in 2018"
+    f.tail = "see you at our shareholders' meeting in April.\nMarch 8, 2019\nV. Prem Watsa"
+    inbox.date_and_kind(f, date(2026, 10, 20))
+    assert (f.period_end, f.kind) == (date(2018, 12, 31), "annual_letter")
+    assert (f.published_on, f.published_basis) == (date(2019, 3, 8), "stated")
+    g = inbox.InboxFile(None, "public", "Targets.pdf", "x", 1)
+    g.head = "Our FY2027 targets. Annual letter 2027 preview"  # a period in the future is never a date
+    inbox.date_and_kind(g, date(2026, 10, 20))
+    assert (g.published_on, g.published_basis) == (date(2026, 10, 20), "first_seen")
+
+
 def test_sources_by_route(cfg):
     pub = inbox.InboxFile(
         path=None, route="public", rel="a.pdf", sha256="x", size=1, manager="laughing-water"

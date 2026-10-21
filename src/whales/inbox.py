@@ -30,6 +30,7 @@ ROUTES = {"public-websites": "public", "shared-by-manager": "shared"}
 SKIP_DIRS = {"permissions"}
 HEAD_PAGES = 2  # pages read to identify a letter
 HEAD_CHARS = 4000
+TAIL_CHARS = 800  # the end of the last page: a letter's signature and date
 HEADER_CHARS = 800  # a manager's own name normally appears this early
 
 
@@ -55,6 +56,7 @@ class InboxFile:
     author: str | None = None
     created: date | None = None
     head: str = ""
+    tail: str = ""  # the end of a PDF's last page: where a letter is signed and dated
     manager: str | None = None
     manager_basis: str = ""
     candidates: list[str] = field(default_factory=list)
@@ -178,7 +180,32 @@ _PERIOD_PATTERNS = [
         lambda m: date(int(m[1]), 12, 31),
         "annual_letter",
     ),
+    # '2018 Shareholders Letter', '2016 Final Shareholders Letter': a bare year on a letter is its year
+    (
+        r"\b(20[0-4]\d)\b(?:\s+\w+){0,2}\s+(?:shareholders?|annual|investor) letter\b",
+        lambda m: date(int(m[1]), 12, 31),
+        "annual_letter",
+    ),
+    # '12/31/25 - 3/31/26' (a period range: the end counts) and 'as of 3/31/26'; quarter ends only
+    (
+        # normalise() has already turned '-' into a space, so a bare gap is a range separator too
+        r"\b\d{1,2}/\d{1,2}/(?:20)?\d{2}\s*(?:to|through|thru|–)?\s*(\d{1,2})/(\d{1,2})/(?:20)?(\d{2})(?!\d)",
+        lambda m: _quarter_end_only(int(m[1]), int(m[2]), 2000 + int(m[3])),
+        "quarterly_letter",
+    ),
+    (
+        r"\b(\d{1,2})/(\d{1,2})/(?:20)?(\d{2})(?!\d)",
+        lambda m: _quarter_end_only(int(m[1]), int(m[2]), 2000 + int(m[3])),
+        "quarterly_letter",
+    ),
 ]
+
+
+def _quarter_end_only(month: int, day: int, year: int) -> date:
+    """A numeric date is a period only when it is a quarter end; anything else raises (and is skipped)."""
+    if (month, day) not in _QUARTER_END.values():
+        raise ValueError("not a quarter end")
+    return date(year, month, day)
 
 
 def infer_period(text: str) -> tuple[date | None, str]:
@@ -224,17 +251,29 @@ def date_in_name(name: str) -> date | None:
         return None
 
 
-def infer_published(text: str) -> date | None:
-    """The first full date written out, e.g. 'October 15, 2026' or '15 October 2026'."""
-    names = "|".join(_MONTHS)
+def infer_published(text: str, numeric: bool = False) -> date | None:
+    """The first full date written out, e.g. 'October 15, 2026', 'October 10th, 2026' or '15 October
+    2026'. With ``numeric``, a US-style '10/15/2026' or '10/15/26' counts too (the last fallback: numeric
+    dates also mark periods and tables)."""
+    names = "|".join(list(_MONTHS) + ["sept"] + [m[:3] for m in _MONTHS])  # 'Sept.', 'Oct', 'Jan'
     for m in re.finditer(
-        rf"\b({names})\s+(\d{{1,2}}),?\s+{_YEAR}|\b(\d{{1,2}})\s+({names}),?\s+{_YEAR}", text, re.I
+        rf"\b({names})\.?\s+(\d{{1,2}})(?:st|nd|rd|th)?,?\s+{_YEAR}"
+        rf"|\b(\d{{1,2}})(?:st|nd|rd|th)?\s+(?:of\s+)?({names})\.?,?\s+{_YEAR}",
+        text,
+        re.I,
     ):
         month, day, year = (m[1], m[2], m[3]) if m[1] else (m[5], m[4], m[6])
+        number = next(i for name, i in _MONTHS.items() if name.startswith(month.lower()[:3]))
         try:
-            return date(int(year), _MONTHS[month.lower()], int(day))
+            return date(int(year), number, int(day))
         except ValueError:
             continue
+    if numeric:
+        for m in re.finditer(r"\b(\d{1,2})/(\d{1,2})/(20\d{2}|\d{2})(?!\d)", text):
+            try:
+                return date(int(m[3]) if len(m[3]) == 4 else 2000 + int(m[3]), int(m[1]), int(m[2]))
+            except ValueError:
+                continue
     return None
 
 
@@ -291,38 +330,52 @@ def read_pdf(f: InboxFile, body: bytes) -> None:
     meta = reader.metadata or {}
     f.title = (meta.get("/Title") or None) and str(meta.get("/Title")).strip()[:300]
     f.author = (meta.get("/Author") or None) and str(meta.get("/Author")).strip()[:200]
-    f.created = _pdf_date(meta.get("/CreationDate"))
+    f.created = _pdf_date(meta.get("/CreationDate")) or _pdf_date(meta.get("/ModDate"))
     if f.extract_allowed is False:
         return  # W-030: the publisher forbids text extraction; identify from name and metadata only
     parts = []
     for page in reader.pages[:HEAD_PAGES]:
         parts.append(page.extract_text() or "")
     f.head = re.sub(r"[ \t]+", " ", "\n".join(parts))[:HEAD_CHARS]
+    if f.pages > HEAD_PAGES:
+        # the signature block: 'March 8, 2019 / V. Prem Watsa' is the only date in a Fairfax letter
+        f.tail = re.sub(r"[ \t]+", " ", reader.pages[-1].extract_text() or "")[-TAIL_CHARS:]
 
 
 def date_and_kind(f: InboxFile, first_seen: date, stated: date | None = None) -> None:
     """Period from the file name first, then the title, then the first page; publication date from the page's
     own markup (``stated``, when the caller found one), a date in the file name, a date written near the
-    top, or the PDF's creation date, each only if plausible for the period; failing those, the period end
-    itself (a lower bound), then the file's own date."""
+    top, the date under the signature at the end, a numeric date near the top, or the PDF's creation (or
+    modification) date, each only if plausible for the period; failing those, the period end itself (a
+    lower bound, never a future one), then the file's own date."""
     name = Path(f.rel).stem
     period, kind = None, "other"
     for text in (name, f.title or "", f.head[:HEADER_CHARS]):
         period, kind = infer_period(text)
         if period:
             break
-    stated = stated or date_in_name(name) or infer_published(f.head[:400])
+    if period is None:
+        # a period range or 'as of' date can sit anywhere on the first page; the end of the range counts
+        period, kind = infer_period(f.head[HEADER_CHARS:HEAD_CHARS])
+    candidates = [
+        stated,
+        date_in_name(name),
+        infer_published(f.head[:400]),
+        infer_published(f.tail),
+        infer_published(f.head[:400], numeric=True),
+    ]
+    stated = next((d for d in candidates if d is not None and plausible(d, period, first_seen)), None)
     if period is None:
         period, kind = period_without_year(f"{name} {f.title or ''}", stated or f.created)
     f.period_end = period
     f.kind = infer_kind(f, kind)
     if stated is not None and stated == period:
         stated = None  # 'as of June 30' is the period, not the day the letter came out
-    if plausible(stated, period):
+    if plausible(stated, period, first_seen):
         f.published_on, f.published_basis = stated, "stated"
-    elif plausible(f.created, period):
+    elif plausible(f.created, period, first_seen):
         f.published_on, f.published_basis = f.created, "inferred"
-    elif period is not None:
+    elif period is not None and period <= first_seen:
         f.published_on, f.published_basis = period, "inferred"
     else:
         f.published_on = first_seen

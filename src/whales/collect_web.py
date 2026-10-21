@@ -97,6 +97,15 @@ def visible_text(page: str) -> str:
     return re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", " ", page))).strip()
 
 
+def main_text(page: str) -> str:
+    """The visible text of the page's own content: navigation, header, footer and asides stripped, and the
+    ``<main>`` element alone when the page has one. GMO's pages (2026-10-21) put 20,000 characters of menu
+    before 'White Papers | August 31, 2026', so the date never reached the first 400 characters."""
+    body = re.sub(r"<(nav|header|footer|aside)\b.*?</\1>", " ", page, flags=re.I | re.S)
+    m = re.search(r"<main\b.*?</main>", body, flags=re.I | re.S)
+    return visible_text(m.group(0) if m else body)
+
+
 GENERIC_LINK_TEXT = re.compile(r"^(read more|download|view|open|pdf|click here|link|more)\W*$", re.I)
 
 
@@ -129,7 +138,7 @@ def describe(c: WebCandidate, body: bytes, content_type: str, today: date) -> In
         page = body.decode("utf-8", "replace")
         title = re.search(r"<title[^>]*>(.*?)</title>", page, re.I | re.S)
         f.title = visible_text(title.group(1))[:300] if title else None
-        f.head = visible_text(page)[:4000]
+        f.head = main_text(page)[:4000]
         stated = page_date(page)
     link_text = c.text if c.text and not GENERIC_LINK_TEXT.match(c.text) else None
     f.title = f.title or link_text or name  # a "READ MORE" link is no title; the file name says more

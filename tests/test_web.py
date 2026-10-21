@@ -207,6 +207,26 @@ def test_describe_reads_the_page_markup_date_and_ignores_generic_link_text():
     assert g.title == "Trian-Letter.pdf"
 
 
+def test_describe_reads_the_main_content_past_a_long_menu():
+    """GMO's pages (2026-10-21): 20,000 characters of navigation before 'White Papers | August 31, 2026'."""
+    menu = (
+        b"<nav>" + b'<small class="date">July 23, 2026</small> Insights The Electricity Tipping Point ' * 200
+    )
+    menu += b"</nav>"
+    page = (
+        b"<html><head><title>Triple Mandate</title></head><body><header>GMO</header>"
+        + menu
+        + b'<article><small class="date">July 15, 2026</small>Targeting Outcomes</article>'
+        b"<main><h1>Triple Mandate</h1><p>White Papers | August 31, 2026</p><p>A credit problem.</p>"
+        b"</main><footer>Copyright 2026</footer></body></html>"
+    )
+    f = collect_web.describe(
+        web.WebCandidate("https://m.test/triple-mandate_insights/", ""), page, "text/html", date(2026, 10, 20)
+    )
+    assert f.head.startswith("Triple Mandate White Papers | August 31, 2026")
+    assert (f.published_on, f.published_basis) == (date(2026, 8, 31), "stated")
+
+
 def test_recording_refuses_to_run_outside_azure(monkeypatch):
     monkeypatch.delenv("IDENTITY_ENDPOINT", raising=False)
     with pytest.raises(collect_web.NotInAzure):
