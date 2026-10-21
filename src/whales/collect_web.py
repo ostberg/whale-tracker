@@ -97,10 +97,32 @@ def visible_text(page: str) -> str:
     return re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", " ", page))).strip()
 
 
+GENERIC_LINK_TEXT = re.compile(r"^(read more|download|view|open|pdf|click here|link|more)\W*$", re.I)
+
+
+def page_date(page: str) -> date | None:
+    """The publication date a page states in its markup: a ``<time datetime>``, an ``article:published_time``
+    meta tag or a ``datePublished`` field. The first Azure run (2026-10-21) dated every Oaktree memo on the
+    day it was collected because the memo's date sits past the first 400 characters of visible text."""
+    for pattern in (
+        r"<time\b[^>]*\bdatetime=[\"'][^\"'\d]*(\d{4}-\d{2}-\d{2})",
+        r"<meta\b[^>]*\barticle:published_time[^>]*\bcontent=[\"'][^\"'\d]*(\d{4}-\d{2}-\d{2})",
+        r"\"datePublished\"\s*:\s*\"[^\"\d]*(\d{4}-\d{2}-\d{2})",
+    ):
+        m = re.search(pattern, page, re.I)
+        if m:
+            try:
+                return date.fromisoformat(m[1])
+            except ValueError:
+                continue
+    return None
+
+
 def describe(c: WebCandidate, body: bytes, content_type: str, today: date) -> InboxFile:
     """Title, period, kind and publication date of one fetched document, with the inbox's rules."""
     name = PurePosixPath(urllib.parse.urlsplit(c.url).path).name or "document"
     f = InboxFile(None, "public", name, hashlib.sha256(body).hexdigest(), len(body))
+    stated = None
     if content_type == "application/pdf" or body[:5] == b"%PDF-":
         read_pdf(f, body)
     else:
@@ -108,8 +130,10 @@ def describe(c: WebCandidate, body: bytes, content_type: str, today: date) -> In
         title = re.search(r"<title[^>]*>(.*?)</title>", page, re.I | re.S)
         f.title = visible_text(title.group(1))[:300] if title else None
         f.head = visible_text(page)[:4000]
-    f.title = f.title or c.text or name
-    date_and_kind(f, today)
+        stated = page_date(page)
+    link_text = c.text if c.text and not GENERIC_LINK_TEXT.match(c.text) else None
+    f.title = f.title or link_text or name  # a "READ MORE" link is no title; the file name says more
+    date_and_kind(f, today, stated)
     return f
 
 
@@ -159,6 +183,81 @@ def collect(
         "UPDATE raw.run_log SET status = %s, finished_at = now(), detail = %s WHERE id = %s",
         ("failed" if any(r.error for r in results) else "ok", json.dumps(detail), run_id),
     )
+    return results
+
+
+REDATE_SQL = """
+SELECT DISTINCT ON (d.id) d.id, m.slug, d.title, d.published_on, d.period_end, f.url, s.slug
+FROM letters.document d
+JOIN letters.document_file f ON f.document_id = d.id
+JOIN letters.source s ON s.id = f.source_id
+JOIN core.manager m ON m.id = d.manager_id
+WHERE d.published_on_basis = 'first_seen' AND f.url LIKE 'http%%'
+  AND (%s::text IS NULL OR m.slug = %s)
+ORDER BY d.id, f.id DESC
+"""
+SUPERSEDE_SQL = (
+    "UPDATE letters.extraction_run SET status = 'superseded', "
+    'detail = detail || \'{"superseded": "document redated"}\'::jsonb '
+    "WHERE document_id = %s AND task = 'predictions' AND status = 'ok'"
+)
+
+
+@dataclass
+class RedateResult:
+    document_id: int
+    manager: str
+    title: str
+    old: date
+    new: date | None = None
+    basis: str | None = None
+    runs_superseded: int = 0
+    error: str | None = None
+
+
+def redate(
+    db: Database,
+    client: WebClient,
+    cfg: Config,
+    *,
+    manager: str | None = None,
+    apply: bool = False,
+    limit: int | None = None,
+) -> list[RedateResult]:
+    """Documents dated the day they were first seen: fetch each again and take the date its page markup or
+    file states (migration 0004). A redated document's successful predictions runs are marked superseded,
+    so the next extraction run redoes them with the right window. Dry run: list them, fetch nothing."""
+    rows = db.run(REDATE_SQL, (manager, manager))
+    rows = rows[:limit] if limit else rows
+    results = [RedateResult(r[0], r[1], r[2], r[3]) for r in rows]
+    if not apply:
+        return results
+    if not in_azure():
+        raise NotInAzure("redating reads PDFs; run it in the Azure admin job (W-045 covers the inbox only)")
+    rules = {s.slug: s.web for s in cfg.sources if s.web}
+    conn = db.connection()
+    today = date.today()
+    for r, row in zip(results, rows, strict=True):
+        _id, _m, _t, _old, period_end, url, source_slug = row
+        rule = rules.get(source_slug)
+        try:
+            if rule is None:
+                raise WebError(f"source {source_slug} has no web rule")
+            body, ctype = client.get(url, rule.allowed_hosts())
+            f = describe(WebCandidate(url, ""), body, ctype, today)
+        except Exception as e:  # noqa: BLE001 - recorded per document; the run goes on
+            r.error = f"{type(e).__name__}: {e}"[:500]
+            continue
+        if f.published_basis == "first_seen" or f.published_on == r.old:
+            continue  # nothing better found
+        with conn.transaction():
+            conn.execute(
+                "UPDATE letters.document SET published_on = %s, published_on_basis = %s, "
+                "period_end = COALESCE(period_end, %s) WHERE id = %s",
+                (f.published_on, f.published_basis, f.period_end, r.document_id),
+            )
+            r.runs_superseded = conn.execute(SUPERSEDE_SQL, (r.document_id,)).rowcount
+        r.new, r.basis = f.published_on, f.published_basis
     return results
 
 

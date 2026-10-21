@@ -300,17 +300,18 @@ def read_pdf(f: InboxFile, body: bytes) -> None:
     f.head = re.sub(r"[ \t]+", " ", "\n".join(parts))[:HEAD_CHARS]
 
 
-def date_and_kind(f: InboxFile, first_seen: date) -> None:
-    """Period from the file name first, then the title, then the first page; publication date from a date in
-    the file name, a date written near the top, or the PDF's creation date, each only if plausible for the
-    period; failing those, the period end itself (a lower bound), then the file's own date."""
+def date_and_kind(f: InboxFile, first_seen: date, stated: date | None = None) -> None:
+    """Period from the file name first, then the title, then the first page; publication date from the page's
+    own markup (``stated``, when the caller found one), a date in the file name, a date written near the
+    top, or the PDF's creation date, each only if plausible for the period; failing those, the period end
+    itself (a lower bound), then the file's own date."""
     name = Path(f.rel).stem
     period, kind = None, "other"
     for text in (name, f.title or "", f.head[:HEADER_CHARS]):
         period, kind = infer_period(text)
         if period:
             break
-    stated = date_in_name(name) or infer_published(f.head[:400])
+    stated = stated or date_in_name(name) or infer_published(f.head[:400])
     if period is None:
         period, kind = period_without_year(f"{name} {f.title or ''}", stated or f.created)
     f.period_end = period

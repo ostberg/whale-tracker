@@ -177,6 +177,36 @@ def test_describe_html_and_pdf():
     assert g.period_end == date(2026, 3, 31) and g.published_on == date(2026, 4, 20) and g.pages == 1
 
 
+def test_describe_reads_the_page_markup_date_and_ignores_generic_link_text():
+    """Oaktree memos were all dated the day they were collected (first Azure run, 2026-10-21): the memo's
+    date sits in a <time> tag past the first 400 characters of visible text. Trian's PDF was titled
+    'READ MORE' after its link."""
+    nav = b"<nav>" + b"Insights Memos About Careers Contact " * 30 + b"</nav>"
+    page = (
+        b"<html><head><title>Sea Change</title></head><body>"
+        + nav
+        + b'<time class="embedded-date" datetime=">2022-12-13T08:00:00.0000000Z" pubdate>Dec 13, 2022</time>'
+        b"<p>December 13, 2022</p><p>Memo text</p></body></html>"
+    )
+    f = collect_web.describe(
+        web.WebCandidate("https://m.test/memo/sea-change", ""), page, "text/html", date(2026, 10, 20)
+    )
+    assert (f.published_on, f.published_basis) == (date(2022, 12, 13), "stated")
+    assert collect_web.page_date(
+        '<meta property="article:published_time" content="2025-02-03T10:00:00Z">'
+    ) == date(2025, 2, 3)
+    assert collect_web.page_date('"datePublished":"2024-05-06"') == date(2024, 5, 6)
+    assert collect_web.page_date("<p>no markup date</p>") is None
+    pdf = make_pdf(["Letter to the board", "April 20, 2026"])
+    g = collect_web.describe(
+        web.WebCandidate("https://m.test/wp-content/uploads/2026/04/Trian-Letter.pdf", "READ MORE"),
+        pdf,
+        "application/pdf",
+        date(2026, 10, 1),
+    )
+    assert g.title == "Trian-Letter.pdf"
+
+
 def test_recording_refuses_to_run_outside_azure(monkeypatch):
     monkeypatch.delenv("IDENTITY_ENDPOINT", raising=False)
     with pytest.raises(collect_web.NotInAzure):
@@ -244,3 +274,82 @@ def test_a_missing_page_ends_paging_quietly():
         max_pages=5,
     )
     assert [x.url for x in web.candidates(c, rule)] == ["https://m.test/d/1.pdf"]
+
+
+class _RedateDb:
+    """Answers the redate query with the given rows; records every statement of the connection."""
+
+    def __init__(self, rows):
+        self.rows = rows
+        self.calls = []
+
+    def run(self, sql, params=()):
+        assert sql.startswith("\nSELECT DISTINCT ON (d.id)") and params == (None, None)
+        return self.rows
+
+    def connection(self):
+        return self
+
+    def execute(self, sql, params=None):
+        self.calls.append((sql, params))
+
+        class _R:
+            rowcount = 17
+
+        return _R()
+
+    def transaction(self):
+        import contextlib
+
+        return contextlib.nullcontext()
+
+
+class _RedateClient:
+    def __init__(self, pages):
+        self.pages, self.got = pages, []
+
+    def get(self, url, allowed_hosts):
+        self.got.append((url, allowed_hosts))
+        return self.pages[url], "text/html"
+
+
+def test_redate_takes_the_stated_date_and_supersedes_the_runs(tmp_path, monkeypatch):
+    from test_config import MANAGERS, SOURCE, TAGS, TOPICS, _write
+
+    good = SOURCE + 'web = { method = "links", index = ["https://x.test/letters"], match = "memo" }\n'
+    cfg = config.load(_write(tmp_path, tags=TAGS, topics=TOPICS, managers=MANAGERS, sources=good))
+    rows = [
+        (1, "m1", "Sea Change", date(2026, 10, 20), None, "https://x.test/memo/sea-change", "s1"),
+        (2, "m1", "No date", date(2026, 10, 20), None, "https://x.test/memo/no-date", "s1"),
+        (3, "m1", "Other source", date(2026, 10, 20), None, "https://x.test/memo/x", "s9"),
+    ]
+    pages = {
+        "https://x.test/memo/sea-change": b'<html><body><time datetime="2022-12-13T08:00:00Z">x</time>'
+        b"</body></html>",
+        "https://x.test/memo/no-date": b"<html><body>nothing</body></html>",
+    }
+    db, client = _RedateDb(rows), _RedateClient(pages)
+    monkeypatch.delenv("IDENTITY_ENDPOINT", raising=False)
+    dry = collect_web.redate(db, client, cfg)
+    assert [r.document_id for r in dry] == [1, 2, 3] and client.got == [] and db.calls == []
+    with pytest.raises(collect_web.NotInAzure):
+        collect_web.redate(db, client, cfg, apply=True)
+    monkeypatch.setenv("IDENTITY_ENDPOINT", "http://169.254.169.254/x")
+    out = collect_web.redate(db, client, cfg, apply=True)
+    assert (out[0].new, out[0].basis, out[0].runs_superseded) == (date(2022, 12, 13), "stated", 17)
+    assert out[1].new is None and out[1].error is None  # nothing better found: left alone
+    assert out[2].new is None and "no web rule" in out[2].error
+    assert client.got == [
+        ("https://x.test/memo/sea-change", {"x.test"}),
+        ("https://x.test/memo/no-date", {"x.test"}),
+    ]
+    update, supersede = db.calls
+    assert update[0].startswith("UPDATE letters.document SET published_on") and update[1] == (
+        date(2022, 12, 13),
+        "stated",
+        None,
+        1,
+    )
+    assert supersede[0].startswith("UPDATE letters.extraction_run SET status = 'superseded'") and supersede[
+        1
+    ] == (1,)

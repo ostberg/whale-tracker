@@ -102,7 +102,7 @@ Routine runs happen in Azure (W-042): `job-whales-collect-sec` daily, `job-whale
 `job-whales-weekly` (Mondays after it: the reminder calendar refresh and the digest, `whales weekly --apply`),
 `job-whales-extract` (manual, 25 documents per start, until the pilot is judged and it gets a schedule),
 (W-046; `whales collect web --offline` dry-runs it from anywhere, reading index pages only), and `job-whales-admin`
-started on demand with arguments such as `config sync --apply`, `db migrate --apply` or `status`
+started on demand with arguments such as `config sync --apply`, `db migrate --apply`, `redate --apply` (documents dated the day they were first seen take the date their page or file states) or `status`
 (`az containerapp job start -n job-whales-admin -g rg-whale-tracker --args "config sync --apply"`: the
 arguments as one quoted string, because the az CLI refuses a list element starting with `--`; the image's
 entrypoint splits it). Deploy with

@@ -318,6 +318,26 @@ def cmd_inbox_load(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_redate(args: argparse.Namespace) -> int:
+    cfg = config.load()
+    client = WebClient(collect_web.user_agent())
+    with Database(DbSettings.from_env(), role=collect.INGEST_ROLE) as db:
+        results = collect_web.redate(
+            db, client, cfg, manager=args.manager, apply=args.apply, limit=args.limit
+        )
+    print(f"{len(results)} document(s) dated the day they were first seen")
+    for r in results:
+        line = f"   {r.manager:<24} {r.old} {r.title[:60]}"
+        if r.new:
+            line += f"  -> {r.new} ({r.basis}), {r.runs_superseded} run(s) superseded"
+        if r.error:
+            line += f"  ERROR {r.error}"
+        print(line)
+    if not args.apply:
+        print("(dry run: nothing fetched, nothing written; add --apply in Azure)")
+    return 1 if any(r.error for r in results) else 0
+
+
 def cmd_extract_predictions(args: argparse.Namespace) -> int:
     cfg = config.load()
     with Database(DbSettings.from_env(), role=collect.INGEST_ROLE) as db:
@@ -516,6 +536,14 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--limit", type=int, help="at most this many new documents per source")
     p.add_argument("-v", "--verbose", action="store_true", help="list each new document")
     p.set_defaults(func=cmd_collect_web)
+
+    p = sub.add_parser(
+        "redate", help="take the stated date of documents dated the day they were first seen (migration 0004)"
+    )
+    p.add_argument("--manager", help="only this manager slug")
+    p.add_argument("--limit", type=int, help="at most this many documents")
+    p.add_argument("--apply", action="store_true", help="fetch and update (Azure only; default: list only)")
+    p.set_defaults(func=cmd_redate)
 
     ext = sub.add_parser("extract", help="model extraction runs (W-048)").add_subparsers(
         dest="command", required=True
